@@ -28,3 +28,54 @@ a { color: var(--primary); }
 .pinpad-key { height: 54px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-alt); font: 600 20px var(--font-ui); color: var(--text); }
 .pinpad-keys--lg .pinpad-key { height: 60px; border-radius: 16px; font-size: 22px; }
 .pinpad-key:active { background: var(--primary-tint); transform: scale(.95); }
+
+/* ---------- comuns ---------- */
+.avatar { flex: none; border-radius: 50%; color: #fff; display: inline-grid; place-items: center; font-family: var(--font-ui); font-weight: 600; }
+.avatar--ring { border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--border); }
+.title-xl { margin: 0; font: 700 28px/1.1 var(--font-display); letter-spacing: -.02em; }
+.muted { margin: 0; font: 400 15px/1.45 var(--font-ui); color: var(--text-2); text-wrap: pretty; }
+.empty { padding: 28px 18px; border: 1px dashed var(--border-dashed); border-radius: 18px; text-align: center; font: 400 14px var(--font-ui); color: var(--text-2); }
+.empty-title { font: 600 17px var(--font-display); color: var(--text); margin-bottom: 6px; }
+.section-label { font: 600 13px var(--font-ui); color: var(--text-2); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font: 600 12px var(--font-ui); white-space: nowrap; }
+
+/* ---------- toast ---------- */
+.toast { position: fixed; left: 50%; bottom: 28px; z-index: 80; transform: translate(-50%, 16px); opacity: 0; transition: all .3s cubic-bezier(.2,.8,.2,1); pointer-events: none; max-width: calc(100vw - 32px); }
+.toast[data-open='true'] { transform: translate(-50%, 0); opacity: 1; }
+.toast-body { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 14px; background: var(--text); color: var(--bg); font: 500 14px/1.35 var(--font-ui); box-shadow: 0 14px 30px -12px rgba(0,0,0,.4); }
+.toast-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: #6FCF97; }
+.toast[data-kind='warn'] .toast-dot { background: #E0A33A; }
+
+/* ---------- moldura do funcionário (mobile-first) ---------- */
+.phone { position: relative; max-width: 440px; min-height: 100vh; margin: 0 auto; background: var(--surface); display: flex; flex-direction: column; }
+.phone-scroll { flex: 1; overflow-y: auto; position: relative; }
+@media (min-width: 480px) {
+  .phone { min-height: min(860px, calc(100vh - 48px)); margin: 24px auto; border: 1px solid var(--border); border-radius: 34px; overflow: hidden; box-shadow: 0 40px 70px -40px rgba(28,31,29,.45); }
+}
+
+/* ---------- identificação ---------- */
+.identify { padding: 30px 22px 24px; display: flex; flex-direction: column; gap: 26px; }
+.identify-head { display: flex; flex-direction: column; gap: 6px; }
+.restaurant { display: flex; align-items: center; gap: 12px; }
+.restaurant-logo { width: 48px; height: 48px; border-radius: 14px; background: var(--accent); display: grid; place-items: center; font: 700 19px var(--font-display); color: var(--surface); flex: none; }
+.restaurant-logo--sm { width: 36px; height: 36px; border-radius: 11px; font-size: 14px; }
+.restaurant-name { font: 700 22px var(--font-display); letter-spacing: -.01em; }
+.restaurant-tagline { font: 500 13px var(--font-ui); color: var(--text-2); }
+.emp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.emp-card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); text-align: left; transition: all .15s; }
+.emp-card:hover { border-color: var(--primary); background: var(--primary-tint-3); }
+.emp-card:active { transform: scale(.97); }
+.emp-card-name { display: block; font: 600 15px var(--font-ui); color: var(--text); }
+.emp-card-role { display: block; font: 400 12px var(--font-ui); color: var(--text-2); }
+
+/* ---------- retorno com sessão ---------- */
+.resume { flex: 1; min-height: 100%; padding: 30px 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; background: var(--primary); color: var(--bg); }
+.resume-brand { display: flex; align-items: center; gap: 10px; font: 600 16px var(--font-display); }
+.resume-center { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.resume-eyebrow { font: 600 12px var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: #B8D3C4; }
+.resume-title { margin: 0; font: 700 30px/1.1 var(--font-display); }
+.resume-text { margin: 0; font: 400 14px/1.5 var(--font-ui); color: #D5E3DA; max-width: 290px; text-wrap: pretty; }
+.resume-actions { display: flex; flex-direction: column; gap: 10px; }
+.resume-continue { border: 0; border-radius: 16px; padding: 18px; background: var(--surface); color: var(--primary); font: 700 17px var(--font-ui); }
+.resume-continue:active { transform: scale(.98); }
+.resume-switch { border: 0; background: transparent; color: var(--bg); font: 500 14px var(--font-ui); padding: 10px; }
