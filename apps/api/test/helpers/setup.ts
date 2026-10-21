@@ -32,3 +32,11 @@ export async function authorizedAgent(app: Parameters<typeof request.agent>[0]) 
   if (res.status !== 201) throw new Error(`falha ao autorizar aparelho: ${res.status}`);
   return agent;
 }
+
+/** Aparelho autorizado já identificado como o funcionário informado. */
+export async function employeeAgent(app: Parameters<typeof request.agent>[0], employeeId: string) {
+  const agent = await authorizedAgent(app);
+  const res = await agent.post('/api/session').send({ employeeId });
+  if (res.status !== 201) throw new Error(`falha ao identificar ${employeeId}: ${res.status}`);
+  return agent;
+}

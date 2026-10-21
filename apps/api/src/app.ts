@@ -4,6 +4,7 @@ import type { AppContext } from './context.js';
 import type { Db } from './db/index.js';
 import { errorHandler } from './http.js';
 import { deviceRoutes } from './routes/device.js';
+import { meRoutes } from './routes/me.js';
 import { sessionRoutes } from './routes/session.js';
 import { PinGuard } from './security/pin-guard.js';
 
@@ -23,6 +24,7 @@ export function createApp(deps: AppDeps) {
   });
   app.use('/api', deviceRoutes(ctx));
   app.use('/api', sessionRoutes(ctx));
+  app.use('/api', meRoutes(ctx));
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Rota não encontrada.' });

@@ -67,7 +67,7 @@ export function EmployeeApp() {
     <div className="phone">
       {screen === 'identify' && <IdentifyScreen employees={employees} onPick={login} />}
       {screen === 'resume' && me && <ResumeScreen me={me} onContinue={() => setScreen('today')} onSwitch={logout} />}
-      {screen === 'today' && me && <TodayScreen me={me} />}
+      {screen === 'today' && me && <TodayScreen me={me} onOpen={() => {}} onSwitch={logout} />}
     </div>
   );
 }

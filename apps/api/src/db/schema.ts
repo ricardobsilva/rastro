@@ -56,4 +56,37 @@ CREATE TABLE IF NOT EXISTS devices (
   employee_id TEXT REFERENCES employees(id),
   session_since TEXT
 );
+
+-- Instância diária: um checklist executado por um funcionário num dia operacional.
+-- Guarda snapshot de nome e prazo; dias anteriores nunca são ressincronizados.
+CREATE TABLE IF NOT EXISTS executions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  op_date TEXT NOT NULL,
+  checklist_id TEXT NOT NULL REFERENCES checklists(id),
+  employee_id TEXT NOT NULL REFERENCES employees(id),
+  checklist_name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  due_time TEXT,
+  started_manually INTEGER NOT NULL DEFAULT 0,
+  visible INTEGER NOT NULL DEFAULT 1,
+  UNIQUE (op_date, checklist_id, employee_id)
+);
+
+CREATE TABLE IF NOT EXISTS execution_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  execution_id INTEGER NOT NULL REFERENCES executions(id),
+  item_id TEXT NOT NULL REFERENCES items(id),
+  item_name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL,
+  required INTEGER NOT NULL,
+  allow_note INTEGER NOT NULL,
+  position INTEGER NOT NULL,
+  visible INTEGER NOT NULL DEFAULT 1,
+  done INTEGER NOT NULL DEFAULT 0,
+  done_at INTEGER,
+  undone_at INTEGER,
+  note TEXT NOT NULL DEFAULT '',
+  UNIQUE (execution_id, item_id)
+);
 `;
