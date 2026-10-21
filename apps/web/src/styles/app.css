@@ -1,0 +1,30 @@
+/* ---------- base ---------- */
+input, select, textarea { font-family: inherit; }
+a { color: var(--primary); }
+
+.btn { border: 0; border-radius: 10px; padding: 10px 16px; font: 600 14px var(--font-ui); }
+.btn-primary { background: var(--primary); color: var(--surface); }
+.btn-secondary { background: var(--track); color: var(--text); }
+.btn:active { transform: scale(.98); }
+
+.brand-sign { display: flex; align-items: center; justify-content: center; gap: 6px; font: 500 12px var(--font-ui); color: var(--text-2); }
+.brand-sign span { font: 700 13px var(--font-display); color: var(--primary); }
+
+/* ---------- gate (aparelho / gestor) ---------- */
+.gate { display: grid; place-items: center; padding: 48px 16px; min-height: 100vh; }
+.gate-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 28px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.gate-eyebrow { font: 600 12px var(--font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.gate-title { margin: 0; font: 700 26px var(--font-display); }
+.gate-text { margin: 0; font: 400 14px/1.45 var(--font-ui); color: var(--text-2); }
+
+/* ---------- PIN pad ---------- */
+.pinpad { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.pinpad-dots { display: flex; gap: 14px; padding: 6px 0; }
+.pinpad-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--primary); background: transparent; transition: all .15s; }
+.pinpad-dot.is-filled { background: var(--primary); }
+.pinpad-dot.is-error { border-color: var(--late); }
+.pinpad-error { font: 600 13px var(--font-ui); color: var(--late); background: var(--late-bg); padding: 8px 12px; border-radius: 10px; }
+.pinpad-keys { display: grid; grid-template-columns: repeat(3, 72px); gap: 10px; }
+.pinpad-key { height: 54px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-alt); font: 600 20px var(--font-ui); color: var(--text); }
+.pinpad-keys--lg .pinpad-key { height: 60px; border-radius: 16px; font-size: 22px; }
+.pinpad-key:active { background: var(--primary-tint); transform: scale(.95); }

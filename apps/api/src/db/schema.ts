@@ -47,4 +47,13 @@ CREATE TABLE IF NOT EXISTS checklist_employees (
   employee_id TEXT NOT NULL REFERENCES employees(id),
   PRIMARY KEY (checklist_id, employee_id)
 );
+
+CREATE TABLE IF NOT EXISTS devices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  token_hash TEXT NOT NULL UNIQUE,
+  authorized_by TEXT NOT NULL REFERENCES employees(id),
+  created_at TEXT NOT NULL,
+  employee_id TEXT REFERENCES employees(id),
+  session_since TEXT
+);
 `;
