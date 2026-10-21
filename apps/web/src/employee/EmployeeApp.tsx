@@ -7,6 +7,7 @@ import { IdentifyScreen } from './IdentifyScreen';
 import { ProfileScreen } from './ProfileScreen';
 import { ResumeScreen } from './ResumeScreen';
 import { RunScreen } from './RunScreen';
+import { SwitchSheet } from './SwitchSheet';
 import { type Tab, TabBar } from './TabBar';
 import { TodayScreen } from './TodayScreen';
 
@@ -18,6 +19,7 @@ export function EmployeeApp() {
   const [session, setSession] = useState<Session>({ employee: null, since: null });
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [runId, setRunId] = useState<number | null>(null);
+  const [switchOpen, setSwitchOpen] = useState(false);
   const me = session.employee;
 
   const fail = useCallback(
@@ -44,6 +46,7 @@ export function EmployeeApp() {
   }, [fail, loadEmployees]);
 
   async function login(e: Employee) {
+    setSwitchOpen(false);
     try {
       setSession(await api.post<Session>('/api/session', { employeeId: e.id }));
       setRunId(null);
@@ -67,6 +70,11 @@ export function EmployeeApp() {
     }
   }
 
+  const openSwitch = () => {
+    setSwitchOpen(true);
+    loadEmployees();
+  };
+
   const openRun = (id: number) => {
     setRunId(id);
     setScreen('run');
@@ -77,15 +85,16 @@ export function EmployeeApp() {
     <div className="phone">
       <div className="phone-scroll">
         {screen === 'identify' && <IdentifyScreen employees={employees} onPick={login} />}
-        {screen === 'resume' && me && <ResumeScreen me={me} onContinue={() => setScreen('today')} onSwitch={logout} />}
-        {screen === 'today' && me && <TodayScreen me={me} onOpen={openRun} onSwitch={logout} />}
+        {screen === 'resume' && me && <ResumeScreen me={me} onContinue={() => setScreen('today')} onSwitch={openSwitch} />}
+        {screen === 'today' && me && <TodayScreen me={me} onOpen={openRun} onSwitch={openSwitch} />}
         {screen === 'activities' && me && <ActivitiesScreen />}
-        {screen === 'profile' && me && <ProfileScreen me={me} since={session.since} onSwitch={logout} onLogout={logout} />}
+        {screen === 'profile' && me && <ProfileScreen me={me} since={session.since} onSwitch={openSwitch} onLogout={logout} />}
         {screen === 'run' && me && runId !== null && (
-          <RunScreen executionId={runId} me={me} onBack={() => setScreen('today')} onSwitch={logout} onFinished={() => setScreen('today')} />
+          <RunScreen executionId={runId} me={me} onBack={() => setScreen('today')} onSwitch={openSwitch} onFinished={() => setScreen('today')} />
         )}
       </div>
       {me && isTab && <TabBar current={screen} onChange={setScreen} />}
+      {me && switchOpen && <SwitchSheet employees={employees} currentId={me.id} onPick={login} onClose={() => setSwitchOpen(false)} />}
     </div>
   );
 }
