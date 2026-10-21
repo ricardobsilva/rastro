@@ -5,7 +5,7 @@ import { useToast } from '../ui/Toast';
 import type { Execution } from './types';
 
 /** Estado de uma execução + ações do funcionário (marcar, observar). */
-export function useExecution(executionId: number | null) {
+export function useExecution(executionId: number | null, onChange?: () => void) {
   const toast = useToast();
   const { data: exec, error, setData, reload } = useResource<Execution>(executionId ? `/api/me/executions/${executionId}` : null);
   const [pop, setPop] = useState<string | null>(null);
@@ -20,6 +20,7 @@ export function useExecution(executionId: number | null) {
     setTimeout(() => setPop((p) => (p === itemId ? null : p)), 220);
     try {
       setData(await api.put<Execution>(`/api/me/executions/${exec.id}/items/${itemId}`, { done }));
+      onChange?.();
       if (!done) toast('Item desmarcado. A alteração foi registrada no histórico.', 'warn');
     } catch (e) {
       toast(errorMessage(e), 'warn');
@@ -33,6 +34,7 @@ export function useExecution(executionId: number | null) {
     if (!exec) return false;
     try {
       setData(await api.put<Execution>(`/api/me/executions/${exec.id}/items/${itemId}/note`, { note }));
+      onChange?.();
       if (note.trim()) toast('Observação salva.');
       return true;
     } catch (e) {

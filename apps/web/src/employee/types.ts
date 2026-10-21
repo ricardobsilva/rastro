@@ -21,3 +21,6 @@ export type Execution = {
 };
 
 export type Activity = { id: number; time: string; itemName: string; checklistName: string; action: 'done' | 'undone' | 'note'; note: string };
+
+export type TeamMember = import('../types').Employee & { done: number; total: number; late: number };
+export type Team = { now: string; dateLabel: string; members: TeamMember[] };

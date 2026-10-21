@@ -212,3 +212,49 @@ a { color: var(--primary); }
 .sheet-emp.is-current { border-color: var(--primary); background: var(--primary-tint-2); }
 .sheet-emp-name { display: block; font: 600 14px var(--font-ui); color: var(--text); }
 .sheet-emp-role { display: block; font: 400 11px var(--font-ui); color: var(--text-2); }
+
+/* ---------- estação de trabalho ---------- */
+.station-wrap { padding: 20px clamp(12px, 2vw, 28px) 40px; }
+.station { max-width: 1440px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; min-height: calc(100vh - 60px); display: flex; flex-direction: column; }
+.station-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 16px 24px; border-bottom: 1px solid var(--track); }
+.station-brand { display: flex; align-items: center; gap: 12px; }
+.station-logo { width: 42px; height: 42px; border-radius: 12px; font-size: 16px; }
+.station-name { font: 700 19px var(--font-display); }
+.station-sub { font: 500 12px var(--font-ui); color: var(--text-2); }
+.station-sub span { font: 700 12px var(--font-display); color: var(--primary); }
+.station-clock { display: flex; align-items: baseline; gap: 10px; }
+.station-time { font: 700 30px var(--font-display); letter-spacing: -.02em; }
+.station-date { font: 500 14px var(--font-ui); color: var(--text-2); }
+.station-who { margin-left: auto; display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 8px; border-radius: 999px; background: var(--primary-tint-2); border: 1px solid #CFE3D5; font: 500 14px var(--font-ui); color: var(--primary); }
+.station-who strong { font-weight: 700; }
+.station-end { border: 0; border-radius: 999px; padding: 9px 16px; background: var(--primary); color: var(--surface); font: 600 13px var(--font-ui); }
+.station-identify { flex: 1; padding: clamp(24px, 5vw, 64px) 24px; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+.station-title { margin: 0; font: 700 clamp(30px, 4vw, 44px)/1.05 var(--font-display); letter-spacing: -.02em; }
+.station-grid { width: 100%; max-width: 1040px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.station-card { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 14px 18px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); transition: all .15s; }
+.station-card:hover { border-color: var(--primary); background: var(--primary-tint-3); transform: translateY(-2px); }
+.station-card:active { transform: scale(.97); }
+.station-card-name { display: block; font: 600 17px var(--font-ui); color: var(--text); }
+.station-card-role { display: block; font: 400 13px var(--font-ui); color: var(--text-2); margin-top: 2px; }
+.station-card-bar { width: 100%; display: flex; align-items: center; gap: 8px; }
+.station-main { flex: 1; display: flex; flex-wrap: wrap; min-height: 0; }
+.station-team { flex: 0 0 200px; max-width: 100%; border-right: 1px solid var(--track); padding: 18px 10px; display: flex; flex-direction: column; gap: 6px; background: var(--surface-alt-2); }
+.eyebrow--xs { font-size: 11px; letter-spacing: .08em; padding: 0 8px 6px; }
+.station-member { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid transparent; border-radius: 14px; background: transparent; text-align: left; width: 100%; }
+.station-member:hover { background: var(--surface); }
+.station-member.is-current { background: var(--primary-tint-2); border-color: var(--primary); }
+.station-member-name { display: block; font: 600 14px var(--font-ui); color: var(--text); }
+.station-member-sub { display: block; font: 400 11px var(--font-ui); color: var(--text-2); }
+.station-member-sub.is-current { color: var(--primary); }
+.station-member-sub.is-late { color: var(--late); }
+.station-day { flex: 1 1 280px; max-width: 360px; min-width: 0; padding: 22px 18px; display: flex; flex-direction: column; gap: 18px; border-right: 1px solid var(--track); }
+.progress-card--sm { border-radius: 20px; padding: 16px; gap: 16px; }
+.progress-card--sm .ring-label { font-size: 18px; }
+.progress-card--sm .progress-card-title { font-size: 15px; }
+.station-run { flex: 2 1 340px; min-width: 0; display: flex; flex-direction: column; }
+.station-run-head { padding: 22px 24px 16px; border-bottom: 1px solid var(--track); display: flex; flex-direction: column; gap: 12px; }
+.station-run-title { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.station-finish { border-radius: 14px; padding: 13px 20px; font-weight: 700; font-size: 15px; }
+.station-run-body { padding: 16px 24px 28px; display: flex; flex-direction: column; gap: 10px; }
+.station-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; align-items: start; }
+.station-norun { flex: 1; display: grid; place-items: center; padding: 40px; text-align: center; font: 400 15px var(--font-ui); color: var(--text-2); }
