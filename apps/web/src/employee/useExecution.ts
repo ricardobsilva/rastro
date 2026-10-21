@@ -9,11 +9,13 @@ export function useExecution(executionId: number | null) {
   const toast = useToast();
   const { data: exec, error, setData, reload } = useResource<Execution>(executionId ? `/api/me/executions/${executionId}` : null);
   const [pop, setPop] = useState<string | null>(null);
+  const [finishError, setFinishError] = useState('');
   const busy = useRef(new Set<string>());
 
   async function toggle(itemId: string, done: boolean) {
     if (!exec || busy.current.has(itemId)) return;
     busy.current.add(itemId);
+    setFinishError('');
     setPop(itemId);
     setTimeout(() => setPop((p) => (p === itemId ? null : p)), 220);
     try {
@@ -39,5 +41,22 @@ export function useExecution(executionId: number | null) {
     }
   }
 
-  return { exec, error, reload, setExec: setData, toggle, saveNote, pop };
+  /** Tenta concluir; devolve true se pode sair da tela. */
+  async function finish(): Promise<boolean> {
+    if (!exec) return false;
+    if (exec.total > 0 && exec.done === exec.total) return true;
+    try {
+      const r = await api.post<{ kind: 'ok' | 'warn'; message: string }>(`/api/me/executions/${exec.id}/finish`);
+      toast(r.message, r.kind);
+      setFinishError('');
+      return true;
+    } catch (e) {
+      setFinishError(errorMessage(e));
+      return false;
+    }
+  }
+
+  const allDone = !!exec && exec.total > 0 && exec.done === exec.total;
+
+  return { exec, error, reload, setExec: setData, toggle, saveNote, finish, finishError, allDone, pop };
 }

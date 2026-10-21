@@ -11,8 +11,8 @@ type Props = { executionId: number; me: Employee; onBack: () => void; onSwitch: 
 export const runMeta = (e: Execution) =>
   e.dueTime ? `Concluir até ${e.dueTime}${e.status === 'late' ? ' · com atraso' : ''}` : 'Sob demanda';
 
-export function RunScreen({ executionId, me, onBack, onSwitch }: Props) {
-  const { exec, error, toggle, saveNote, pop } = useExecution(executionId);
+export function RunScreen({ executionId, me, onBack, onSwitch, onFinished }: Props) {
+  const { exec, error, toggle, saveNote, finish, finishError, allDone, pop } = useExecution(executionId);
 
   return (
     <div className="run">
@@ -42,12 +42,29 @@ export function RunScreen({ executionId, me, onBack, onSwitch }: Props) {
       </div>
       <div className="run-body">
         {error && <div className="banner banner--error">{error}</div>}
+        {allDone && (
+          <div className="banner banner--success">
+            <div className="banner-icon">✓</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>Checklist concluído</div>
+              <div style={{ fontSize: 13 }}>Tudo registrado em seu nome. Bom trabalho!</div>
+            </div>
+          </div>
+        )}
+        {finishError && <div className="banner banner--error">{finishError}</div>}
         {exec?.items.map((it) => (
           <ExecItemCard key={it.itemId} item={it} me={me} pop={pop === it.itemId} onToggle={() => toggle(it.itemId, it.status !== 'done')}>
             <NoteEditor item={it} onSave={(note) => saveNote(it.itemId, note)} />
           </ExecItemCard>
         ))}
       </div>
+      {exec && (
+        <div className="run-foot">
+          <button type="button" className="btn-block" onClick={async () => (await finish()) && onFinished()}>
+            {allDone ? 'Voltar para Meu dia' : 'Concluir checklist'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

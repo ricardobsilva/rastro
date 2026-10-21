@@ -1,7 +1,7 @@
-import { cardStatus, compareCards, dueMinute, fmtMinute, greeting, longDate } from '@rastro/domain';
+import { cardStatus, finishMessage, missingRequiredMessage, compareCards, dueMinute, fmtMinute, greeting, longDate } from '@rastro/domain';
 import { Router } from 'express';
 import type { AppContext } from '../context.js';
-import { parse, route } from '../http.js';
+import { HttpError, parse, route } from '../http.js';
 import type { EmployeeRow } from '../repos/employees.js';
 import { type ExecutionRow, currentDay, itemsOf } from '../services/day.js';
 import { requireEmployee } from '../security/employee.js';
@@ -70,6 +70,19 @@ export function meRoutes({ db, clock }: AppContext) {
     assertEditable(exec, now.date);
     setItemNote(db, { now, at, emp, exec, item: visibleItem(db, exec, req.params.itemId!), note });
     res.json(executionView(db, exec, now));
+  }));
+
+  r.post('/me/executions/:id/finish', route((req, res) => {
+    const emp = res.locals.employee as EmployeeRow;
+    const now = currentDay(db, clock);
+    const exec = ownExecution(db, req.params.id!, emp, now.date);
+    assertEditable(exec, now.date);
+    const { items } = executionView(db, exec, now);
+    const missing = items.filter((i) => i.required && i.status !== 'done');
+    if (missing.length)
+      throw new HttpError(422, missingRequiredMessage(missing.map((i) => i.name)), { missing: missing.map((i) => i.itemId) });
+    const pending = items.filter((i) => i.status !== 'done').length;
+    res.json({ pending, ...finishMessage(pending) });
   }));
 
   return r;
