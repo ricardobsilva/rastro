@@ -319,3 +319,7 @@ a { color: var(--primary); }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 0; border-bottom: 1px solid var(--track); background: transparent; padding: 10px 0; text-align: left; width: 100%; }
 .toggle-row-label { font: 600 14px var(--font-ui); color: var(--text); }
 .toggle-row-hint { font: 400 12px var(--font-ui); color: var(--text-2); }
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.muted-sm { font: 400 12px var(--font-ui); color: var(--text-2); }
+.cell { font: 500 13px var(--font-ui); }
+.table-empty { padding: 36px; text-align: center; font: 400 14px var(--font-ui); color: var(--text-2); }

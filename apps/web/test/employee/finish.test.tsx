@@ -4,7 +4,7 @@ import { ApiError } from '../../src/api/client';
 import { RunScreen } from '../../src/employee/RunScreen';
 import { JOAO, execution, item, renderWithToast } from '../helpers';
 
-const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn() }));
+const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn(), patch: vi.fn() }));
 vi.mock('../../src/api/client', async (orig) => ({ ...(await orig<object>()), api }));
 
 const renderRun = (onFinished = vi.fn()) =>

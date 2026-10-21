@@ -4,7 +4,7 @@ import { ApiError } from '../../src/api/client';
 import { TodayScreen } from '../../src/employee/TodayScreen';
 import { JOAO, renderWithToast } from '../helpers';
 
-const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn() }));
+const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn(), patch: vi.fn() }));
 vi.mock('../../src/api/client', async (orig) => ({ ...(await orig<object>()), api }));
 
 const card = (o: object) => ({ executionId: 1, checklistId: 'c1', name: 'Abertura do restaurante', dueTime: '10:30', done: 4, total: 6, status: 'late', ...o });

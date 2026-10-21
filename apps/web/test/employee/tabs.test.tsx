@@ -4,7 +4,7 @@ import { ApiError } from '../../src/api/client';
 import { EmployeeApp } from '../../src/employee/EmployeeApp';
 import { EMPLOYEES, JOAO, renderWithToast } from '../helpers';
 
-const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn() }));
+const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn(), patch: vi.fn() }));
 vi.mock('../../src/api/client', async (orig) => ({ ...(await orig<object>()), api }));
 vi.mock('../../src/employee/TodayScreen', () => ({ TodayScreen: () => <h1>Meu dia</h1> }));
 vi.mock('../../src/employee/ActivitiesScreen', () => ({ ActivitiesScreen: () => <h1>Minhas atividades</h1> }));

@@ -5,7 +5,7 @@ import { ActivitiesScreen } from '../../src/employee/ActivitiesScreen';
 import { ProfileScreen } from '../../src/employee/ProfileScreen';
 import { JOAO, renderWithToast } from '../helpers';
 
-const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn() }));
+const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn(), patch: vi.fn() }));
 vi.mock('../../src/api/client', async (orig) => ({ ...(await orig<object>()), api }));
 
 beforeEach(() => vi.resetAllMocks());

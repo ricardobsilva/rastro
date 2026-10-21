@@ -4,7 +4,7 @@ import { ApiError } from '../../src/api/client';
 import { AdminApp } from '../../src/admin/AdminApp';
 import { MARINA, renderWithToast } from '../helpers';
 
-const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn() }));
+const api = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), del: vi.fn(), patch: vi.fn() }));
 vi.mock('../../src/api/client', async (orig) => ({ ...(await orig<object>()), api }));
 vi.mock('../../src/admin/pages', () => ({
   PAGES: {
