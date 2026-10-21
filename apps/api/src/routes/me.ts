@@ -5,9 +5,10 @@ import { parse, route } from '../http.js';
 import type { EmployeeRow } from '../repos/employees.js';
 import { type ExecutionRow, currentDay, itemsOf } from '../services/day.js';
 import { requireEmployee } from '../security/employee.js';
-import { assertEditable, executionView, ownExecution, setItemDone, visibleItem } from '../services/execution.js';
+import { assertEditable, executionView, ownExecution, setItemDone, setItemNote, visibleItem } from '../services/execution.js';
 import { z } from 'zod';
 
+const noteSchema = z.object({ note: z.string({ message: 'Informe a observação.' }) });
 const doneSchema = z.object({ done: z.boolean({ message: 'Informe se o item foi concluído.' }) });
 
 export function meRoutes({ db, clock }: AppContext) {
@@ -57,6 +58,17 @@ export function meRoutes({ db, clock }: AppContext) {
     const exec = ownExecution(db, req.params.id!, emp, now.date);
     assertEditable(exec, now.date);
     setItemDone(db, { now, at, emp, exec, item: visibleItem(db, exec, req.params.itemId!), done });
+    res.json(executionView(db, exec, now));
+  }));
+
+  r.put('/me/executions/:id/items/:itemId/note', route((req, res) => {
+    const emp = res.locals.employee as EmployeeRow;
+    const { note } = parse(noteSchema, req.body);
+    const at = clock();
+    const now = currentDay(db, () => at);
+    const exec = ownExecution(db, req.params.id!, emp, now.date);
+    assertEditable(exec, now.date);
+    setItemNote(db, { now, at, emp, exec, item: visibleItem(db, exec, req.params.itemId!), note });
     res.json(executionView(db, exec, now));
   }));
 

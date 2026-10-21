@@ -26,5 +26,18 @@ export function useExecution(executionId: number | null) {
     }
   }
 
-  return { exec, error, reload, setExec: setData, toggle, pop };
+  /** Devolve true se salvou. */
+  async function saveNote(itemId: string, note: string): Promise<boolean> {
+    if (!exec) return false;
+    try {
+      setData(await api.put<Execution>(`/api/me/executions/${exec.id}/items/${itemId}/note`, { note }));
+      if (note.trim()) toast('Observação salva.');
+      return true;
+    } catch (e) {
+      toast(errorMessage(e), 'warn');
+      return false;
+    }
+  }
+
+  return { exec, error, reload, setExec: setData, toggle, saveNote, pop };
 }

@@ -67,3 +67,18 @@ export function setItemDone(db: Db, args: { now: OperationalNow; at: Date; emp: 
     recordEvent(db, { ...args, action: done ? 'done' : 'undone' });
   })();
 }
+
+export const NOTE_MAX = 500;
+
+/** Salva observação aparada. Texto vazio limpa sem evento; texto igual ao atual não gera evento. */
+export function setItemNote(db: Db, args: { now: OperationalNow; at: Date; emp: EmployeeRow; exec: ExecutionRow; item: ExecutionItemRow; note: string }) {
+  const { item } = args;
+  if (!item.allow_note) throw new HttpError(422, 'Este item não permite observação.');
+  const note = args.note.trim();
+  if (note.length > NOTE_MAX) throw new HttpError(422, `A observação pode ter até ${NOTE_MAX} caracteres.`);
+  if (note === item.note) return;
+  db.transaction(() => {
+    db.prepare('UPDATE execution_items SET note = ? WHERE id = ?').run(note, item.id);
+    if (note) recordEvent(db, { ...args, action: 'note', note });
+  })();
+}

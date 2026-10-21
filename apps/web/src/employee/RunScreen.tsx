@@ -2,6 +2,7 @@ import type { Employee } from '../types';
 import { Avatar } from '../ui/Avatar';
 import { barColor, pct } from '../ui/status';
 import { ExecItemCard } from './ExecItemCard';
+import { NoteEditor } from './NoteEditor';
 import type { Execution } from './types';
 import { useExecution } from './useExecution';
 
@@ -11,7 +12,7 @@ export const runMeta = (e: Execution) =>
   e.dueTime ? `Concluir até ${e.dueTime}${e.status === 'late' ? ' · com atraso' : ''}` : 'Sob demanda';
 
 export function RunScreen({ executionId, me, onBack, onSwitch }: Props) {
-  const { exec, error, toggle, pop } = useExecution(executionId);
+  const { exec, error, toggle, saveNote, pop } = useExecution(executionId);
 
   return (
     <div className="run">
@@ -42,7 +43,9 @@ export function RunScreen({ executionId, me, onBack, onSwitch }: Props) {
       <div className="run-body">
         {error && <div className="banner banner--error">{error}</div>}
         {exec?.items.map((it) => (
-          <ExecItemCard key={it.itemId} item={it} me={me} pop={pop === it.itemId} onToggle={() => toggle(it.itemId, it.status !== 'done')} />
+          <ExecItemCard key={it.itemId} item={it} me={me} pop={pop === it.itemId} onToggle={() => toggle(it.itemId, it.status !== 'done')}>
+            <NoteEditor item={it} onSave={(note) => saveNote(it.itemId, note)} />
+          </ExecItemCard>
         ))}
       </div>
     </div>
