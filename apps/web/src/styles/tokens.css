@@ -1,0 +1,47 @@
+:root {
+  --bg: #F4EFE6;
+  --surface: #FFFDF9;
+  --surface-alt: #F8F4EC;
+  --surface-alt-2: #FBF8F2;
+  --track: #EFE9DE;
+  --border: #E4DCCD;
+  --border-dashed: #D3C9B7;
+  --check-neutral: #BDB4A4;
+
+  --text: #1C1F1D;
+  --text-2: #6B6A63;
+  --text-3: #3B3D3A;
+
+  --primary: #1F4D3B;
+  --primary-dark: #2F6450;
+  --primary-tint: #E3ECE6;
+  --primary-tint-2: #EEF4EF;
+  --primary-tint-3: #F6F9F6;
+  --accent: #C2502F;
+
+  --success: #2F7D4F;
+  --success-bg: #E1F0E5;
+  --success-fg: #1F5A38;
+  --late: #B3261E;
+  --late-bg: #F9E0DD;
+  --late-border: #EDC2BC;
+  --late-fg: #8E1F18;
+  --warn: #8A5A12;
+  --warn-bg: #FBEFD9;
+  --info: #2F6F8F;
+  --info-bg: #E2EDF2;
+
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-ui: 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.4 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; cursor: pointer; }

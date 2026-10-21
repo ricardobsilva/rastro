@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap">
+<style>
+body{margin:0;background:#F4EFE6;color:#1C1F1D;font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1F4D3B}a:hover{color:#C2502F}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#F4EFE6">
+
+<div style="position:sticky;top:0;z-index:40;background:#1C1F1D;color:#F4EFE6;display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:10px 20px">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="width:30px;height:30px;border-radius:9px;background:#F4EFE6;display:grid;place-items:center;font:700 17px 'Bricolage Grotesque';color:#1F4D3B">R</div>
+    <div style="display:flex;flex-direction:column;line-height:1.15">
+      <span style="font:700 15px 'Bricolage Grotesque';letter-spacing:-.01em">Rastro</span>
+      <span style="font:500 11px Geist;color:#B9B3A6">Protótipo · Cliente: Casa Brasa</span>
+    </div>
+  </div>
+  <div style="display:flex;background:#2C302D;border-radius:10px;padding:3px;gap:2px">
+    <button onClick="{{ goEmp }}" style="border:0;border-radius:8px;padding:7px 14px;font:600 13px Geist;background:{{ modeEmpBg }};color:{{ modeEmpFg }}">Funcionário</button>
+    <button onClick="{{ goAdmin }}" style="border:0;border-radius:8px;padding:7px 14px;font:600 13px Geist;background:{{ modeAdmBg }};color:{{ modeAdmFg }}">Gestor</button>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <span style="font:500 12px Geist;color:#B9B3A6">Qua, 21 out · <span style="font-family:'Geist Mono';color:#F4EFE6">{{ nowLabel }}</span> simulado</span>
+    <sc-if value="{{ isEmp }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;background:#2C302D;border-radius:10px;padding:3px;gap:2px">
+        <button onClick="{{ goPhone }}" style="border:0;border-radius:8px;padding:6px 12px;font:600 12px Geist;background:{{ devPhoneBg }};color:{{ devPhoneFg }}">Celular</button>
+        <button onClick="{{ goStation }}" style="border:0;border-radius:8px;padding:6px 12px;font:600 12px Geist;background:{{ devStBg }};color:{{ devStFg }}">Estação de trabalho</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isPhone }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ reopenApp }}" style="border:1px solid #4A4E4B;background:transparent;color:#F4EFE6;border-radius:8px;padding:6px 12px;font:500 12px Geist">Simular reabertura do app</button>
+    </sc-if>
+    <button onClick="{{ resetDemo }}" style="border:1px solid #4A4E4B;background:transparent;color:#B9B3A6;border-radius:8px;padding:6px 12px;font:500 12px Geist">Reiniciar demo</button>
+  </div>
+</div>
+
+<!-- ================= FUNCIONÁRIO ================= -->
+<sc-if value="{{ isPhone }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px 12px 40px">
+<div style="width:100%;max-width:400px;height:min(820px, calc(100vh - 120px));min-height:640px;background:#FFFDF9;border:1px solid #E4DCCD;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 40px 70px -40px rgba(28,31,29,.45)">
+<div style="flex:1;overflow-y:auto;position:relative">
+
+  <!-- Tela 1: identificação -->
+  <sc-if value="{{ scrIdentify }}" hint-placeholder-val="{{ true }}">
+  <div style="padding:30px 22px 24px;display:flex;flex-direction:column;gap:26px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:48px;height:48px;border-radius:14px;background:#C2502F;display:grid;place-items:center;font:700 19px 'Bricolage Grotesque';color:#FFFDF9">CB</div>
+      <div>
+        <div style="font:700 22px 'Bricolage Grotesque';letter-spacing:-.01em">Casa Brasa</div>
+        <div style="font:500 13px Geist;color:#6B6A63">Cozinha de fogo · Pinheiros</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h1 style="margin:0;font:700 28px/1.1 'Bricolage Grotesque';letter-spacing:-.02em">Quem está trabalhando agora?</h1>
+      <p style="margin:0;font:400 15px/1.45 Geist;color:#6B6A63;text-wrap:pretty">Toque no seu nome para começar. O aparelho lembra de você até alguém trocar de usuário.</p>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;font:500 12px Geist;color:#6B6A63">com <span style="font:700 13px 'Bricolage Grotesque';color:#1F4D3B">Rastro</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <sc-for list="{{ idEmps }}" as="e" hint-placeholder-count="6">
+        <button onClick="{{ e.pick }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:14px;border:1px solid #E4DCCD;border-radius:16px;background:#FFFDF9;text-align:left;transition:all .15s" style-hover="border-color:#1F4D3B;background:#F6F9F6" style-active="transform:scale(.97)">
+          <div style="width:40px;height:40px;border-radius:50%;background:{{ e.tone }};color:#fff;display:grid;place-items:center;font:600 14px Geist">{{ e.initials }}</div>
+          <div>
+            <div style="font:600 15px Geist;color:#1C1F1D">{{ e.name }}</div>
+            <div style="font:400 12px Geist;color:#6B6A63">{{ e.role }}</div>
+          </div>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- PIN -->
+  <sc-if value="{{ scrPin }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:22px 22px 24px;display:flex;flex-direction:column;align-items:center;gap:18px">
+    <button onClick="{{ backToIdentify }}" style="align-self:flex-start;border:0;background:transparent;font:600 14px Geist;color:#1F4D3B;padding:6px 0">← Trocar</button>
+    <div style="width:68px;height:68px;border-radius:50%;background:{{ pickEmp.tone }};color:#fff;display:grid;place-items:center;font:600 22px Geist">{{ pickEmp.initials }}</div>
+    <div style="text-align:center">
+      <div style="font:700 24px 'Bricolage Grotesque'">Olá, {{ pickEmp.first }}</div>
+      <div style="font:400 14px Geist;color:#6B6A63;margin-top:4px">Digite seu PIN de 4 dígitos</div>
+    </div>
+    <div style="display:flex;gap:14px;padding:6px 0">
+      <sc-for list="{{ pinDots }}" as="d" hint-placeholder-count="4">
+        <div style="width:16px;height:16px;border-radius:50%;border:2px solid {{ d.border }};background:{{ d.bg }};transition:all .15s"></div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ pinErr }}" hint-placeholder-val="{{ false }}">
+      <div style="font:600 13px Geist;color:#B3261E;background:#F9E0DD;padding:8px 12px;border-radius:10px">{{ pinErr }}</div>
+    </sc-if>
+    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px">
+      <sc-for list="{{ empKeys }}" as="k" hint-placeholder-count="12">
+        <button onClick="{{ k.press }}" style="visibility:{{ k.vis }};height:60px;border-radius:16px;border:1px solid #E4DCCD;background:#F8F4EC;font:600 22px Geist;color:#1C1F1D" style-active="background:#E3ECE6;transform:scale(.95)">{{ k.label }}</button>
+      </sc-for>
+    </div>
+    <button onClick="{{ toggleRemember }}" style="display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:6px;font:500 14px Geist;color:#1C1F1D">
+      <span style="width:22px;height:22px;border-radius:6px;border:2px solid #1F4D3B;background:{{ rememberBg }};display:grid;place-items:center;color:#fff;font-size:13px">✓</span>
+      Manter conectado neste aparelho
+    </button>
+    <div style="font:500 12px Geist;color:#6B6A63">PIN de demonstração: <span style="font-family:'Geist Mono'">{{ pickEmp.pin }}</span></div>
+  </div>
+  </sc-if>
+
+  <!-- Retorno com sessão ativa -->
+  <sc-if value="{{ scrResume }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:100%;padding:30px 24px;display:flex;flex-direction:column;justify-content:space-between;gap:24px;background:#1F4D3B;color:#F4EFE6">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:11px;background:#C2502F;display:grid;place-items:center;font:700 14px 'Bricolage Grotesque';color:#FFFDF9">CB</div>
+      <span style="font:600 16px 'Bricolage Grotesque'">Casa Brasa</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+      <div style="font:600 12px Geist;letter-spacing:.08em;text-transform:uppercase;color:#B8D3C4">Sessão ativa neste aparelho</div>
+      <div style="width:92px;height:92px;border-radius:50%;background:{{ me.tone }};color:#fff;display:grid;place-items:center;font:600 30px Geist;border:4px solid #F4EFE6">{{ me.initials }}</div>
+      <div style="font:700 30px/1.1 'Bricolage Grotesque'">Bem-vindo de volta, {{ me.first }}</div>
+      <div style="font:400 14px/1.5 Geist;color:#D5E3DA;max-width:290px;text-wrap:pretty">Sem login. Sua identificação fica salva aqui até alguém tocar em “Trocar funcionário”.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onClick="{{ resume }}" style="border:0;border-radius:16px;padding:18px;background:#FFFDF9;color:#1F4D3B;font:700 17px Geist" style-active="transform:scale(.98)">Continuar como {{ me.first }}</button>
+      <button onClick="{{ openSwitch }}" style="border:0;background:transparent;color:#F4EFE6;font:500 14px Geist;padding:10px">Não é o {{ me.first }}? Trocar usuário</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Tela 2: Meu dia -->
+  <sc-if value="{{ scrToday }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:24px 18px 24px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="font:600 12px Geist;letter-spacing:.06em;text-transform:uppercase;color:#6B6A63">{{ todayLong }}</div>
+        <h1 style="margin:0;font:700 30px/1.05 'Bricolage Grotesque';letter-spacing:-.02em">{{ greeting }}, {{ me.first }}!</h1>
+        <div style="font:400 15px Geist;color:#6B6A63">Você possui {{ my.total }} atividades para hoje.</div>
+      </div>
+      <button onClick="{{ openSwitch }}" style="flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:transparent;padding:0" style-active="transform:scale(.95)">
+        <span style="width:44px;height:44px;border-radius:50%;background:{{ me.tone }};color:#fff;display:grid;place-items:center;font:600 14px Geist;border:2px solid #FFFDF9;box-shadow:0 0 0 2px #E4DCCD">{{ me.initials }}</span>
+        <span style="font:600 11px Geist;color:#1F4D3B">Trocar ⇄</span>
+      </button>
+    </div>
+    <div style="background:#1F4D3B;color:#F4EFE6;border-radius:22px;padding:18px;display:flex;gap:18px;align-items:center">
+      <div style="position:relative;width:84px;height:84px;flex:none">
+        <svg width="84" height="84" viewBox="0 0 84 84" style="transform:rotate(-90deg)">
+          <circle cx="42" cy="42" r="34" fill="none" stroke="#2F6450" stroke-width="9"></circle>
+          <circle cx="42" cy="42" r="34" fill="none" stroke="#F4EFE6" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="{{ my.ringOffset }}" style="transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1)"></circle>
+        </svg>
+        <div style="position:absolute;inset:0;display:grid;place-items:center;font:700 20px 'Bricolage Grotesque'">{{ my.pct }}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <div style="font:600 16px/1.3 Geist">{{ my.done }} de {{ my.total }} tarefas concluídas</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span style="padding:4px 9px;border-radius:999px;background:#2F6450;font:600 12px Geist">{{ my.done }} concluídas</span>
+          <span style="padding:4px 9px;border-radius:999px;background:#2F6450;font:600 12px Geist">{{ my.pending }} pendentes</span>
+          <sc-if value="{{ my.hasLate }}" hint-placeholder-val="{{ false }}">
+            <span style="padding:4px 9px;border-radius:999px;background:#C2502F;font:600 12px Geist">{{ my.late }} atrasadas</span>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font:600 13px Geist;color:#6B6A63">Seus checklists de hoje</div>
+      <sc-for list="{{ my.cards }}" as="c" hint-placeholder-count="3">
+        <button onClick="{{ c.open }}" style="display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid #E4DCCD;border-radius:18px;background:#FFFDF9;text-align:left;transition:all .15s" style-hover="border-color:#1F4D3B" style-active="transform:scale(.98)">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;width:100%">
+            <div style="min-width:0">
+              <div style="font:600 18px/1.2 'Bricolage Grotesque';color:#1C1F1D">{{ c.name }}</div>
+              <div style="font:400 13px Geist;color:#6B6A63;margin-top:3px">{{ c.meta }}</div>
+            </div>
+            <span style="flex:none;padding:4px 9px;border-radius:999px;font:600 12px Geist;color:{{ c.fg }};background:{{ c.bg }}">{{ c.stLabel }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div style="flex:1;height:8px;border-radius:4px;background:#EFE9DE;overflow:hidden">
+              <div style="height:100%;width:{{ c.pct }};background:{{ c.bar }};border-radius:4px;transition:width .5s"></div>
+            </div>
+            <span style="font:500 13px 'Geist Mono';color:#1C1F1D">{{ c.done }}/{{ c.total }}</span>
+          </div>
+        </button>
+      </sc-for>
+      <sc-if value="{{ my.empty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:28px 18px;border:1px dashed #D3C9B7;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:6px">
+          <div style="font:600 17px 'Bricolage Grotesque'">Nada para hoje</div>
+          <div style="font:400 14px Geist;color:#6B6A63">Nenhum checklist foi atribuído a você. Fale com o gerente se isso parecer errado.</div>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{ my.hasOnDemand }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font:600 13px Geist;color:#6B6A63">Quando necessário</div>
+      <sc-for list="{{ my.onDemand }}" as="o" hint-placeholder-count="1">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border:1px dashed #D3C9B7;border-radius:16px">
+          <div>
+            <div style="font:600 15px Geist">{{ o.name }}</div>
+            <div style="font:400 12px Geist;color:#6B6A63">{{ o.meta }}</div>
+          </div>
+          <button onClick="{{ o.start }}" style="border:0;border-radius:10px;padding:9px 14px;background:#E3ECE6;color:#1F4D3B;font:600 13px Geist">Iniciar</button>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- Tela 3: execução -->
+  <sc-if value="{{ scrRun }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;min-height:100%">
+    <div style="position:sticky;top:0;z-index:2;background:#FFFDF9;border-bottom:1px solid #EFE9DE;padding:16px 18px 14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <button onClick="{{ backToday }}" style="border:0;background:transparent;font:600 14px Geist;color:#1F4D3B;padding:2px 0">← Meu dia</button>
+        <button onClick="{{ openSwitch }}" style="display:flex;align-items:center;gap:6px;border:1px solid #E4DCCD;background:#FFFDF9;border-radius:999px;padding:3px 10px 3px 3px;font:600 12px Geist;color:#1C1F1D">
+          <span style="width:24px;height:24px;border-radius:50%;background:{{ me.tone }};color:#fff;display:grid;place-items:center;font:600 10px Geist">{{ me.initials }}</span>{{ me.first }} · Trocar
+        </button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px">
+        <div style="min-width:0">
+          <div style="font:600 12px Geist;color:#6B6A63;letter-spacing:.04em;text-transform:uppercase">Checklist</div>
+          <div style="font:700 23px/1.1 'Bricolage Grotesque';letter-spacing:-.01em">{{ run.name }}</div>
+          <div style="font:400 13px Geist;color:#6B6A63;margin-top:3px">{{ run.meta }}</div>
+        </div>
+        <div style="font:700 22px 'Bricolage Grotesque';color:#1F4D3B;flex:none">{{ run.done }}/{{ run.total }}</div>
+      </div>
+      <div style="height:8px;border-radius:4px;background:#EFE9DE;overflow:hidden">
+        <div style="height:100%;width:{{ run.pct }};background:{{ run.bar }};border-radius:4px;transition:width .45s cubic-bezier(.2,.8,.2,1)"></div>
+      </div>
+    </div>
+    <div style="padding:14px 14px 20px;display:flex;flex-direction:column;gap:10px;flex:1">
+      <sc-if value="{{ run.allDone }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:#E1F0E5;color:#1F5A38">
+          <div style="width:36px;height:36px;flex:none;border-radius:50%;background:#2F7D4F;color:#fff;display:grid;place-items:center;font:700 18px Geist">✓</div>
+          <div><div style="font:700 15px Geist">Checklist concluído</div><div style="font:400 13px Geist">Tudo registrado em seu nome. Bom trabalho!</div></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ runErr }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:12px 14px;border-radius:14px;background:#F9E0DD;color:#8E1F18;font:600 14px/1.4 Geist">{{ runErr }}</div>
+      </sc-if>
+      <sc-for list="{{ run.items }}" as="it" hint-placeholder-count="6">
+        <div style="border:1px solid {{ it.cardBorder }};border-radius:16px;background:{{ it.cardBg }};padding:14px;display:flex;flex-direction:column;gap:10px;transition:background .3s,border-color .3s">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <button onClick="{{ it.toggle }}" aria-label="Marcar item" style="flex:none;width:34px;height:34px;border-radius:10px;border:2px solid {{ it.checkBorder }};background:{{ it.checkBg }};display:grid;place-items:center;padding:0;transform:scale({{ it.scale }});transition:all .2s cubic-bezier(.3,1.6,.5,1)">
+              <svg width="18" height="18" viewBox="0 0 18 18" style="opacity:{{ it.checkOpacity }};transition:opacity .2s"><path d="M3.5 9.5l3.5 3.5 7.5-8" fill="none" stroke="#FFFDF9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:2px">
+              <div style="font:600 16px/1.3 Geist;color:{{ it.nameColor }};transition:color .2s">{{ it.name }}</div>
+              <sc-if value="{{ it.desc }}" hint-placeholder-val="{{ false }}"><div style="font:400 13px/1.4 Geist;color:#6B6A63">{{ it.desc }}</div></sc-if>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+                <sc-if value="{{ it.doneMeta }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 3px;border-radius:999px;background:#E1F0E5;color:#1F5A38;font:600 12px Geist"><span style="width:18px;height:18px;border-radius:50%;background:{{ it.tone }};color:#fff;display:grid;place-items:center;font:600 9px Geist">{{ it.initials }}</span>{{ it.doneMeta }}</span>
+                </sc-if>
+                <sc-if value="{{ it.late }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 9px;border-radius:999px;background:#F9E0DD;color:#B3261E;font:600 12px Geist">Atrasado</span></sc-if>
+                <sc-if value="{{ it.required }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 9px;border-radius:999px;background:#EFE9DE;color:#5E5D57;font:600 12px Geist">Obrigatório</span></sc-if>
+                <sc-if value="{{ it.undoneLabel }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 9px;border-radius:999px;background:#FBEFD9;color:#8A5A12;font:600 12px Geist">{{ it.undoneLabel }}</span></sc-if>
+              </div>
+              <sc-if value="{{ it.note }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:4px;padding:8px 10px;border-radius:10px;background:#F4EFE6;font:400 13px/1.4 Geist;color:#3B3D3A">“{{ it.note }}”</div>
+              </sc-if>
+            </div>
+          </div>
+          <sc-if value="{{ it.showNoteBtn }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ it.openNote }}" style="align-self:flex-start;margin-left:46px;border:0;background:transparent;color:#1F4D3B;font:600 13px Geist;padding:0">+ {{ it.noteBtn }}</button>
+          </sc-if>
+          <sc-if value="{{ it.noteOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-left:46px;display:flex;flex-direction:column;gap:8px">
+              <textarea value="{{ noteDraft }}" onChange="{{ setNoteDraft }}" rows="3" placeholder="Ex.: faltaram 2 toalhas, avisei a gerência" style="width:100%;border:1px solid #D3C9B7;border-radius:12px;padding:10px;font:400 14px Geist;resize:none;background:#FFFDF9;outline:none" style-focus="border-color:#1F4D3B"></textarea>
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ saveNote }}" style="border:0;border-radius:10px;padding:9px 14px;background:#1F4D3B;color:#FFFDF9;font:600 13px Geist">Salvar observação</button>
+                <button onClick="{{ cancelNote }}" style="border:0;border-radius:10px;padding:9px 14px;background:#EFE9DE;color:#1C1F1D;font:600 13px Geist">Cancelar</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="position:sticky;bottom:0;padding:12px 14px 16px;background:linear-gradient(to top,#FFFDF9 75%,rgba(255,253,249,0))">
+      <button onClick="{{ finishRun }}" style="width:100%;border:0;border-radius:16px;padding:16px;background:#1F4D3B;color:#FFFDF9;font:700 16px Geist" style-active="transform:scale(.98)">{{ run.finishLabel }}</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Concluídas -->
+  <sc-if value="{{ scrDone }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:24px 18px;display:flex;flex-direction:column;gap:16px">
+    <div>
+      <h1 style="margin:0;font:700 28px 'Bricolage Grotesque';letter-spacing:-.02em">Minhas atividades</h1>
+      <div style="font:400 14px Geist;color:#6B6A63;margin-top:4px">Tudo que você registrou hoje, com horário.</div>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <sc-for list="{{ myLog }}" as="l" hint-placeholder-count="5">
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #EFE9DE">
+          <div style="font:500 13px 'Geist Mono';color:#1C1F1D;width:44px;flex:none;padding-top:1px">{{ l.time }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px Geist">{{ l.iname }}</div>
+            <div style="font:400 12px Geist;color:#6B6A63">{{ l.cname }}</div>
+          </div>
+          <span style="flex:none;align-self:flex-start;padding:3px 8px;border-radius:999px;font:600 11px Geist;color:{{ l.fg }};background:{{ l.bg }}">{{ l.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ myLogEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:28px 18px;border:1px dashed #D3C9B7;border-radius:18px;text-align:center;font:400 14px Geist;color:#6B6A63">Você ainda não concluiu tarefas hoje.</div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- Perfil -->
+  <sc-if value="{{ scrProfile }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:28px 18px;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:60px;height:60px;border-radius:50%;background:{{ me.tone }};color:#fff;display:grid;place-items:center;font:600 20px Geist">{{ me.initials }}</div>
+      <div>
+        <div style="font:700 22px 'Bricolage Grotesque'">{{ me.name }}</div>
+        <div style="font:400 14px Geist;color:#6B6A63">{{ me.role }} · {{ me.group }}</div>
+      </div>
+    </div>
+    <div style="border:1px solid #E4DCCD;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;gap:8px;font:600 14px Geist"><span style="width:8px;height:8px;border-radius:50%;background:#2F7D4F"></span>Sessão ativa neste aparelho</div>
+      <div style="font:400 13px/1.45 Geist;color:#6B6A63">Identificado desde as {{ sessionSince }}. Todas as marcações são registradas em seu nome, com horário.</div>
+    </div>
+    <button onClick="{{ openSwitch }}" style="border:0;background:#1F4D3B;color:#FFFDF9;border-radius:14px;padding:14px;font:600 15px Geist">Trocar usuário</button>
+    <button onClick="{{ switchEmp }}" style="border:0;background:transparent;color:#B3261E;padding:8px;font:600 14px Geist">Sair deste aparelho</button>
+    <div style="font:400 12px/1.45 Geist;color:#6B6A63;text-align:center;text-wrap:pretty">Use “Trocar usuário” ao entregar o aparelho para um colega. Assim cada tarefa fica com o responsável certo.</div>
+  </div>
+  </sc-if>
+
+</div>
+<sc-if value="{{ showTabs }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #EFE9DE;background:#FFFDF9;padding:6px 8px 10px">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+      <button onClick="{{ t.go }}" style="border:0;background:transparent;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;font:600 12px Geist;color:{{ t.fg }}">
+        <span style="width:22px;height:4px;border-radius:2px;background:{{ t.bar }}"></span>{{ t.label }}
+      </button>
+    </sc-for>
+  </div>
+</sc-if>
+<sc-if value="{{ switchOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeSwitch }}" style="position:absolute;inset:0;z-index:10;background:rgba(28,31,29,.4);display:flex;flex-direction:column;justify-content:flex-end">
+    <div onClick="{{ stop }}" style="background:#FFFDF9;border-radius:26px 26px 0 0;padding:10px 18px 22px;display:flex;flex-direction:column;gap:14px;max-height:85%;overflow-y:auto">
+      <div style="align-self:center;width:40px;height:5px;border-radius:3px;background:#E4DCCD"></div>
+      <div>
+        <div style="font:700 21px 'Bricolage Grotesque'">Quem vai usar agora?</div>
+        <div style="font:400 13px Geist;color:#6B6A63;margin-top:2px">Toque no nome. As próximas marcações ficam com essa pessoa.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <sc-for list="{{ switchEmps }}" as="e" hint-placeholder-count="6">
+          <button onClick="{{ e.pick }}" style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid {{ e.border }};border-radius:14px;background:{{ e.bg }};text-align:left" style-active="transform:scale(.97)">
+            <span style="width:36px;height:36px;flex:none;border-radius:50%;background:{{ e.tone }};color:#fff;display:grid;place-items:center;font:600 13px Geist">{{ e.initials }}</span>
+            <span style="min-width:0"><span style="display:block;font:600 14px Geist;color:#1C1F1D">{{ e.name }}</span><span style="display:block;font:400 11px Geist;color:#6B6A63">{{ e.role }}</span></span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</div>
+<div style="font:500 12px Geist;color:#6B6A63;text-align:center;max-width:400px">Experiência do funcionário · mobile-first. Em desktop é exibida em largura de celular.</div>
+</div>
+</sc-if>
+
+<!-- ================= ESTAÇÃO DE TRABALHO ================= -->
+<sc-if value="{{ isStation }}" hint-placeholder-val="{{ false }}">
+<div style="padding:20px clamp(12px,2vw,28px) 40px">
+<div style="max-width:1440px;margin:0 auto;background:#FFFDF9;border:1px solid #E4DCCD;border-radius:24px;overflow:hidden;min-height:calc(100vh - 120px);display:flex;flex-direction:column">
+
+  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:16px 24px;border-bottom:1px solid #EFE9DE">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:42px;height:42px;border-radius:12px;background:#C2502F;display:grid;place-items:center;font:700 16px 'Bricolage Grotesque';color:#FFFDF9">CB</div>
+      <div>
+        <div style="font:700 19px 'Bricolage Grotesque'">Casa Brasa</div>
+        <div style="font:500 12px Geist;color:#6B6A63">Estação compartilhada · com <span style="font:700 12px 'Bricolage Grotesque';color:#1F4D3B">Rastro</span></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font:700 30px 'Bricolage Grotesque';letter-spacing:-.02em">{{ nowLabel }}</span>
+      <span style="font:500 14px Geist;color:#6B6A63">{{ todayLong }}</span>
+    </div>
+    <sc-if value="{{ stMain }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-left:auto;display:flex;align-items:center;gap:12px;padding:6px 6px 6px 8px;border-radius:999px;background:#EEF4EF;border:1px solid #CFE3D5">
+        <span style="width:34px;height:34px;border-radius:50%;background:{{ me.tone }};color:#fff;display:grid;place-items:center;font:600 13px Geist">{{ me.initials }}</span>
+        <span style="font:500 14px Geist;color:#1F4D3B">Marcando como <strong style="font-weight:700">{{ me.name }}</strong></span>
+        <button onClick="{{ switchEmp }}" style="border:0;border-radius:999px;padding:9px 16px;background:#1F4D3B;color:#FFFDF9;font:600 13px Geist">Encerrar e trocar</button>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ stIdentify }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;padding:clamp(24px,5vw,64px) 24px;display:flex;flex-direction:column;align-items:center;gap:28px">
+    <div style="text-align:center;display:flex;flex-direction:column;gap:8px">
+      <h1 style="margin:0;font:700 clamp(30px,4vw,44px)/1.05 'Bricolage Grotesque';letter-spacing:-.02em">Quem vai marcar tarefas agora?</h1>
+      <p style="margin:0;font:400 17px Geist;color:#6B6A63">Toque no seu nome. Ao terminar, toque em “Encerrar e trocar” para o próximo colega.</p>
+    </div>
+    <div style="width:100%;max-width:1040px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px">
+      <sc-for list="{{ stationTeam }}" as="e" hint-placeholder-count="7">
+        <button onClick="{{ e.pick }}" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 14px 18px;border:1px solid #E4DCCD;border-radius:20px;background:#FFFDF9;transition:all .15s" style-hover="border-color:#1F4D3B;background:#F6F9F6;transform:translateY(-2px)" style-active="transform:scale(.97)">
+          <span style="width:72px;height:72px;border-radius:50%;background:{{ e.tone }};color:#fff;display:grid;place-items:center;font:600 24px Geist">{{ e.initials }}</span>
+          <span style="text-align:center">
+            <span style="display:block;font:600 17px Geist;color:#1C1F1D">{{ e.name }}</span>
+            <span style="display:block;font:400 13px Geist;color:#6B6A63;margin-top:2px">{{ e.role }}</span>
+          </span>
+          <span style="width:100%;display:flex;align-items:center;gap:8px">
+            <span style="flex:1;height:6px;border-radius:3px;background:#EFE9DE;overflow:hidden"><span style="display:block;height:100%;width:{{ e.pct }};background:{{ e.bar }}"></span></span>
+            <span style="font:500 12px 'Geist Mono';color:#6B6A63">{{ e.prog }}</span>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ stMain }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;display:flex;flex-wrap:wrap;min-height:0">
+
+    <div style="flex:0 0 200px;max-width:100%;border-right:1px solid #EFE9DE;padding:18px 10px;display:flex;flex-direction:column;gap:6px;background:#FBF8F2">
+      <div style="font:600 11px Geist;letter-spacing:.08em;text-transform:uppercase;color:#6B6A63;padding:0 8px 6px">Trocar com um toque</div>
+      <sc-for list="{{ stationTeam }}" as="e" hint-placeholder-count="7">
+        <button onClick="{{ e.pick }}" style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid {{ e.border }};border-radius:14px;background:{{ e.bg }};text-align:left;width:100%" style-hover="background:#FFFDF9">
+          <span style="width:36px;height:36px;flex:none;border-radius:50%;background:{{ e.tone }};color:#fff;display:grid;place-items:center;font:600 13px Geist">{{ e.initials }}</span>
+          <span style="flex:1;min-width:0">
+            <span style="display:block;font:600 14px Geist;color:#1C1F1D">{{ e.name }}</span>
+            <span style="display:block;font:400 11px Geist;color:{{ e.subFg }}">{{ e.sub }}</span>
+          </span>
+          <span style="font:500 11px 'Geist Mono';color:#6B6A63">{{ e.prog }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="flex:1 1 280px;max-width:360px;min-width:0;padding:22px 18px;display:flex;flex-direction:column;gap:18px;border-right:1px solid #EFE9DE">
+      <div>
+        <h1 style="margin:0;font:700 28px/1.05 'Bricolage Grotesque';letter-spacing:-.02em">{{ greeting }}, {{ me.first }}!</h1>
+        <div style="font:400 15px Geist;color:#6B6A63;margin-top:4px">Você possui {{ my.total }} atividades para hoje.</div>
+      </div>
+      <div style="background:#1F4D3B;color:#F4EFE6;border-radius:20px;padding:16px;display:flex;gap:16px;align-items:center">
+        <div style="position:relative;width:76px;height:76px;flex:none">
+          <svg width="76" height="76" viewBox="0 0 84 84" style="transform:rotate(-90deg)">
+            <circle cx="42" cy="42" r="34" fill="none" stroke="#2F6450" stroke-width="9"></circle>
+            <circle cx="42" cy="42" r="34" fill="none" stroke="#F4EFE6" stroke-width="9" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="{{ my.ringOffset }}" style="transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1)"></circle>
+          </svg>
+          <div style="position:absolute;inset:0;display:grid;place-items:center;font:700 18px 'Bricolage Grotesque'">{{ my.pct }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font:600 15px Geist">{{ my.done }} de {{ my.total }} concluídas</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span style="padding:3px 9px;border-radius:999px;background:#2F6450;font:600 12px Geist">{{ my.pending }} pendentes</span>
+            <sc-if value="{{ my.hasLate }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 9px;border-radius:999px;background:#C2502F;font:600 12px Geist">{{ my.late }} atrasadas</span></sc-if>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font:600 13px Geist;color:#6B6A63">Seus checklists</div>
+        <sc-for list="{{ my.cards }}" as="c" hint-placeholder-count="3">
+          <button onClick="{{ c.open }}" style="display:flex;flex-direction:column;gap:10px;padding:14px;border:{{ c.selBorder }};border-radius:16px;background:{{ c.selBg }};text-align:left;transition:all .15s" style-hover="border-color:#1F4D3B">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;width:100%">
+              <div style="min-width:0">
+                <div style="font:600 16px/1.2 'Bricolage Grotesque';color:#1C1F1D">{{ c.name }}</div>
+                <div style="font:400 12px Geist;color:#6B6A63;margin-top:2px">{{ c.meta }}</div>
+              </div>
+              <span style="flex:none;padding:3px 8px;border-radius:999px;font:600 11px Geist;color:{{ c.fg }};background:{{ c.bg }}">{{ c.stLabel }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;width:100%">
+              <div style="flex:1;height:6px;border-radius:3px;background:#EFE9DE;overflow:hidden"><div style="height:100%;width:{{ c.pct }};background:{{ c.bar }};transition:width .5s"></div></div>
+              <span style="font:500 12px 'Geist Mono'">{{ c.done }}/{{ c.total }}</span>
+            </div>
+          </button>
+        </sc-for>
+        <sc-for list="{{ my.onDemand }}" as="o" hint-placeholder-count="0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px dashed #D3C9B7;border-radius:14px">
+            <div><div style="font:600 14px Geist">{{ o.name }}</div><div style="font:400 12px Geist;color:#6B6A63">Sob demanda</div></div>
+            <button onClick="{{ o.start }}" style="border:0;border-radius:10px;padding:8px 12px;background:#E3ECE6;color:#1F4D3B;font:600 13px Geist">Iniciar</button>
+          </div>
+        </sc-for>
+        <sc-if value="{{ my.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:24px 16px;border:1px dashed #D3C9B7;border-radius:16px;text-align:center;font:400 14px Geist;color:#6B6A63">Nenhum checklist atribuído a você hoje.</div>
+        </sc-if>
+      </div>
+      <sc-if value="{{ hasMyLog }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column">
+        <div style="font:600 13px Geist;color:#6B6A63;padding-bottom:4px">Suas últimas marcações</div>
+        <sc-for list="{{ myLogTop }}" as="l" hint-placeholder-count="4">
+          <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #EFE9DE;align-items:center">
+            <span style="font:500 12px 'Geist Mono';width:40px;flex:none">{{ l.time }}</span>
+            <span style="flex:1;min-width:0;font:500 13px Geist;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.iname }}</span>
+            <span style="flex:none;padding:2px 7px;border-radius:999px;font:600 10px Geist;color:{{ l.fg }};background:{{ l.bg }}">{{ l.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+    </div>
+
+    <div style="flex:2 1 340px;min-width:0;display:flex;flex-direction:column">
+      <sc-if value="{{ hasRun }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:22px 24px 16px;border-bottom:1px solid #EFE9DE;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font:600 12px Geist;color:#6B6A63;letter-spacing:.04em;text-transform:uppercase">Checklist</div>
+            <div style="font:700 28px/1.1 'Bricolage Grotesque';letter-spacing:-.01em">{{ run.name }}</div>
+            <div style="font:400 14px Geist;color:#6B6A63;margin-top:3px">{{ run.meta }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="font:700 26px 'Bricolage Grotesque';color:#1F4D3B">{{ run.done }}/{{ run.total }}</span>
+            <button onClick="{{ finishRun }}" style="border:0;border-radius:14px;padding:13px 20px;background:#1F4D3B;color:#FFFDF9;font:700 15px Geist" style-active="transform:scale(.98)">{{ run.finishLabel }}</button>
+          </div>
+        </div>
+        <div style="height:8px;border-radius:4px;background:#EFE9DE;overflow:hidden"><div style="height:100%;width:{{ run.pct }};background:{{ run.bar }};border-radius:4px;transition:width .45s cubic-bezier(.2,.8,.2,1)"></div></div>
+      </div>
+      <div style="padding:16px 24px 28px;display:flex;flex-direction:column;gap:10px">
+        <sc-if value="{{ run.allDone }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:#E1F0E5;color:#1F5A38">
+            <div style="width:36px;height:36px;flex:none;border-radius:50%;background:#2F7D4F;color:#fff;display:grid;place-items:center;font:700 18px Geist">✓</div>
+            <div><div style="font:700 15px Geist">Checklist concluído</div><div style="font:400 13px Geist">Tudo registrado em nome de {{ me.first }}. Não esqueça de encerrar para o próximo colega.</div></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ runErr }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:12px 14px;border-radius:14px;background:#F9E0DD;color:#8E1F18;font:600 14px/1.4 Geist">{{ runErr }}</div>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;align-items:start">
+        <sc-for list="{{ run.items }}" as="it" hint-placeholder-count="6">
+          <div style="border:1px solid {{ it.cardBorder }};border-radius:16px;background:{{ it.cardBg }};padding:16px;display:flex;flex-direction:column;gap:10px;transition:background .3s,border-color .3s">
+            <div style="display:flex;gap:14px;align-items:flex-start">
+              <button onClick="{{ it.toggle }}" aria-label="Marcar item" style="flex:none;width:40px;height:40px;border-radius:12px;border:2px solid {{ it.checkBorder }};background:{{ it.checkBg }};display:grid;place-items:center;padding:0;transform:scale({{ it.scale }});transition:all .2s cubic-bezier(.3,1.6,.5,1)">
+                <svg width="20" height="20" viewBox="0 0 18 18" style="opacity:{{ it.checkOpacity }};transition:opacity .2s"><path d="M3.5 9.5l3.5 3.5 7.5-8" fill="none" stroke="#FFFDF9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </button>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:2px">
+                <div style="font:600 16px/1.3 Geist;color:{{ it.nameColor }}">{{ it.name }}</div>
+                <sc-if value="{{ it.desc }}" hint-placeholder-val="{{ false }}"><div style="font:400 13px/1.4 Geist;color:#6B6A63">{{ it.desc }}</div></sc-if>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+                  <sc-if value="{{ it.doneMeta }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 3px;border-radius:999px;background:#E1F0E5;color:#1F5A38;font:600 12px Geist"><span style="width:18px;height:18px;border-radius:50%;background:{{ it.tone }};color:#fff;display:grid;place-items:center;font:600 9px Geist">{{ it.initials }}</span>{{ it.doneMeta }}</span>
+                  </sc-if>
+                  <sc-if value="{{ it.late }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 9px;border-radius:999px;background:#F9E0DD;color:#B3261E;font:600 12px Geist">Atrasado</span></sc-if>
+                  <sc-if value="{{ it.required }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 9px;border-radius:999px;background:#EFE9DE;color:#5E5D57;font:600 12px Geist">Obrigatório</span></sc-if>
+                  <sc-if value="{{ it.undoneLabel }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 9px;border-radius:999px;background:#FBEFD9;color:#8A5A12;font:600 12px Geist">{{ it.undoneLabel }}</span></sc-if>
+                </div>
+                <sc-if value="{{ it.note }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:4px;padding:8px 10px;border-radius:10px;background:#F4EFE6;font:400 13px/1.4 Geist;color:#3B3D3A">“{{ it.note }}”</div>
+                </sc-if>
+              </div>
+            </div>
+            <sc-if value="{{ it.showNoteBtn }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ it.openNote }}" style="align-self:flex-start;margin-left:54px;border:0;background:transparent;color:#1F4D3B;font:600 13px Geist;padding:0">+ {{ it.noteBtn }}</button>
+            </sc-if>
+            <sc-if value="{{ it.noteOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-left:54px;display:flex;flex-direction:column;gap:8px">
+                <textarea value="{{ noteDraft }}" onChange="{{ setNoteDraft }}" rows="3" placeholder="Ex.: faltaram 2 toalhas, avisei a gerência" style="width:100%;border:1px solid #D3C9B7;border-radius:12px;padding:10px;font:400 14px Geist;resize:none;background:#FFFDF9;outline:none" style-focus="border-color:#1F4D3B"></textarea>
+                <div style="display:flex;gap:8px">
+                  <button onClick="{{ saveNote }}" style="border:0;border-radius:10px;padding:9px 14px;background:#1F4D3B;color:#FFFDF9;font:600 13px Geist">Salvar observação</button>
+                  <button onClick="{{ cancelNote }}" style="border:0;border-radius:10px;padding:9px 14px;background:#EFE9DE;color:#1C1F1D;font:600 13px Geist">Cancelar</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ noRun }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:grid;place-items:center;padding:40px;text-align:center;font:400 15px Geist;color:#6B6A63">Selecione um checklist à esquerda.</div>
+      </sc-if>
+    </div>
+
+  </div>
+  </sc-if>
+</div>
+<div style="font:500 12px Geist;color:#6B6A63;text-align:center;margin-top:12px">Estação de trabalho compartilhada · mesma conta, mesmos dados do celular.</div>
+</div>
+</sc-if>
+
+<!-- ================= GESTOR ================= -->
+<sc-if value="{{ isAdminGate }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;place-items:center;padding:48px 16px;min-height:calc(100vh - 60px)">
+  <div style="width:100%;max-width:380px;background:#FFFDF9;border:1px solid #E4DCCD;border-radius:24px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="font:600 12px Geist;letter-spacing:.08em;text-transform:uppercase;color:#C2502F">Área restrita</div>
+    <div style="font:700 26px 'Bricolage Grotesque';text-align:center">Rastro · Painel do gestor</div>
+    <div style="font:400 14px/1.45 Geist;color:#6B6A63;text-align:center">Configurações e relatórios ficam disponíveis apenas para usuários autorizados.</div>
+    <div style="display:flex;gap:14px;padding:6px 0">
+      <sc-for list="{{ adminDots }}" as="d" hint-placeholder-count="4">
+        <div style="width:16px;height:16px;border-radius:50%;border:2px solid {{ d.border }};background:{{ d.bg }}"></div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ adminErr }}" hint-placeholder-val="{{ false }}">
+      <div style="font:600 13px Geist;color:#B3261E;background:#F9E0DD;padding:8px 12px;border-radius:10px">{{ adminErr }}</div>
+    </sc-if>
+    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px">
+      <sc-for list="{{ adminKeys }}" as="k" hint-placeholder-count="12">
+        <button onClick="{{ k.press }}" style="visibility:{{ k.vis }};height:54px;border-radius:14px;border:1px solid #E4DCCD;background:#F8F4EC;font:600 20px Geist;color:#1C1F1D" style-active="background:#E3ECE6">{{ k.label }}</button>
+      </sc-for>
+    </div>
+    <div style="font:500 12px Geist;color:#6B6A63">Marina Alves (Gerente) · PIN de demonstração: <span style="font-family:'Geist Mono'">1234</span></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;min-height:calc(100vh - 52px)">
+  <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+  <div style="width:232px;flex:none;background:#FFFDF9;border-right:1px solid #E4DCCD;padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:52px;height:calc(100vh - 52px)">
+    <div style="font:600 11px Geist;letter-spacing:.08em;text-transform:uppercase;color:#6B6A63;padding:0 10px 10px">Gestão</div>
+    <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+      <button onClick="{{ n.go }}" style="display:flex;justify-content:space-between;align-items:center;border:0;border-radius:10px;padding:10px 12px;background:{{ n.bg }};color:{{ n.fg }};font:600 14px Geist;text-align:left">
+        {{ n.label }}
+        <sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span style="padding:1px 7px;border-radius:999px;background:#B3261E;color:#fff;font:600 11px Geist">{{ n.badge }}</span></sc-if>
+      </button>
+    </sc-for>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 10px;border-top:1px solid #EFE9DE">
+      <div style="width:32px;height:32px;border-radius:50%;background:#9C3B54;color:#fff;display:grid;place-items:center;font:600 12px Geist">MA</div>
+      <div style="flex:1;min-width:0"><div style="font:600 13px Geist">Marina Alves</div><div style="font:400 12px Geist;color:#6B6A63">Gerente</div></div>
+      <button onClick="{{ logoutAdmin }}" style="border:0;background:transparent;color:#6B6A63;font:500 12px Geist">Sair</button>
+    </div>
+  </div>
+  </sc-if>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:#FFFDF9;border-bottom:1px solid #E4DCCD">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+          <button onClick="{{ n.go }}" style="flex:none;border:0;border-radius:999px;padding:8px 14px;background:{{ n.bg }};color:{{ n.fg }};font:600 13px Geist">{{ n.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <div style="padding:28px clamp(14px,3vw,40px) 60px;max-width:1320px;width:100%">
+
+    <!-- Tela 4: Dashboard -->
+    <sc-if value="{{ pDash }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px">
+        <div>
+          <div style="font:600 12px Geist;letter-spacing:.06em;text-transform:uppercase;color:#6B6A63">{{ dash.dateLabel }}</div>
+          <h1 style="margin:4px 0 0;font:700 32px 'Bricolage Grotesque';letter-spacing:-.02em">Operação do dia</h1>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;background:#FFFDF9;border:1px solid #E4DCCD;border-radius:14px">
+        <select value="{{ f.date }}" onChange="{{ setFDate }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ dateOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <select value="{{ f.emp }}" onChange="{{ setFEmp }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ empOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <select value="{{ f.cat }}" onChange="{{ setFCat }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ catOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <select value="{{ f.cl }}" onChange="{{ setFCl }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ clOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <select value="{{ f.status }}" onChange="{{ setFStatus }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <sc-if value="{{ dash.filtered }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ clearF }}" style="border:0;background:transparent;color:#1F4D3B;font:600 13px Geist;padding:8px">Limpar filtros</button>
+        </sc-if>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        <sc-for list="{{ dash.kpis }}" as="k" hint-placeholder-count="5">
+          <div style="background:{{ k.bg }};border:1px solid {{ k.border }};border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+            <div style="font:600 13px Geist;color:{{ k.labelFg }}">{{ k.label }}</div>
+            <div style="font:700 36px/1 'Bricolage Grotesque';color:{{ k.fg }}">{{ k.value }}</div>
+            <div style="font:400 12px Geist;color:{{ k.labelFg }}">{{ k.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ dash.empty }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:40px;border:1px dashed #D3C9B7;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:6px">
+          <div style="font:600 18px 'Bricolage Grotesque'">Nenhuma tarefa com esses filtros</div>
+          <div style="font:400 14px Geist;color:#6B6A63">Tente outra data ou limpe os filtros.</div>
+        </div>
+      </sc-if>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px">
+        <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <div style="font:600 17px 'Bricolage Grotesque'">Conclusão por checklist</div>
+            <div style="display:flex;gap:12px;font:500 12px Geist;color:#6B6A63">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#1F4D3B"></span>Concluído</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#C2502F"></span>Atrasado</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#E4DCCD"></span>Pendente</span>
+            </div>
+          </div>
+          <sc-for list="{{ dash.clBars }}" as="b" hint-placeholder-count="5">
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;justify-content:space-between;gap:8px;font:500 13px Geist"><span>{{ b.name }}</span><span style="font-family:'Geist Mono';color:#6B6A63">{{ b.done }}/{{ b.total }}</span></div>
+              <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#E4DCCD">
+                <div style="width:{{ b.wDone }};background:#1F4D3B;transition:width .4s"></div>
+                <div style="width:{{ b.wLate }};background:#C2502F;transition:width .4s"></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px">
+            <div style="font:600 17px 'Bricolage Grotesque'">Atrasos</div>
+            <span style="font:600 12px Geist;color:#B3261E">{{ dash.lateCount }} itens</span>
+          </div>
+          <sc-for list="{{ dash.lateList }}" as="r" hint-placeholder-count="4">
+            <button onClick="{{ r.open }}" style="display:flex;align-items:center;gap:10px;padding:10px 4px;border:0;border-bottom:1px solid #EFE9DE;background:transparent;text-align:left;width:100%">
+              <div style="width:30px;height:30px;flex:none;border-radius:50%;background:{{ r.tone }};color:#fff;display:grid;place-items:center;font:600 11px Geist">{{ r.initials }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:600 14px Geist;color:#1C1F1D">{{ r.iname }}</div>
+                <div style="font:400 12px Geist;color:#6B6A63">{{ r.ename }} · {{ r.cname }}</div>
+              </div>
+              <div style="text-align:right;flex:none">
+                <div style="font:600 12px 'Geist Mono';color:#B3261E">{{ r.delay }}</div>
+                <div style="font:400 11px Geist;color:#6B6A63">{{ r.due }}</div>
+              </div>
+            </button>
+          </sc-for>
+          <sc-if value="{{ dash.noLate }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:24px 8px;text-align:center;font:400 14px Geist;color:#6B6A63">Nenhum atraso. A operação está em dia.</div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px">
+        <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="font:600 17px 'Bricolage Grotesque'">Últimos 8 dias</div>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:150px">
+            <sc-for list="{{ dash.trend }}" as="t" hint-placeholder-count="8">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+                <span style="font:500 11px 'Geist Mono';color:#6B6A63">{{ t.pct }}</span>
+                <div style="width:100%;max-width:30px;height:{{ t.h }};background:{{ t.color }};border-radius:6px 6px 2px 2px;transition:height .4s"></div>
+                <span style="font:600 11px Geist;color:#1C1F1D">{{ t.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px">
+          <div style="font:600 17px 'Bricolage Grotesque'">Por categoria</div>
+          <sc-for list="{{ dash.catBars }}" as="b" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:96px 1fr 40px;align-items:center;gap:10px;font:500 13px Geist">
+              <span>{{ b.name }}</span>
+              <div style="height:8px;border-radius:4px;background:#EFE9DE;overflow:hidden"><div style="height:100%;width:{{ b.pct }};background:{{ b.tone }}"></div></div>
+              <span style="font-family:'Geist Mono';color:#6B6A63;text-align:right">{{ b.pct }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:4px">
+          <div style="font:600 17px 'Bricolage Grotesque';margin-bottom:6px">Funcionários com pendências</div>
+          <sc-for list="{{ dash.empPend }}" as="e" hint-placeholder-count="4">
+            <button onClick="{{ e.open }}" style="display:flex;align-items:center;gap:10px;padding:9px 4px;border:0;border-bottom:1px solid #EFE9DE;background:transparent;text-align:left;width:100%" style-hover="background:#F8F4EC">
+              <div style="width:30px;height:30px;flex:none;border-radius:50%;background:{{ e.tone }};color:#fff;display:grid;place-items:center;font:600 11px Geist">{{ e.initials }}</div>
+              <div style="flex:1;min-width:0"><div style="font:600 14px Geist;color:#1C1F1D">{{ e.name }}</div><div style="font:400 12px Geist;color:#6B6A63">{{ e.role }}</div></div>
+              <span style="font:600 12px Geist;color:#5E5D57">{{ e.pend }} pend.</span>
+              <sc-if value="{{ e.late }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 8px;border-radius:999px;background:#F9E0DD;color:#B3261E;font:600 12px Geist">{{ e.late }} atras.</span></sc-if>
+            </button>
+          </sc-for>
+          <sc-if value="{{ dash.noPend }}" hint-placeholder-val="{{ false }}"><div style="padding:20px 8px;text-align:center;font:400 14px Geist;color:#6B6A63">Todos em dia.</div></sc-if>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- Tela 5: Equipe -->
+    <sc-if value="{{ pTeam }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px">
+        <div>
+          <div style="font:600 12px Geist;letter-spacing:.06em;text-transform:uppercase;color:#6B6A63">Acompanhamento</div>
+          <h1 style="margin:4px 0 0;font:700 32px 'Bricolage Grotesque';letter-spacing:-.02em">Equipe</h1>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select value="{{ f.date }}" onChange="{{ setFDate }}" style="padding:9px 10px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+            <sc-for list="{{ dateOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+          </select>
+          <button onClick="{{ newEmp }}" style="border:0;border-radius:10px;padding:10px 16px;background:#1F4D3B;color:#FFFDF9;font:600 14px Geist">+ Novo funcionário</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:14px;align-items:start">
+        <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;overflow-x:auto">
+          <div style="min-width:560px">
+            <div style="display:grid;grid-template-columns:minmax(180px,2fr) 70px 70px 1.2fr 80px 60px;gap:10px;padding:12px 16px;border-bottom:1px solid #E4DCCD;font:600 12px Geist;color:#6B6A63">
+              <span>Funcionário</span><span>Atrib.</span><span>Concl.</span><span>Execução</span><span>Pend.</span><span></span>
+            </div>
+            <sc-for list="{{ team.rows }}" as="r" hint-placeholder-count="7">
+              <div onClick="{{ r.select }}" style="display:grid;grid-template-columns:minmax(180px,2fr) 70px 70px 1.2fr 80px 60px;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid #EFE9DE;background:{{ r.bg }};opacity:{{ r.opacity }};cursor:pointer" style-hover="background:#F8F4EC">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                  <div style="width:32px;height:32px;flex:none;border-radius:50%;background:{{ r.tone }};color:#fff;display:grid;place-items:center;font:600 12px Geist">{{ r.initials }}</div>
+                  <div style="min-width:0"><div style="font:600 14px Geist">{{ r.name }}</div><div style="font:400 12px Geist;color:#6B6A63">{{ r.role }}{{ r.inactive }}</div></div>
+                </div>
+                <span style="font:500 14px 'Geist Mono'">{{ r.total }}</span>
+                <span style="font:500 14px 'Geist Mono'">{{ r.done }}</span>
+                <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;border-radius:3px;background:#EFE9DE;overflow:hidden"><div style="height:100%;width:{{ r.pct }};background:{{ r.bar }}"></div></div><span style="font:500 12px 'Geist Mono';width:36px;text-align:right">{{ r.pct }}</span></div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <span style="font:600 13px Geist;color:#5E5D57">{{ r.pend }}</span>
+                  <sc-if value="{{ r.late }}" hint-placeholder-val="{{ false }}"><span style="padding:1px 6px;border-radius:999px;background:#F9E0DD;color:#B3261E;font:600 11px Geist">{{ r.late }} atr.</span></sc-if>
+                </div>
+                <button onClick="{{ r.edit }}" style="border:0;background:transparent;color:#1F4D3B;font:600 12px Geist;padding:4px">Editar</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ team.sel }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:50%;background:{{ team.sel.tone }};color:#fff;display:grid;place-items:center;font:600 16px Geist">{{ team.sel.initials }}</div>
+            <div style="flex:1">
+              <div style="font:700 22px 'Bricolage Grotesque'">{{ team.sel.first }} — {{ team.sel.role }}</div>
+              <div style="font:400 13px Geist;color:#6B6A63">{{ dash.dateLabel }}</div>
+            </div>
+            <button onClick="{{ team.sel.toggleActive }}" style="border:1px solid #E4DCCD;background:#FFFDF9;border-radius:9px;padding:7px 10px;font:600 12px Geist;color:#1C1F1D">{{ team.sel.activeLabel }}</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:#F4EFE6;border-radius:12px;padding:12px"><div style="font:700 26px 'Bricolage Grotesque'">{{ team.sel.total }}</div><div style="font:500 12px Geist;color:#6B6A63">tarefas atribuídas</div></div>
+            <div style="background:#E1F0E5;border-radius:12px;padding:12px"><div style="font:700 26px 'Bricolage Grotesque';color:#1F5A38">{{ team.sel.done }}</div><div style="font:500 12px Geist;color:#1F5A38">concluídas</div></div>
+            <div style="background:#FBEFD9;border-radius:12px;padding:12px"><div style="font:700 26px 'Bricolage Grotesque';color:#8A5A12">{{ team.sel.pend }}</div><div style="font:500 12px Geist;color:#8A5A12">pendentes</div></div>
+          </div>
+          <sc-for list="{{ team.sel.groups }}" as="g" hint-placeholder-count="2">
+            <div style="display:flex;flex-direction:column">
+              <div style="display:flex;justify-content:space-between;font:600 13px Geist;color:#6B6A63;padding-bottom:6px;border-bottom:1px solid #E4DCCD"><span>{{ g.cname }}</span><span>{{ g.due }}</span></div>
+              <sc-for list="{{ g.list }}" as="x" hint-placeholder-count="3">
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #EFE9DE">
+                  <span style="width:8px;height:8px;border-radius:50%;background:{{ x.fg }};margin-top:6px;flex:none"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font:500 14px Geist">{{ x.iname }}</div>
+                    <sc-if value="{{ x.note }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px Geist;color:#6B6A63">“{{ x.note }}”</div></sc-if>
+                  </div>
+                  <span style="font:500 12px 'Geist Mono';color:{{ x.fg }};flex:none">{{ x.time }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          <sc-if value="{{ team.sel.empty }}" hint-placeholder-val="{{ false }}"><div style="font:400 14px Geist;color:#6B6A63;text-align:center;padding:20px">Sem tarefas atribuídas nesta data.</div></sc-if>
+        </div>
+        </sc-if>
+        <sc-if value="{{ team.noSel }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px dashed #D3C9B7;border-radius:18px;padding:40px 20px;text-align:center;font:400 14px Geist;color:#6B6A63">Selecione um funcionário para ver o detalhamento do dia, com o horário de cada conclusão.</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- Tela 6: Itens -->
+    <sc-if value="{{ pItems }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px">
+        <div>
+          <div style="font:600 12px Geist;letter-spacing:.06em;text-transform:uppercase;color:#6B6A63">Biblioteca</div>
+          <h1 style="margin:4px 0 0;font:700 32px 'Bricolage Grotesque';letter-spacing:-.02em">Itens de checklist</h1>
+        </div>
+        <button onClick="{{ newItem }}" style="border:0;border-radius:10px;padding:10px 16px;background:#1F4D3B;color:#FFFDF9;font:600 14px Geist">+ Novo item</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <input value="{{ itemQ }}" onChange="{{ setItemQ }}" placeholder="Buscar item…" style="flex:1 1 220px;max-width:320px;padding:9px 12px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 14px Geist;outline:none" style-focus="border-color:#1F4D3B">
+        <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="7">
+          <button onClick="{{ c.pick }}" style="border:1px solid {{ c.border }};border-radius:999px;padding:7px 12px;background:{{ c.bg }};color:{{ c.fg }};font:600 13px Geist">{{ c.label }}</button>
+        </sc-for>
+      </div>
+      <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;overflow-x:auto">
+        <div style="min-width:760px">
+          <div style="display:grid;grid-template-columns:minmax(240px,3fr) 120px 100px 100px 150px 90px 60px;gap:12px;padding:12px 16px;border-bottom:1px solid #E4DCCD;font:600 12px Geist;color:#6B6A63">
+            <span>Item</span><span>Categoria</span><span>Obrigatório</span><span>Observação</span><span>Usado em</span><span>Status</span><span></span>
+          </div>
+          <sc-for list="{{ itemRows }}" as="r" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:minmax(240px,3fr) 120px 100px 100px 150px 90px 60px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid #EFE9DE;background:{{ r.bg }}">
+              <div style="min-width:0;opacity:{{ r.opacity }}"><div style="font:600 14px Geist">{{ r.name }}</div><div style="font:400 12px Geist;color:#6B6A63;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.desc }}</div></div>
+              <span style="justify-self:start;padding:3px 9px;border-radius:999px;font:600 12px Geist;color:{{ r.catTone }};background:#F4EFE6">{{ r.cat }}</span>
+              <span style="font:500 13px Geist">{{ r.required }}</span>
+              <span style="font:500 13px Geist">{{ r.allowNote }}</span>
+              <span style="font:400 12px Geist;color:#6B6A63" title="{{ r.usedNames }}">{{ r.used }}</span>
+              <button onClick="{{ r.toggle }}" style="justify-self:start;display:flex;align-items:center;gap:6px;border:0;background:transparent;padding:0;font:600 12px Geist;color:#1C1F1D">
+                <span style="width:34px;height:20px;border-radius:10px;background:{{ r.swBg }};position:relative;transition:background .2s"><span style="position:absolute;top:2px;left:{{ r.swX }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s"></span></span>{{ r.statusLabel }}
+              </button>
+              <button onClick="{{ r.edit }}" style="border:0;background:transparent;color:#1F4D3B;font:600 12px Geist">Editar</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ itemEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:36px;text-align:center;font:400 14px Geist;color:#6B6A63">Nenhum item encontrado.</div></sc-if>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- Tela 7: Checklists -->
+    <sc-if value="{{ pCls }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px">
+        <div>
+          <div style="font:600 12px Geist;letter-spacing:.06em;text-transform:uppercase;color:#6B6A63">Configuração</div>
+          <h1 style="margin:4px 0 0;font:700 32px 'Bricolage Grotesque';letter-spacing:-.02em">Checklists</h1>
+        </div>
+        <button onClick="{{ newCl }}" style="border:0;border-radius:10px;padding:10px 16px;background:#1F4D3B;color:#FFFDF9;font:600 14px Geist">+ Criar checklist</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start">
+        <div style="flex:0 1 240px;min-width:200px;max-width:100%;display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ clList }}" as="c" hint-placeholder-count="6">
+            <div onClick="{{ c.select }}" style="padding:14px;border:1px solid {{ c.border }};border-radius:14px;background:{{ c.bg }};cursor:pointer;display:flex;flex-direction:column;gap:6px;opacity:{{ c.opacity }}">
+              <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+                <div style="font:600 15px Geist">{{ c.name }}</div>
+                <span style="flex:none;font:600 11px Geist;color:{{ c.stFg }}">{{ c.stLabel }}</span>
+              </div>
+              <div style="font:400 12px Geist;color:#6B6A63">{{ c.meta }}</div>
+              <div style="font:400 12px Geist;color:#6B6A63">{{ c.who }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ cl }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1 1 340px;min-width:0;max-width:100%;background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="font:700 20px 'Bricolage Grotesque'">{{ cl.title }}</div>
+            <button onClick="{{ cl.toggleActive }}" style="display:flex;align-items:center;gap:8px;border:0;background:transparent;font:600 13px Geist;color:#1C1F1D;padding:0">
+              <span style="width:38px;height:22px;border-radius:11px;background:{{ cl.swBg }};position:relative;transition:background .2s"><span style="position:absolute;top:3px;left:{{ cl.swX }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s"></span></span>{{ cl.activeLabel }}
+            </button>
+          </div>
+          <sc-if value="{{ clErr }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 14px;border-radius:12px;background:#F9E0DD;color:#8E1F18;font:600 13px Geist">{{ clErr }}</div></sc-if>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+            <label style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Nome do checklist
+              <input value="{{ cl.d.name }}" onChange="{{ cl.setName }}" placeholder="Ex.: Abertura do bar" style="padding:10px 12px;border:1px solid {{ cl.nameBorder }};border-radius:10px;background:#FFFDF9;font:500 14px Geist;outline:none">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Descrição
+              <input value="{{ cl.d.desc }}" onChange="{{ cl.setDesc }}" placeholder="Opcional" style="padding:10px 12px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 14px Geist;outline:none">
+            </label>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font:600 13px Geist">Periodicidade</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ cl.periods }}" as="p" hint-placeholder-count="4">
+                <button onClick="{{ p.pick }}" style="border:1px solid {{ p.border }};border-radius:10px;padding:8px 12px;background:{{ p.bg }};color:{{ p.fg }};font:600 13px Geist">{{ p.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ cl.showDays }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                <sc-for list="{{ cl.dayChips }}" as="d" hint-placeholder-count="7">
+                  <button onClick="{{ d.pick }}" style="width:46px;border:1px solid {{ d.border }};border-radius:999px;padding:7px 0;background:{{ d.bg }};color:{{ d.fg }};font:600 12px Geist">{{ d.label }}</button>
+                </sc-for>
+                <span style="font:400 12px Geist;color:#6B6A63">{{ cl.daysHint }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ cl.showTime }}" hint-placeholder-val="{{ true }}">
+              <label style="display:flex;align-items:center;gap:10px;font:500 13px Geist;margin-top:4px">Concluir até
+                <input type="time" value="{{ cl.d.time }}" onChange="{{ cl.setTime }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 14px 'Geist Mono'">
+                <span style="color:#6B6A63">Após esse horário, itens pendentes aparecem como atrasados.</span>
+              </label>
+            </sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font:600 13px Geist">Responsáveis</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+              <span style="font:500 12px Geist;color:#6B6A63;width:56px">Funções</span>
+              <sc-for list="{{ cl.roleChips }}" as="r" hint-placeholder-count="5">
+                <button onClick="{{ r.pick }}" style="border:1px solid {{ r.border }};border-radius:999px;padding:6px 12px;background:{{ r.bg }};color:{{ r.fg }};font:600 12px Geist">{{ r.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+              <span style="font:500 12px Geist;color:#6B6A63;width:56px">Pessoas</span>
+              <sc-for list="{{ cl.empChips }}" as="r" hint-placeholder-count="7">
+                <button onClick="{{ r.pick }}" style="border:1px solid {{ r.border }};border-radius:999px;padding:6px 12px;background:{{ r.bg }};color:{{ r.fg }};font:600 12px Geist">{{ r.label }}</button>
+              </sc-for>
+            </div>
+            <div style="font:400 13px Geist;color:#6B6A63">{{ cl.resolved }}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;align-items:start">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;font:600 13px Geist"><span>Itens do checklist ({{ cl.count }})</span><span style="font-weight:400;color:#6B6A63">Arraste para reordenar</span></div>
+              <sc-for list="{{ cl.rows }}" as="r" hint-placeholder-count="5">
+                <div draggable="true" onDragStart="{{ r.onDragStart }}" onDragOver="{{ r.onDragOver }}" onDrop="{{ r.onDrop }}" onDragEnd="{{ r.onDragEnd }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px 10px 8px;border:1px solid {{ r.border }};border-radius:12px;background:{{ r.bg }};opacity:{{ r.opacity }};cursor:grab;transition:border-color .15s,background .15s">
+                  <span style="color:#A39C8E;font:700 14px Geist;letter-spacing:-2px;width:14px">⋮⋮</span>
+                  <span style="font:500 12px 'Geist Mono';color:#6B6A63;width:18px">{{ r.n }}</span>
+                  <div style="flex:1;min-width:0"><div style="font:600 13px Geist">{{ r.name }}</div><div style="font:500 11px Geist;color:{{ r.catTone }}">{{ r.cat }}{{ r.req }}</div></div>
+                  <button onClick="{{ r.up }}" aria-label="Subir" style="border:0;background:#F4EFE6;border-radius:7px;width:26px;height:26px;font:600 12px Geist;color:#1C1F1D">↑</button>
+                  <button onClick="{{ r.down }}" aria-label="Descer" style="border:0;background:#F4EFE6;border-radius:7px;width:26px;height:26px;font:600 12px Geist;color:#1C1F1D">↓</button>
+                  <button onClick="{{ r.remove }}" aria-label="Remover" style="border:0;background:transparent;width:26px;height:26px;font:600 16px Geist;color:#B3261E">×</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ cl.noRows }}" hint-placeholder-val="{{ false }}"><div style="padding:24px;border:1px dashed #D3C9B7;border-radius:12px;text-align:center;font:400 13px Geist;color:#6B6A63">Adicione itens da biblioteca ao lado.</div></sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;background:#F8F4EC;border-radius:14px;padding:12px">
+              <div style="font:600 13px Geist">Adicionar da biblioteca</div>
+              <input value="{{ pickQ }}" onChange="{{ setPickQ }}" placeholder="Buscar item…" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;outline:none">
+              <div style="display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto">
+                <sc-for list="{{ cl.pick }}" as="p" hint-placeholder-count="5">
+                  <button onClick="{{ p.add }}" style="display:flex;align-items:center;gap:8px;border:0;border-radius:9px;padding:8px 10px;background:#FFFDF9;text-align:left" style-hover="background:#E3ECE6">
+                    <span style="font:700 14px Geist;color:#1F4D3B">+</span>
+                    <span style="flex:1;min-width:0;font:500 13px Geist;color:#1C1F1D">{{ p.name }}</span>
+                    <span style="font:500 11px Geist;color:{{ p.catTone }}">{{ p.cat }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:6px;border-top:1px solid #EFE9DE">
+            <button onClick="{{ saveCl }}" style="border:0;border-radius:10px;padding:11px 18px;background:#1F4D3B;color:#FFFDF9;font:600 14px Geist">Salvar checklist</button>
+            <button onClick="{{ cancelCl }}" style="border:0;border-radius:10px;padding:11px 18px;background:#EFE9DE;color:#1C1F1D;font:600 14px Geist">Descartar alterações</button>
+            <span style="font:400 12px Geist;color:#6B6A63;flex:1 1 220px">As alterações valem a partir de hoje. Registros de dias anteriores não são modificados.</span>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- Tela 8: Histórico -->
+    <sc-if value="{{ pHist }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div style="font:600 12px Geist;letter-spacing:.06em;text-transform:uppercase;color:#6B6A63">Auditoria</div>
+        <h1 style="margin:4px 0 0;font:700 32px 'Bricolage Grotesque';letter-spacing:-.02em">Histórico de execução</h1>
+        <div style="font:400 14px Geist;color:#6B6A63;margin-top:6px;max-width:680px;text-wrap:pretty">Cada registro guarda o nome do checklist e do item no momento da execução. Desmarcações nunca apagam o registro original.</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;background:#FFFDF9;border:1px solid #E4DCCD;border-radius:14px">
+        <input value="{{ hf.q }}" onChange="{{ setHQ }}" placeholder="Buscar item ou checklist…" style="flex:1 1 200px;max-width:280px;padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;outline:none">
+        <select value="{{ hf.date }}" onChange="{{ setHDate }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ hDateOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <select value="{{ hf.emp }}" onChange="{{ setHEmp }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ empOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <select value="{{ hf.action }}" onChange="{{ setHAction }}" style="padding:8px 10px;border:1px solid #E4DCCD;border-radius:9px;background:#FFFDF9;font:500 13px Geist;color:#1C1F1D">
+          <sc-for list="{{ actionOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+        </select>
+        <span style="margin-left:auto;font:500 13px Geist;color:#6B6A63">{{ hist.count }} registros · {{ hist.undone }} desmarcações</span>
+      </div>
+      <div style="background:#FFFDF9;border:1px solid #E4DCCD;border-radius:18px;overflow-x:auto">
+        <div style="min-width:860px">
+          <div style="display:grid;grid-template-columns:90px 60px 1.3fr 1.6fr 1.2fr 110px 1.4fr;gap:12px;padding:12px 16px;border-bottom:1px solid #E4DCCD;font:600 12px Geist;color:#6B6A63">
+            <span>Data</span><span>Hora</span><span>Checklist</span><span>Item</span><span>Responsável</span><span>Status</span><span>Observação</span>
+          </div>
+          <sc-for list="{{ hist.rows }}" as="r" hint-placeholder-count="10">
+            <div style="display:grid;grid-template-columns:90px 60px 1.3fr 1.6fr 1.2fr 110px 1.4fr;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid #EFE9DE;background:{{ r.rowBg }}">
+              <span style="font:500 13px Geist">{{ r.date }}</span>
+              <span style="font:500 13px 'Geist Mono'">{{ r.time }}</span>
+              <span style="font:400 13px Geist;color:#3B3D3A">{{ r.cname }}</span>
+              <span style="font:600 13px Geist">{{ r.iname }}</span>
+              <span style="display:flex;align-items:center;gap:8px;font:500 13px Geist"><span style="width:24px;height:24px;flex:none;border-radius:50%;background:{{ r.tone }};color:#fff;display:grid;place-items:center;font:600 10px Geist">{{ r.initials }}</span>{{ r.ename }}</span>
+              <span style="justify-self:start;padding:3px 9px;border-radius:999px;font:600 12px Geist;color:{{ r.fg }};background:{{ r.bg }}">{{ r.label }}</span>
+              <span style="font:400 12px Geist;color:#6B6A63">{{ r.note }}</span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ hist.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:36px;text-align:center;font:400 14px Geist;color:#6B6A63">Nenhum registro encontrado com esses filtros.</div></sc-if>
+        </div>
+      </div>
+      <sc-if value="{{ hist.more }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ moreHist }}" style="align-self:center;border:1px solid #E4DCCD;border-radius:10px;padding:10px 18px;background:#FFFDF9;font:600 13px Geist;color:#1C1F1D">Mostrar mais registros</button>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- Modal item -->
+<sc-if value="{{ itemModal }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModals }}" style="position:fixed;inset:0;z-index:60;background:rgba(28,31,29,.45);display:grid;place-items:center;padding:16px;overflow-y:auto">
+  <div onClick="{{ stop }}" style="width:100%;max-width:520px;max-height:calc(100vh - 32px);overflow-y:auto;background:#FFFDF9;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px">
+    <div style="font:700 22px 'Bricolage Grotesque'">{{ itemModal.title }}</div>
+    <label style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Nome do item *
+      <input value="{{ itemModal.d.name }}" onChange="{{ itemModal.setName }}" placeholder="Ex.: Conferir estoque de carvão" style="padding:10px 12px;border:1px solid {{ itemModal.nameBorder }};border-radius:10px;background:#FFFDF9;font:500 14px Geist;outline:none">
+      <sc-if value="{{ itemModal.nameErr }}" hint-placeholder-val="{{ false }}"><span style="font:500 12px Geist;color:#B3261E">{{ itemModal.nameErr }}</span></sc-if>
+    </label>
+    <label style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Descrição
+      <textarea value="{{ itemModal.d.desc }}" onChange="{{ itemModal.setDesc }}" rows="2" placeholder="Orientação curta para quem executa" style="padding:10px 12px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 14px Geist;resize:none;outline:none"></textarea>
+    </label>
+    <div style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Categoria
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <sc-for list="{{ itemModal.cats }}" as="c" hint-placeholder-count="6">
+          <button onClick="{{ c.pick }}" style="border:1px solid {{ c.border }};border-radius:999px;padding:6px 12px;background:{{ c.bg }};color:{{ c.fg }};font:600 12px Geist">{{ c.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ itemModal.toggles }}" as="t" hint-placeholder-count="3">
+        <button onClick="{{ t.toggle }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;border-bottom:1px solid #EFE9DE;background:transparent;padding:10px 0;text-align:left">
+          <div><div style="font:600 14px Geist;color:#1C1F1D">{{ t.label }}</div><div style="font:400 12px Geist;color:#6B6A63">{{ t.hint }}</div></div>
+          <span style="flex:none;width:38px;height:22px;border-radius:11px;background:{{ t.bg }};position:relative;transition:background .2s"><span style="position:absolute;top:3px;left:{{ t.x }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s"></span></span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onClick="{{ closeModals }}" style="border:0;border-radius:10px;padding:11px 16px;background:#EFE9DE;color:#1C1F1D;font:600 14px Geist">Cancelar</button>
+      <button onClick="{{ saveItem }}" style="border:0;border-radius:10px;padding:11px 18px;background:#1F4D3B;color:#FFFDF9;font:600 14px Geist">Salvar item</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- Modal funcionário -->
+<sc-if value="{{ empModal }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModals }}" style="position:fixed;inset:0;z-index:60;background:rgba(28,31,29,.45);display:grid;place-items:center;padding:16px;overflow-y:auto">
+  <div onClick="{{ stop }}" style="width:100%;max-width:480px;max-height:calc(100vh - 32px);overflow-y:auto;background:#FFFDF9;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px">
+    <div style="font:700 22px 'Bricolage Grotesque'">{{ empModal.title }}</div>
+    <sc-if value="{{ empModal.err }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border-radius:10px;background:#F9E0DD;color:#8E1F18;font:600 13px Geist">{{ empModal.err }}</div></sc-if>
+    <label style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Nome completo
+      <input value="{{ empModal.d.name }}" onChange="{{ empModal.setName }}" placeholder="Ex.: Lucas Pereira" style="padding:10px 12px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 14px Geist;outline:none">
+    </label>
+    <label style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Cargo
+      <input value="{{ empModal.d.role }}" onChange="{{ empModal.setRole }}" placeholder="Ex.: Garçom" style="padding:10px 12px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 14px Geist;outline:none">
+    </label>
+    <div style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">Função (para atribuição de checklists)
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <sc-for list="{{ empModal.groups }}" as="g" hint-placeholder-count="5">
+          <button onClick="{{ g.pick }}" style="border:1px solid {{ g.border }};border-radius:999px;padding:6px 12px;background:{{ g.bg }};color:{{ g.fg }};font:600 12px Geist">{{ g.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <label style="display:flex;flex-direction:column;gap:6px;font:600 13px Geist">PIN de 4 dígitos
+      <input value="{{ empModal.d.pin }}" onChange="{{ empModal.setPin }}" inputmode="numeric" maxlength="4" placeholder="0000" style="width:120px;padding:10px 12px;border:1px solid #E4DCCD;border-radius:10px;background:#FFFDF9;font:500 16px 'Geist Mono';letter-spacing:.3em;outline:none">
+    </label>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onClick="{{ closeModals }}" style="border:0;border-radius:10px;padding:11px 16px;background:#EFE9DE;color:#1C1F1D;font:600 14px Geist">Cancelar</button>
+      <button onClick="{{ saveEmp }}" style="border:0;border-radius:10px;padding:11px 18px;background:#1F4D3B;color:#FFFDF9;font:600 14px Geist">Salvar</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<div style="position:fixed;left:50%;bottom:28px;z-index:80;transform:translate(-50%,{{ toastY }});opacity:{{ toastOpacity }};transition:all .3s cubic-bezier(.2,.8,.2,1);pointer-events:none;max-width:calc(100vw - 32px)">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;background:#1C1F1D;color:#F4EFE6;font:500 14px/1.35 Geist;box-shadow:0 14px 30px -12px rgba(0,0,0,.4)">
+    <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ toastDot }}"></span>{{ toastMsg }}
+  </div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;horaSimulada&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;08:30&quot;,&quot;11:40&quot;,&quot;15:30&quot;,&quot;23:50&quot;],&quot;default&quot;:&quot;11:40&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demonstração&quot;}}">
+const pad=n=>String(n).padStart(2,'0');
+const toMin=s=>{if(!s)return null;const p=s.split(':');return (+p[0])*60+(+p[1]);};
+const fmt=m=>m==null?'':pad(Math.floor(m/60)%24)+':'+pad(Math.floor(m)%60);
+const MONTHS=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const WD_FULL=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const WD=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const TODAY=new Date(2026,9,21);
+const dayKey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const keyDate=k=>{const p=k.split('-');return new Date(+p[0],+p[1]-1,+p[2]);};
+const shortD=d=>pad(d.getDate())+'/'+pad(d.getMonth()+1);
+const TODAY_KEY=dayKey(TODAY);
+const CATS=['Limpeza','Estoque','Organização','Cozinha','Atendimento','Equipamentos'];
+const CAT_TONE={'Limpeza':'#2F6F8F','Estoque':'#8A5A12','Organização':'#5B4B8A','Cozinha':'#B2462A','Atendimento':'#1F4D3B','Equipamentos':'#4A5560'};
+const GROUPS=['Salão','Cozinha','Bar','Limpeza','Gerência'];
+const PERIODS=[['daily','Diariamente'],['weekdays','Dias específicos'],['weekly','Semanalmente'],['ondemand','Sob demanda']];
+const ST={done:{l:'Concluído',fg:'#2F7D4F',bg:'#E1F0E5'},pending:{l:'Pendente',fg:'#5E5D57',bg:'#EFE9DE'},late:{l:'Atrasado',fg:'#B3261E',bg:'#F9E0DD'},progress:{l:'Em andamento',fg:'#8A5A12',bg:'#FBEFD9'}};
+const ini=n=>n.trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+const first=n=>n.trim().split(/\s+/)[0];
+const TONES=['#C2502F','#2F6F8F','#8A5A12','#5B4B8A','#1F4D3B','#4A5560','#9C3B54'];
+const sw=on=>({bg:on?'#1F4D3B':'#CFC6B6',x:on?'19px':'3px'});
+const chip=on=>({bg:on?'#1F4D3B':'#FFFDF9',fg:on?'#FFFDF9':'#1C1F1D',border:on?'#1F4D3B':'#E4DCCD'});
+
+const EMP=[
+ {id:'e1',name:'João Silva',role:'Garçom',group:'Salão',pin:'1111',tone:'#C2502F'},
+ {id:'e2',name:'Ana Costa',role:'Garçonete',group:'Salão',pin:'2222',tone:'#2F6F8F'},
+ {id:'e3',name:'Carlos Mendes',role:'Cozinheiro',group:'Cozinha',pin:'3333',tone:'#8A5A12'},
+ {id:'e4',name:'Beatriz Rocha',role:'Auxiliar de cozinha',group:'Cozinha',pin:'4444',tone:'#5B4B8A'},
+ {id:'e5',name:'Rafael Lima',role:'Bartender',group:'Bar',pin:'5555',tone:'#1F4D3B'},
+ {id:'e7',name:'Diego Souza',role:'Auxiliar de limpeza',group:'Limpeza',pin:'7777',tone:'#4A5560'},
+ {id:'e6',name:'Marina Alves',role:'Gerente',group:'Gerência',pin:'1234',tone:'#9C3B54',admin:true},
+ {id:'e8',name:'Paula Nunes',role:'Garçonete',group:'Salão',pin:'8888',tone:'#6B6A63',active:false},
+];
+const ITEMS=[
+['i1','Conferir organização das mesas','Mesas alinhadas, cadeiras posicionadas e toalhas sem manchas.','Organização',true,false],
+['i2','Verificar guardanapos','Repor os porta-guardanapos de todas as mesas.','Atendimento',false,false],
+['i3','Conferir talheres','Talheres limpos e polidos para 80 lugares.','Atendimento',true,true],
+['i4','Verificar limpeza do salão','Piso, vidros e banheiros de clientes.','Limpeza',true,true],
+['i5','Conferir disponibilidade de arroz','Mínimo de 2 sacos de 5 kg no estoque seco.','Estoque',false,true],
+['i6','Verificar funcionamento dos equipamentos','Forno, chapa, fritadeira e máquina de café.','Equipamentos',true,true],
+['i7','Ligar exaustores e coifas','','Equipamentos',true,false],
+['i8','Conferir temperatura das câmaras frias','Resfriados até 5 °C, congelados até −18 °C. Anote as leituras.','Equipamentos',true,true],
+['i9','Verificar validade dos perecíveis','Separar itens que vencem em até 2 dias.','Estoque',true,true],
+['i10','Separar mise en place do almoço','Conforme a ficha do prato do dia.','Cozinha',false,false],
+['i11','Higienizar bancadas de preparo','Álcool 70% após a limpeza com detergente.','Limpeza',true,false],
+['i12','Conferir estoque de bebidas','Refrigerantes, águas, cervejas e sucos.','Estoque',false,true],
+['i13','Repor gelo no bar','','Estoque',false,false],
+['i14','Conferir cardápios e displays','Cardápios limpos e sem páginas danificadas.','Organização',false,false],
+['i15','Testar máquinas de cartão','Ligar, conferir bateria e conexão.','Equipamentos',true,false],
+['i16','Retirar lixo e recicláveis','','Limpeza',false,false],
+['i17','Desligar equipamentos de cocção','','Equipamentos',true,false],
+['i18','Fechar registro de gás','','Equipamentos',true,false],
+['i19','Lavar e guardar utensílios','','Cozinha',false,false],
+['i20','Conferir caixa e sangria','Valor final conferido com o relatório do PDV.','Organização',true,true],
+['i21','Trancar portas e acionar alarme','','Organização',true,false],
+['i22','Confirmar entrega de hortifrúti','Conferir nota fiscal, peso e qualidade.','Estoque',true,true],
+['i23','Limpar filtros da coifa','Desmontar, desengordurar e secar.','Limpeza',true,false],
+['i24','Abastecer produtos de limpeza','','Estoque',false,false,false],
+['i25','Conferir reservas do dia','Separar as mesas reservadas com placa.','Atendimento',false,true],
+['i26','Recolher e higienizar cardápios','','Limpeza',false,false],
+].map(a=>({id:a[0],name:a[1],desc:a[2],cat:a[3],required:a[4],allowNote:a[5],active:a[6]!==false}));
+const CLS=[
+ {id:'c1',name:'Abertura do restaurante',desc:'Preparação do salão antes da abertura das portas.',items:['i1','i2','i3','i4','i5','i6'],time:'10:30',roles:['Salão']},
+ {id:'c2',name:'Organização do salão',desc:'Ajustes finais antes do almoço.',items:['i14','i25','i15'],time:'11:30',roles:['Salão']},
+ {id:'c4',name:'Abertura da cozinha',desc:'',items:['i7','i8','i11','i10','i6'],time:'10:00',emps:['e4']},
+ {id:'c3',name:'Conferência de estoque',desc:'Estoque seco, câmaras e bebidas.',items:['i5','i9','i12','i22','i8'],time:'11:00',emps:['e3']},
+ {id:'c6',name:'Abertura do bar',desc:'',items:['i12','i13','i15'],time:'11:00',emps:['e5']},
+ {id:'c9',name:'Limpeza geral',desc:'',items:['i4','i16','i11'],time:'09:30',roles:['Limpeza']},
+ {id:'c8',name:'Limpeza da coifa',desc:'Limpeza profunda semanal.',items:['i23','i11'],time:'15:00',period:'weekly',days:[3],emps:['e7']},
+ {id:'c5',name:'Fechamento do salão',desc:'Deixar o salão pronto para o dia seguinte.',items:['i26','i16','i1'],time:'23:30',roles:['Salão']},
+ {id:'c7',name:'Fechamento do restaurante',desc:'',items:['i17','i18','i19','i20','i21'],time:'23:45',emps:['e6']},
+ {id:'c10',name:'Recebimento de compras',desc:'Usar sempre que chegar mercadoria.',items:['i22','i9','i5'],time:'',period:'ondemand',roles:['Cozinha']},
+ {id:'c11',name:'Conferência da adega',desc:'',items:['i12','i9'],time:'16:00',period:'weekdays',days:[1,4],emps:['e5']},
+];
+const SEED=[
+ ['c1','e1','i1','09:52'],['c1','e1','i2','09:58'],['c1','e1','i3','10:05'],['c1','e1','i4','10:12'],['c1','e1','i5','10:20','Restam 3 sacos de 5 kg.'],
+ ['c2','e1','i14','10:48'],['c2','e1','i25','11:02'],['c2','e1','i15','11:15'],
+ ['c1','e2','i1','09:40'],['c1','e2','i2','09:44'],['c1','e2','i3','09:50'],['c1','e2','i4','09:57'],['c1','e2','i5','10:03'],['c1','e2','i6','10:11'],
+ ['c2','e2','i14','10:55'],
+ ['c4','e4','i7','08:50'],['c4','e4','i8','08:55','Câmara 1: 3 °C · Câmara 2: −19 °C'],['c4','e4','i11','09:10'],['c4','e4','i10','09:40'],['c4','e4','i6','09:52'],
+ ['c3','e3','i5','10:30'],['c3','e3','i9','10:36'],
+ ['c6','e5','i12','10:20'],['c6','e5','i13','10:35'],
+ ['c9','e7','i4','08:40'],['c9','e7','i16','09:00'],['c9','e7','i11','09:15'],
+];
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function normCl(c){return Object.assign({period:'daily',days:[],roles:[],emps:[],active:true,desc:''},c,{items:[...c.items],days:[...(c.days||[])],roles:[...(c.roles||[])],emps:[...(c.emps||[])]});}
+function applies(c,dow){if(!c.active)return false;if(c.period==='daily')return true;if(c.period==='ondemand')return false;return c.days.includes(dow);}
+function assignees(c,emps){return emps.filter(e=>e.active&&(c.emps.includes(e.id)||c.roles.includes(e.group)));}
+function periodLabel(c){if(c.period==='daily')return 'Todos os dias';if(c.period==='ondemand')return 'Sob demanda';if(c.period==='weekly')return 'Semanal · '+(c.days.length?WD_FULL[c.days[0]]:'sem dia');return c.days.length?c.days.slice().sort().map(d=>WD[d]).join(', '):'Nenhum dia';}
+
+function genPast(cls,emps,items){
+  const rnd=mulberry(11);const rows=[];
+  for(let d=7;d>=1;d--){
+    const date=addDays(TODAY,-d);const dk=dayKey(date);const dow=date.getDay();
+    cls.forEach(c=>{if(!applies(c,dow))return;const due=toMin(c.time);
+      assignees(c,emps).forEach(e=>{c.items.forEach((iid,idx)=>{const it=items.find(x=>x.id===iid);if(!it||!it.active)return;
+        const missed=rnd()<0.05;let at=null;
+        if(!missed){at=rnd()<0.08?due+5+Math.floor(rnd()*35):due-55+idx*7+Math.floor(rnd()*6);at=Math.min(1439,at);}
+        rows.push({date:dk,cid:c.id,cname:(c.id==='c1'&&d>=5)?'Abertura do salão':c.name,iid,iname:it.name,cat:it.cat,eid:e.id,ename:e.name,due,status:missed?'late':'done',at,note:''});
+      });});
+    });
+  }
+  return rows;
+}
+
+function initialState(){
+  const emps=EMP.map(e=>Object.assign({admin:false,active:true},e));
+  const items=ITEMS.map(i=>Object.assign({},i));
+  const cls=CLS.map(normCl);
+  const C=id=>cls.find(x=>x.id===id),I=id=>items.find(x=>x.id===id),E=id=>emps.find(x=>x.id===id);
+  const events=[];let n=1;const push=o=>events.push(Object.assign({id:n++},o));
+  const marks={};
+  SEED.forEach(s=>{const [c,e,i,t,note]=s;marks[c+'|'+e+'|'+i]={done:true,at:toMin(t),note:note||''};push({date:TODAY_KEY,time:toMin(t),cname:C(c).name,iname:I(i).name,eid:e,ename:E(e).name,action:'done',note:''});if(note)push({date:TODAY_KEY,time:toMin(t),cname:C(c).name,iname:I(i).name,eid:e,ename:E(e).name,action:'note',note});});
+  push({date:TODAY_KEY,time:640,cname:C('c3').name,iname:I('i12').name,eid:'e3',ename:E('e3').name,action:'done',note:''});
+  push({date:TODAY_KEY,time:652,cname:C('c3').name,iname:I('i12').name,eid:'e3',ename:E('e3').name,action:'undone',note:'Contagem divergente, vou recontar.'});
+  marks['c3|e3|i12']={done:false,undoneAt:652,note:''};
+  const past=genPast(cls,emps,items);
+  const d2=dayKey(addDays(TODAY,-2));
+  const r=past.find(x=>x.date===d2&&x.cid==='c1'&&x.eid==='e1'&&x.iid==='i3');
+  if(r){r.status='done';r.at=631;r.note='Faltavam 12 garfos; completado após a lavagem.';}
+  past.forEach(x=>{if(x.status==='done')push({date:x.date,time:x.at,cname:x.cname,iname:x.iname,eid:x.eid,ename:x.ename,action:'done',note:x.note});});
+  push({date:d2,time:602,cname:'Abertura do restaurante',iname:'Conferir talheres',eid:'e1',ename:'João Silva',action:'done',note:''});
+  push({date:d2,time:615,cname:'Abertura do restaurante',iname:'Conferir talheres',eid:'e1',ename:'João Silva',action:'undone',note:'Faltavam 12 garfos.'});
+  const d3=dayKey(addDays(TODAY,-3));
+  push({date:d3,time:668,cname:'Conferência de estoque',iname:'Verificar validade dos perecíveis',eid:'e3',ename:'Carlos Mendes',action:'note',note:'2 kg de tomate descartados.'});
+  let session=null;try{session=localStorage.getItem('casabrasa.session');}catch(e){}
+  if(!emps.find(e=>e.id===session&&e.active))session=null;
+  return {mode:'emp',empScreen:session?'resume':'identify',session,sessionSince:'09:31',pickEmp:null,pin:'',pinErr:'',remember:true,
+    runKey:null,runErr:'',noteKey:null,noteDraft:'',popKey:null,
+    emps,items,cls,marks,events,past,started:{},nextId:n,
+    adminAuthed:false,adminPin:'',adminErr:'',page:'dash',
+    f:{date:TODAY_KEY,emp:'all',cat:'all',cl:'all',status:'all'},selEmp:null,
+    itemQ:'',itemCat:'all',itemModal:null,empModal:null,
+    clSel:'c1',clDraft:normCl(cls[0]),clErr:'',pickQ:'',dragIdx:null,overIdx:null,
+    hf:{date:'all',emp:'all',action:'all',q:''},hLimit:40,
+    toast:null,toastOn:false,vw:typeof window!=='undefined'?window.innerWidth:1200};
+}
+
+class Component extends DCLogic {
+  state = initialState();
+  t0 = Date.now();
+  componentDidMount(){
+    this._rs=()=>this.setState({vw:window.innerWidth});window.addEventListener('resize',this._rs);
+    this._iv=setInterval(()=>this.forceUpdate(),20000);
+  }
+  componentWillUnmount(){window.removeEventListener('resize',this._rs);clearInterval(this._iv);clearTimeout(this._tt);}
+  now(){const b=toMin(this.props.horaSimulada||'11:40');return Math.min(1439,b+Math.floor((Date.now()-this.t0)/60000));}
+  toast(msg,kind){clearTimeout(this._tt);this.setState({toast:{msg,kind:kind||'ok'},toastOn:true});this._tt=setTimeout(()=>this.setState({toastOn:false}),3000);}
+  ev(o){this.setState(s=>({events:s.events.concat([Object.assign({id:s.nextId,date:TODAY_KEY},o)]),nextId:s.nextId+1}));}
+
+  rowsToday(){
+    const s=this.state,now=this.now(),out=[],dow=TODAY.getDay();
+    s.cls.forEach(c=>{const ap=applies(c,dow);const due=toMin(c.time);
+      assignees(c,s.emps).forEach(e=>{const key=c.id+'|'+e.id;if(!ap&&!(c.active&&s.started[key]))return;
+        c.items.forEach(iid=>{const it=s.items.find(x=>x.id===iid);if(!it||!it.active)return;const m=s.marks[key+'|'+iid];const done=!!(m&&m.done);
+          out.push({date:TODAY_KEY,cid:c.id,cname:c.name,iid,iname:it.name,cat:it.cat,eid:e.id,ename:e.name,due,status:done?'done':(due!=null&&now>due?'late':'pending'),at:done?m.at:null,note:m?m.note:'',undoneAt:m&&!m.done?m.undoneAt:null,required:it.required,allowNote:it.allowNote,desc:it.desc});
+        });
+      });
+    });
+    return out;
+  }
+  rowsFor(dk,rt){return dk===TODAY_KEY?rt:this.state.past.filter(r=>r.date===dk);}
+
+  // employee actions
+  pressPin(k){const s=this.state;let pin=s.pin;if(k==='del'){this.setState({pin:pin.slice(0,-1),pinErr:''});return;}if(pin.length>=4)return;pin+=k;
+    if(pin.length<4){this.setState({pin,pinErr:''});return;}
+    const e=s.emps.find(x=>x.id===s.pickEmp);
+    if(e&&e.pin===pin){this.setState({pin});setTimeout(()=>this.login(e.id),160);}
+    else{this.setState({pin});setTimeout(()=>this.setState({pin:'',pinErr:'PIN incorreto. Tente novamente.'}),220);}
+  }
+  login(id){const e=this.state.emps.find(x=>x.id===id);try{if(this.state.remember)localStorage.setItem('casabrasa.session',id);}catch(err){}
+    this.setState({session:id,sessionSince:fmt(this.now()),empScreen:'today',runKey:null,switchOpen:false});this.toast('Olá, '+first(e.name)+'! Para trocar, toque na sua foto.');}
+  switchEmp(){try{localStorage.removeItem('casabrasa.session');}catch(e){}this.setState({session:null,empScreen:'identify',runKey:null});}
+  toggleItem(cid,eid,iid){
+    const s=this.state,k=cid+'|'+eid+'|'+iid,m=s.marks[k],now=this.now();
+    const c=s.cls.find(x=>x.id===cid),it=s.items.find(x=>x.id===iid),e=s.emps.find(x=>x.id===eid);
+    const base={cname:c.name,iname:it.name,eid,ename:e.name,time:now};
+    if(m&&m.done){this.setState({marks:Object.assign({},s.marks,{[k]:Object.assign({},m,{done:false,undoneAt:now})}),popKey:k,runErr:''});this.ev(Object.assign({action:'undone',note:''},base));this.toast('Item desmarcado. A alteração foi registrada no histórico.','warn');}
+    else{this.setState({marks:Object.assign({},s.marks,{[k]:{done:true,at:now,note:m?m.note:''}}),popKey:k,runErr:''});this.ev(Object.assign({action:'done',note:''},base));}
+    clearTimeout(this._pt);this._pt=setTimeout(()=>this.setState({popKey:null}),220);
+  }
+  saveNote(){const s=this.state,k=s.noteKey;if(!k)return;const [cid,eid,iid]=k.split('|');const m=s.marks[k]||{done:false,note:''};const txt=s.noteDraft.trim();
+    const c=s.cls.find(x=>x.id===cid),it=s.items.find(x=>x.id===iid),e=s.emps.find(x=>x.id===eid);
+    this.setState({marks:Object.assign({},s.marks,{[k]:Object.assign({},m,{note:txt})}),noteKey:null,noteDraft:''});
+    if(txt){this.ev({action:'note',note:txt,cname:c.name,iname:it.name,eid,ename:e.name,time:this.now()});this.toast('Observação salva.');}
+  }
+  finishRun(rows){const req=rows.filter(r=>r.required&&r.status!=='done');
+    if(req.length){this.setState({runErr:'Faltam '+req.length+(req.length>1?' itens obrigatórios: ':' item obrigatório: ')+req.map(r=>r.iname).join(', ')+'.'});return;}
+    const pend=rows.filter(r=>r.status!=='done').length;
+    this.setState({empScreen:'today',runKey:null,runErr:''});
+    this.toast(pend?'Checklist salvo. '+pend+(pend>1?' itens continuam pendentes.':' item continua pendente.'):'Checklist concluído! Tudo registrado em seu nome.',pend?'warn':'ok');
+  }
+
+  pressAdmin(k){const s=this.state;let pin=s.adminPin;if(k==='del'){this.setState({adminPin:pin.slice(0,-1)});return;}if(pin.length>=4)return;pin+=k;
+    if(pin.length<4){this.setState({adminPin:pin,adminErr:''});return;}
+    const ok=s.emps.find(e=>e.admin&&e.active&&e.pin===pin);
+    this.setState({adminPin:pin});
+    setTimeout(()=>{if(ok){this.setState({adminAuthed:true,adminPin:''});this.toast('Acesso liberado · '+ok.name);}else this.setState({adminPin:'',adminErr:'PIN sem permissão de gestor.'});},200);
+  }
+
+  // checklist editor
+  setDraft(p){this.setState(s=>({clDraft:Object.assign({},s.clDraft,p),clErr:''}));}
+  moveItem(from,to){const s=this.state;const it=[...s.clDraft.items];if(to<0||to>=it.length||from===to)return;const [x]=it.splice(from,1);it.splice(to,0,x);this.setDraft({items:it});}
+  saveCl(){const s=this.state,d=s.clDraft;
+    if(!d.name.trim())return this.setState({clErr:'Dê um nome ao checklist.'});
+    if(!d.items.length)return this.setState({clErr:'Adicione pelo menos um item.'});
+    if(!d.roles.length&&!d.emps.length)return this.setState({clErr:'Associe pelo menos uma função ou pessoa.'});
+    if((d.period==='weekdays'||d.period==='weekly')&&!d.days.length)return this.setState({clErr:'Escolha os dias da semana.'});
+    if(d.period!=='ondemand'&&!d.time)return this.setState({clErr:'Defina o horário esperado de execução.'});
+    let cls,id=d.id;
+    if(!id){id='c'+(Date.now()%100000);cls=s.cls.concat([Object.assign({},d,{id,name:d.name.trim()})]);}
+    else cls=s.cls.map(c=>c.id===id?Object.assign({},d,{name:d.name.trim()}):c);
+    this.setState({cls,clSel:id,clDraft:normCl(cls.find(c=>c.id===id)),clErr:''});
+    this.toast(d.id?'Checklist atualizado. O histórico anterior foi preservado.':'Checklist criado e atribuído à equipe.');
+  }
+  saveItem(){const s=this.state,m=s.itemModal,d=m.d;const name=d.name.trim();
+    if(!name)return this.setState({itemModal:Object.assign({},m,{err:'Informe o nome do item.'})});
+    if(s.items.some(i=>i.id!==d.id&&i.name.toLowerCase()===name.toLowerCase()))return this.setState({itemModal:Object.assign({},m,{err:'Já existe um item com esse nome.'})});
+    let items;if(d.id)items=s.items.map(i=>i.id===d.id?Object.assign({},d,{name}):i);
+    else items=s.items.concat([Object.assign({},d,{name,id:'i'+(s.items.length+1)+'x'+(Date.now()%1000)})]);
+    this.setState({items,itemModal:null});this.toast(d.id?'Item atualizado.':'Item cadastrado. Já pode ser usado em qualquer checklist.');
+  }
+  saveEmp(){const s=this.state,m=s.empModal,d=m.d;
+    if(!d.name.trim()||!d.role.trim())return this.setState({empModal:Object.assign({},m,{err:'Preencha nome e cargo.'})});
+    if(!/^\d{4}$/.test(d.pin))return this.setState({empModal:Object.assign({},m,{err:'O PIN deve ter 4 números.'})});
+    if(s.emps.some(e=>e.id!==d.id&&e.pin===d.pin))return this.setState({empModal:Object.assign({},m,{err:'Esse PIN já está em uso.'})});
+    let emps;if(d.id)emps=s.emps.map(e=>e.id===d.id?Object.assign({},e,d,{admin:d.group==='Gerência'}):e);
+    else emps=s.emps.concat([Object.assign({},d,{id:'e'+(Date.now()%100000),active:true,admin:d.group==='Gerência',tone:TONES[s.emps.length%TONES.length]})]);
+    this.setState({emps,empModal:null});this.toast(d.id?'Funcionário atualizado.':'Funcionário cadastrado.');
+  }
+
+  renderVals(){
+    const s=this.state,now=this.now(),rt=this.rowsToday();
+    const set=p=>this.setState(p);
+    const isEmp=s.mode==='emp',wide=s.vw>=900;
+    const empById=id=>s.emps.find(e=>e.id===id)||{name:'—',tone:'#6B6A63',role:''};
+    const keypad=fn=>['1','2','3','4','5','6','7','8','9','','0','del'].map(k=>({label:k==='del'?'⌫':k,vis:k===''?'hidden':'visible',press:()=>{if(k)fn(k);}}));
+    const dots=(pin,err)=>[0,1,2,3].map(i=>({bg:i<pin.length?(err?'#B3261E':'#1F4D3B'):'transparent',border:err?'#B3261E':'#1F4D3B'}));
+    const meE=s.session?s.emps.find(e=>e.id===s.session):null;
+    const me=meE?Object.assign({},meE,{first:first(meE.name),initials:ini(meE.name)}):{first:'',initials:'',tone:'#6B6A63',name:'',role:'',group:''};
+    const pickE=s.emps.find(e=>e.id===s.pickEmp);
+    const pickEmp=pickE?{first:first(pickE.name),initials:ini(pickE.name),tone:pickE.tone,pin:pickE.pin}:{first:'',initials:'',tone:'#6B6A63',pin:''};
+
+    // Meu dia
+    const mine=meE?rt.filter(r=>r.eid===meE.id):[];
+    const groups={};mine.forEach(r=>{(groups[r.cid]=groups[r.cid]||[]).push(r);});
+    const cards=Object.keys(groups).map(cid=>{const g=groups[cid],c=s.cls.find(x=>x.id===cid);const total=g.length,done=g.filter(r=>r.status==='done').length,late=g.some(r=>r.status==='late');
+      const st=done===total?'done':late?'late':done>0?'progress':'pending';
+      return {key:cid+'|'+meE.id,name:c.name,meta:(c.time?'Até '+c.time:'Sob demanda')+' · '+total+' itens',done,total,pct:Math.round(done/total*100)+'%',stLabel:ST[st].l,fg:ST[st].fg,bg:ST[st].bg,bar:st==='late'?'#C2502F':st==='done'?'#2F7D4F':'#1F4D3B',
+        open:()=>set({runKey:cid+'|'+meE.id,empScreen:'run',runErr:'',noteKey:null}),o:(st==='late'?0:st==='done'?2:1)*2000+(toMin(c.time)||1500)};
+    }).sort((a,b)=>a.o-b.o);
+    const mDone=mine.filter(r=>r.status==='done').length,mLate=mine.filter(r=>r.status==='late').length,mPct=mine.length?mDone/mine.length:0;
+    const onDemand=meE?s.cls.filter(c=>c.active&&c.period==='ondemand'&&assignees(c,s.emps).some(e=>e.id===meE.id)&&!s.started[c.id+'|'+meE.id]).map(c=>({name:c.name,meta:c.items.length+' itens · '+c.desc,start:()=>{const k=c.id+'|'+meE.id;this.setState(st=>({started:Object.assign({},st.started,{[k]:true}),runKey:k,empScreen:'run',runErr:''}));}})):[];
+    const my={total:mine.length,done:mDone,pending:mine.length-mDone,late:mLate,hasLate:mLate>0,pct:Math.round(mPct*100)+'%',ringOffset:(213.6*(1-mPct)).toFixed(1),cards,empty:cards.length===0,onDemand,hasOnDemand:onDemand.length>0};
+
+    // execução
+    const station=s.device==='station';
+    const runKeyEff=s.runKey||(station&&cards[0]?cards[0].key:null);
+    cards.forEach(c=>{const on=station&&c.key===runKeyEff;c.selBorder=on?'2px solid #1F4D3B':'1px solid #E4DCCD';c.selBg=on?'#F6F9F6':'#FFFDF9';});
+    const stationTeam=s.emps.filter(e=>e.active).map(e=>{const rr=rt.filter(r=>r.eid===e.id);const d=rr.filter(r=>r.status==='done').length,l=rr.filter(r=>r.status==='late').length;const cur=meE&&e.id===meE.id;
+      return {name:first(e.name)+' '+e.name.split(' ').slice(-1)[0][0]+'.',role:e.role,initials:ini(e.name),tone:e.tone,prog:rr.length?d+'/'+rr.length:'—',pct:rr.length?Math.round(d/rr.length*100)+'%':'0%',bar:l?'#C2502F':'#1F4D3B',
+        sub:cur?'Usando agora':l?l+' atrasada'+(l>1?'s':''):e.role,subFg:cur?'#1F4D3B':l?'#B3261E':'#6B6A63',bg:cur?'#EEF4EF':'transparent',border:cur?'#1F4D3B':'transparent',
+        pick:()=>{if(cur)return;this.setState({runKey:null,noteKey:null,runErr:''});this.login(e.id);}};});
+    let run={name:'',meta:'',done:0,total:0,pct:'0%',bar:'#1F4D3B',items:[],allDone:false,finishLabel:''};let runRows=[];
+    if(runKeyEff&&meE){const [cid,eid]=runKeyEff.split('|');const c=s.cls.find(x=>x.id===cid);runRows=rt.filter(r=>r.cid===cid&&r.eid===eid);
+      const done=runRows.filter(r=>r.status==='done').length,late=runRows.some(r=>r.status==='late');const e=empById(eid);
+      run={name:c?c.name:'',meta:c&&c.time?('Concluir até '+c.time+(late?' · com atraso':'')):'Sob demanda',done,total:runRows.length,pct:(runRows.length?Math.round(done/runRows.length*100):0)+'%',bar:late?'#C2502F':done===runRows.length?'#2F7D4F':'#1F4D3B',allDone:runRows.length>0&&done===runRows.length,finishLabel:runRows.length>0&&done===runRows.length?'Voltar para Meu dia':'Concluir checklist',
+        items:runRows.map(r=>{const k=cid+'|'+eid+'|'+r.iid,d=r.status==='done',late=r.status==='late';return {name:r.iname,desc:r.desc,required:r.required,late,
+          doneMeta:d?first(e.name)+' · '+fmt(r.at):'',initials:ini(e.name),tone:e.tone,undoneLabel:!d&&r.undoneAt!=null?'Desmarcado às '+fmt(r.undoneAt)+' · registrado no histórico':'',
+          note:r.note,showNoteBtn:r.allowNote&&s.noteKey!==k,noteBtn:r.note?'Editar observação':'Adicionar observação',noteOpen:s.noteKey===k,
+          checkBg:d?'#1F4D3B':'#FFFDF9',checkBorder:d?'#1F4D3B':late?'#B3261E':'#BDB4A4',checkOpacity:d?1:0,scale:s.popKey===k?1.15:1,nameColor:d?'#6B6A63':'#1C1F1D',
+          cardBg:d?'#F5F9F5':'#FFFDF9',cardBorder:d?'#CFE3D5':late?'#EDC2BC':'#E4DCCD',
+          toggle:()=>this.toggleItem(cid,eid,r.iid),openNote:()=>set({noteKey:k,noteDraft:r.note||''})};})};
+    }
+    const myLog=meE?s.events.filter(x=>x.date===TODAY_KEY&&x.eid===meE.id).sort((a,b)=>b.time-a.time||b.id-a.id).map(x=>({time:fmt(x.time),iname:x.iname,cname:x.cname,label:x.action==='done'?'Concluído':x.action==='undone'?'Desmarcado':'Observação',fg:x.action==='done'?'#2F7D4F':x.action==='undone'?'#8A5A12':'#2F6F8F',bg:x.action==='done'?'#E1F0E5':x.action==='undone'?'#FBEFD9':'#E2EDF2'})):[];
+    const tab=s.empScreen;
+    const tabs=[['today','Hoje'],['done','Atividades'],['profile','Perfil']].map(([id,l])=>({label:l,go:()=>set({empScreen:id}),fg:tab===id?'#1F4D3B':'#6B6A63',bar:tab===id?'#1F4D3B':'transparent'}));
+
+    // admin
+    const dateOpts=[{v:TODAY_KEY,l:'Hoje · '+shortD(TODAY)}].concat([1,2,3,4,5,6,7].map(d=>{const x=addDays(TODAY,-d);return {v:dayKey(x),l:(d===1?'Ontem':WD[x.getDay()])+' · '+shortD(x)};}));
+    const empOpts=[{v:'all',l:'Todos os funcionários'}].concat(s.emps.map(e=>({v:e.id,l:e.name})));
+    const catOpts=[{v:'all',l:'Todas as categorias'}].concat(CATS.map(c=>({v:c,l:c})));
+    const clOpts=[{v:'all',l:'Todos os checklists'}].concat(s.cls.map(c=>({v:c.id,l:c.name})));
+    const statusOpts=[{v:'all',l:'Todos os status'},{v:'done',l:'Concluídas'},{v:'pending',l:'Pendentes'},{v:'late',l:'Atrasadas'}];
+    const f=s.f;const isToday=f.date===TODAY_KEY;
+    const flt=(rows,skipStatus)=>rows.filter(r=>(f.emp==='all'||r.eid===f.emp)&&(f.cat==='all'||r.cat===f.cat)&&(f.cl==='all'||r.cid===f.cl)&&(skipStatus||f.status==='all'||r.status===f.status));
+    const dayRows=this.rowsFor(f.date,rt);const fr=flt(dayRows);
+    const tot=fr.length,dn=fr.filter(r=>r.status==='done').length,pe=fr.filter(r=>r.status==='pending').length,la=fr.filter(r=>r.status==='late').length;
+    const pctOf=(a,b)=>b?Math.round(a/b*100)+'%':'0%';
+    const kp=(label,value,sub,o)=>Object.assign({label,value,sub,bg:'#FFFDF9',border:'#E4DCCD',fg:'#1C1F1D',labelFg:'#6B6A63'},o||{});
+    const kpis=[kp('Tarefas previstas',tot,fr.length?new Set(fr.map(r=>r.cid+r.eid)).size+' checklists em execução':'—'),kp('Concluídas',dn,pctOf(dn,tot)+' do total',{fg:'#2F7D4F'}),kp('Pendentes',pe,'dentro do prazo'),kp('Atrasadas',la,isToday?'fora do horário previsto':'não realizadas',la?{bg:'#F9E0DD',border:'#EDC2BC',fg:'#B3261E',labelFg:'#8E1F18'}:{}),kp('Conclusão',pctOf(dn,tot),'percentual do dia',{bg:'#1F4D3B',border:'#1F4D3B',fg:'#FFFDF9',labelFg:'#D5E3DA'})];
+    const byCl={};fr.forEach(r=>{const g=byCl[r.cid]=byCl[r.cid]||{name:r.cname,done:0,late:0,total:0};g.total++;if(r.status==='done')g.done++;if(r.status==='late')g.late++;});
+    const clBars=Object.values(byCl).map(g=>Object.assign(g,{wDone:pctOf(g.done,g.total),wLate:pctOf(g.late,g.total),p:g.done/g.total})).sort((a,b)=>a.p-b.p);
+    const lateAll=fr.filter(r=>r.status==='late').sort((a,b)=>a.due-b.due);
+    const lateList=lateAll.slice(0,6).map(r=>{const e=empById(r.eid);return {iname:r.iname,cname:r.cname,ename:first(r.ename),initials:ini(r.ename),tone:e.tone,due:'previsto '+fmt(r.due),delay:isToday?'+'+(now-r.due)+' min':'não feito',open:()=>set({page:'team',selEmp:r.eid})};});
+    const byE={};fr.forEach(r=>{if(r.status==='done')return;const g=byE[r.eid]=byE[r.eid]||{pend:0,late:0};g.pend++;if(r.status==='late')g.late++;});
+    const empPend=Object.keys(byE).map(id=>{const e=empById(id);return {name:e.name,role:e.role,initials:ini(e.name),tone:e.tone,pend:byE[id].pend,late:byE[id].late,open:()=>set({page:'team',selEmp:id})};}).sort((a,b)=>b.late-a.late||b.pend-a.pend);
+    const catBars=CATS.map(c=>{const g=fr.filter(r=>r.cat===c);return {name:c,tone:CAT_TONE[c],pct:pctOf(g.filter(r=>r.status==='done').length,g.length),n:g.length};}).filter(b=>b.n>0);
+    const trend=[7,6,5,4,3,2,1,0].map(d=>{const x=addDays(TODAY,-d),k=dayKey(x);const rr=flt(this.rowsFor(k,rt),true);const p=rr.length?rr.filter(r=>r.status==='done').length/rr.length:0;return {label:d===0?'Hoje':WD[x.getDay()],pct:Math.round(p*100)+'%',h:Math.max(4,Math.round(p*100))+'px',color:k===f.date?'#C2502F':'#1F4D3B'};});
+    const dLabelDate=keyDate(f.date);
+    const dash={dateLabel:WD_FULL[dLabelDate.getDay()]+', '+dLabelDate.getDate()+' de '+MONTHS[dLabelDate.getMonth()]+(isToday?' · agora '+fmt(now):''),kpis,clBars,lateList,lateCount:lateAll.length,noLate:lateAll.length===0,empPend,noPend:empPend.length===0,catBars,trend,empty:tot===0,filtered:f.emp!=='all'||f.cat!=='all'||f.cl!=='all'||f.status!=='all'};
+    const setF=k=>e=>{const v=e.target.value;this.setState(st=>({f:Object.assign({},st.f,{[k]:v})}));};
+    const lateToday=rt.filter(r=>r.status==='late').length;
+    const nav=[['dash','Painel',lateToday],['team','Equipe',0],['items','Itens',0],['cls','Checklists',0],['hist','Histórico',0]].map(([id,l,b])=>({label:l,badge:b||0,go:()=>set({page:id}),bg:s.page===id?(wide?'#E3ECE6':'#1F4D3B'):'transparent',fg:s.page===id?(wide?'#1F4D3B':'#FFFDF9'):'#3B3D3A'}));
+
+    // equipe
+    const teamRows=s.emps.slice().sort((a,b)=>(b.active?1:0)-(a.active?1:0)).map(e=>{const rr=dayRows.filter(r=>r.eid===e.id);const d=rr.filter(r=>r.status==='done').length,l=rr.filter(r=>r.status==='late').length;const p=rr.length?d/rr.length:0;
+      return {name:e.name,role:e.role,inactive:e.active?'':' · Inativo',initials:ini(e.name),tone:e.tone,total:rr.length,done:d,pend:rr.length-d,late:l,pct:rr.length?Math.round(p*100)+'%':'—',bar:l?'#C2502F':'#1F4D3B',bg:s.selEmp===e.id?'#EEF4EF':'transparent',opacity:e.active?1:.55,
+        select:()=>set({selEmp:e.id}),edit:ev=>{ev.stopPropagation();set({empModal:{d:{id:e.id,name:e.name,role:e.role,group:e.group,pin:e.pin},err:''}});}};});
+    let sel=null;const se=s.emps.find(e=>e.id===s.selEmp);
+    if(se){const rr=dayRows.filter(r=>r.eid===se.id);const g={};rr.forEach(r=>{(g[r.cid]=g[r.cid]||[]).push(r);});const d=rr.filter(r=>r.status==='done').length;
+      sel={first:first(se.name),role:se.role,initials:ini(se.name),tone:se.tone,total:rr.length,done:d,pend:rr.length-d,empty:rr.length===0,activeLabel:se.active?'Desativar':'Reativar',
+        toggleActive:()=>{this.setState(st=>({emps:st.emps.map(x=>x.id===se.id?Object.assign({},x,{active:!x.active}):x)}));this.toast(se.active?se.name+' foi desativado. O histórico dele continua disponível.':se.name+' foi reativado.',se.active?'warn':'ok');},
+        groups:Object.keys(g).map(cid=>({cname:g[cid][0].cname,due:g[cid][0].due!=null?'até '+fmt(g[cid][0].due):'sob demanda',list:g[cid].map(r=>({iname:r.iname,note:r.note,fg:ST[r.status].fg,time:r.status==='done'?'✓ '+fmt(r.at):r.status==='late'?(isToday?'atrasado':'não feito'):'pendente'}))}))};}
+    const team={rows:teamRows,sel,noSel:!sel};
+
+    // itens
+    const q=s.itemQ.trim().toLowerCase();
+    const itemRows=s.items.filter(i=>(s.itemCat==='all'||i.cat===s.itemCat)&&(!q||i.name.toLowerCase().includes(q))).map(i=>{const used=s.cls.filter(c=>c.items.includes(i.id));const w=sw(i.active);
+      return {name:i.name,desc:i.desc||'Sem descrição',cat:i.cat,catTone:CAT_TONE[i.cat],required:i.required?'Sim':'—',allowNote:i.allowNote?'Permite':'—',used:used.length?used.length+(used.length>1?' checklists':' checklist'):'Não utilizado',usedNames:used.map(c=>c.name).join(', '),
+        statusLabel:i.active?'Ativo':'Inativo',swBg:w.bg,swX:i.active?'16px':'2px',opacity:i.active?1:.5,bg:'transparent',
+        toggle:()=>{this.setState(st=>({items:st.items.map(x=>x.id===i.id?Object.assign({},x,{active:!x.active}):x)}));this.toast(i.active?'Item desativado. Ele deixa de aparecer nos checklists a partir de hoje.':'Item reativado.',i.active?'warn':'ok');},
+        edit:()=>set({itemModal:{d:Object.assign({},i),err:''}})};});
+    const catChips=[['all','Todas']].concat(CATS.map(c=>[c,c])).map(([v,l])=>Object.assign({label:l,pick:()=>set({itemCat:v})},chip(s.itemCat===v)));
+    let itemModal=null;if(s.itemModal){const m=s.itemModal,d=m.d;const upd=p=>this.setState(st=>({itemModal:Object.assign({},st.itemModal,{d:Object.assign({},st.itemModal.d,p),err:''})}));
+      itemModal={title:d.id?'Editar item':'Novo item',d,nameErr:m.err,nameBorder:m.err?'#B3261E':'#E4DCCD',setName:e=>upd({name:e.target.value}),setDesc:e=>upd({desc:e.target.value}),
+        cats:CATS.map(c=>Object.assign({label:c,pick:()=>upd({cat:c})},chip(d.cat===c))),
+        toggles:[['required','Obrigatório','O checklist só pode ser concluído com este item feito.'],['allowNote','Permitir observação','O funcionário pode escrever um comentário.'],['active','Ativo','Itens inativos não aparecem para a equipe.']].map(([k,l,h])=>{const w=sw(d[k]);return {label:l,hint:h,bg:w.bg,x:w.x,toggle:()=>upd({[k]:!d[k]})};})};}
+    let empModal=null;if(s.empModal){const m=s.empModal,d=m.d;const upd=p=>this.setState(st=>({empModal:Object.assign({},st.empModal,{d:Object.assign({},st.empModal.d,p),err:''})}));
+      empModal={title:d.id?'Editar funcionário':'Novo funcionário',d,err:m.err,setName:e=>upd({name:e.target.value}),setRole:e=>upd({role:e.target.value}),setPin:e=>upd({pin:e.target.value.replace(/\D/g,'').slice(0,4)}),
+        groups:GROUPS.map(g=>Object.assign({label:g,pick:()=>upd({group:g})},chip(d.group===g)))};}
+
+    // checklists
+    const clList=s.cls.map(c=>{const a=assignees(c,s.emps);const on=s.clSel===c.id;return {name:c.name,meta:periodLabel(c)+(c.time&&c.period!=='ondemand'?' · até '+c.time:'')+' · '+c.items.length+' itens',who:a.length?a.map(e=>first(e.name)).join(', '):'Sem responsáveis',
+      stLabel:c.active?'Ativo':'Inativo',stFg:c.active?'#2F7D4F':'#6B6A63',bg:on?'#FFFDF9':'transparent',border:on?'#1F4D3B':'#E4DCCD',opacity:c.active?1:.6,
+      select:()=>set({clSel:c.id,clDraft:normCl(c),clErr:'',pickQ:''})};});
+    let cl=null;const D=s.clDraft;
+    if(D){const w=sw(D.active);const res=assignees(D,s.emps);const pq=s.pickQ.trim().toLowerCase();
+      cl={title:D.id?'Editar checklist':'Novo checklist',d:D,count:D.items.length,noRows:D.items.length===0,swBg:w.bg,swX:w.x,activeLabel:D.active?'Ativo':'Inativo',toggleActive:()=>this.setDraft({active:!D.active}),
+        nameBorder:s.clErr&&!D.name.trim()?'#B3261E':'#E4DCCD',setName:e=>this.setDraft({name:e.target.value}),setDesc:e=>this.setDraft({desc:e.target.value}),setTime:e=>this.setDraft({time:e.target.value}),
+        periods:PERIODS.map(([v,l])=>Object.assign({label:l,pick:()=>this.setDraft({period:v,days:v==='weekly'?D.days.slice(0,1):D.days})},chip(D.period===v))),
+        showDays:D.period==='weekdays'||D.period==='weekly',showTime:D.period!=='ondemand',daysHint:D.period==='weekly'?'Escolha um dia':'Escolha um ou mais dias',
+        dayChips:[1,2,3,4,5,6,0].map(d=>Object.assign({label:WD[d],pick:()=>{let days;if(D.period==='weekly')days=[d];else days=D.days.includes(d)?D.days.filter(x=>x!==d):D.days.concat([d]);this.setDraft({days});}},chip(D.days.includes(d)))),
+        roleChips:GROUPS.map(g=>Object.assign({label:g,pick:()=>this.setDraft({roles:D.roles.includes(g)?D.roles.filter(x=>x!==g):D.roles.concat([g])})},chip(D.roles.includes(g)))),
+        empChips:s.emps.filter(e=>e.active).map(e=>Object.assign({label:first(e.name),pick:()=>this.setDraft({emps:D.emps.includes(e.id)?D.emps.filter(x=>x!==e.id):D.emps.concat([e.id])})},chip(D.emps.includes(e.id)))),
+        resolved:res.length?'Aparecerá no “Meu dia” de: '+res.map(e=>e.name).join(', ')+'.':'Ninguém receberá este checklist ainda.',
+        rows:D.items.map((iid,idx)=>{const it=s.items.find(x=>x.id===iid)||{name:'?',cat:'Limpeza'};const over=s.overIdx===idx&&s.dragIdx!==null&&s.dragIdx!==idx;
+          return {n:idx+1,name:it.name,cat:it.cat,catTone:CAT_TONE[it.cat],req:it.required?' · Obrigatório':'',border:over?'#1F4D3B':'#E4DCCD',bg:over?'#EEF4EF':'#FFFDF9',opacity:s.dragIdx===idx?.4:1,
+            onDragStart:e=>{e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(idx));}catch(x){}set({dragIdx:idx});},
+            onDragOver:e=>{e.preventDefault();if(s.overIdx!==idx)set({overIdx:idx});},
+            onDrop:e=>{e.preventDefault();const from=this.state.dragIdx;this.setState({dragIdx:null,overIdx:null});if(from!==null)this.moveItem(from,idx);},
+            onDragEnd:()=>set({dragIdx:null,overIdx:null}),
+            up:()=>this.moveItem(idx,idx-1),down:()=>this.moveItem(idx,idx+1),remove:()=>this.setDraft({items:D.items.filter((_,j)=>j!==idx)})};}),
+        pick:s.items.filter(i=>i.active&&!D.items.includes(i.id)&&(!pq||i.name.toLowerCase().includes(pq))).map(i=>({name:i.name,cat:i.cat,catTone:CAT_TONE[i.cat],add:()=>this.setDraft({items:D.items.concat([i.id])})}))};
+    }
+
+    // histórico
+    const hf=s.hf,hq=hf.q.trim().toLowerCase();
+    const AL={done:['Concluído','#2F7D4F','#E1F0E5'],undone:['Desmarcado','#8A5A12','#FBEFD9'],note:['Observação','#2F6F8F','#E2EDF2']};
+    const hAll=s.events.filter(x=>(hf.date==='all'||x.date===hf.date)&&(hf.emp==='all'||x.eid===hf.emp)&&(hf.action==='all'||x.action===hf.action)&&(!hq||x.iname.toLowerCase().includes(hq)||x.cname.toLowerCase().includes(hq)))
+      .sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.time-a.time||b.id-a.id));
+    const hist={count:hAll.length,undone:hAll.filter(x=>x.action==='undone').length,empty:hAll.length===0,more:hAll.length>s.hLimit,
+      rows:hAll.slice(0,s.hLimit).map(x=>{const e=empById(x.eid),a=AL[x.action];return {date:x.date===TODAY_KEY?'Hoje':shortD(keyDate(x.date)),time:fmt(x.time),cname:x.cname,iname:x.iname,ename:x.ename,initials:ini(x.ename),tone:e.tone,label:a[0],fg:a[1],bg:a[2],note:x.note||'—',rowBg:x.action==='undone'?'#FDF6EA':'transparent'};})};
+    const hDateOpts=[{v:'all',l:'Todas as datas'}].concat(dateOpts);
+    const actionOpts=[{v:'all',l:'Todas as ações'},{v:'done',l:'Concluído'},{v:'undone',l:'Desmarcado'},{v:'note',l:'Observação'}];
+    const setH=k=>e=>{const v=e.target.value;this.setState(st=>({hf:Object.assign({},st.hf,{[k]:v}),hLimit:40}));};
+
+    const t=s.toast||{msg:'',kind:'ok'};
+    return {
+      nowLabel:fmt(now),isEmp,isPhone:isEmp&&!station,isStation:isEmp&&station,stIdentify:!meE,stMain:!!meE,stationTeam,
+      hasRun:!!meE&&runRows.length>0,noRun:!!meE&&runRows.length===0,myLogTop:myLog.slice(0,5),hasMyLog:myLog.length>0,
+      goPhone:()=>set({device:'phone'}),goStation:()=>set({device:'station',switchOpen:false}),
+      devPhoneBg:!station?'#F4EFE6':'transparent',devPhoneFg:!station?'#1C1F1D':'#B9B3A6',devStBg:station?'#F4EFE6':'transparent',devStFg:station?'#1C1F1D':'#B9B3A6',modeEmpBg:isEmp?'#F4EFE6':'transparent',modeEmpFg:isEmp?'#1C1F1D':'#B9B3A6',modeAdmBg:!isEmp?'#F4EFE6':'transparent',modeAdmFg:!isEmp?'#1C1F1D':'#B9B3A6',
+      goEmp:()=>set({mode:'emp'}),goAdmin:()=>set({mode:'admin'}),
+      reopenApp:()=>{this.setState({empScreen:s.session?'resume':'identify',runKey:null});this.toast(s.session?'App reaberto: a sessão continua ativa, sem novo login.':'Nenhuma sessão salva neste aparelho.');},
+      resetDemo:()=>{try{localStorage.removeItem('casabrasa.session');}catch(e){}this.t0=Date.now();this.setState(Object.assign(initialState(),{session:null,empScreen:'identify',mode:s.mode}));},
+      scrIdentify:isEmp&&s.empScreen==='identify',scrPin:isEmp&&s.empScreen==='pin',scrResume:isEmp&&s.empScreen==='resume'&&!!meE,scrToday:isEmp&&s.empScreen==='today'&&!!meE,scrRun:isEmp&&s.empScreen==='run'&&!!meE,scrDone:isEmp&&s.empScreen==='done'&&!!meE,scrProfile:isEmp&&s.empScreen==='profile'&&!!meE,
+      showTabs:!!meE&&['today','done','profile'].includes(s.empScreen),tabs,
+      idEmps:s.emps.filter(e=>e.active).map(e=>({name:first(e.name)+' '+e.name.split(' ').slice(-1)[0][0]+'.',role:e.role,initials:ini(e.name),tone:e.tone,pick:()=>this.login(e.id)})),
+      switchOpen:isEmp&&!!s.switchOpen&&!!meE,openSwitch:()=>set({switchOpen:true}),closeSwitch:()=>set({switchOpen:false}),
+      switchEmps:s.emps.filter(e=>e.active).map(e=>{const cur=meE&&e.id===meE.id;return {name:first(e.name)+' '+e.name.split(' ').slice(-1)[0][0]+'.',role:cur?'Usando agora':e.role,initials:ini(e.name),tone:e.tone,bg:cur?'#EEF4EF':'#FFFDF9',border:cur?'#1F4D3B':'#E4DCCD',pick:()=>{if(cur){set({switchOpen:false});return;}this.setState({switchOpen:false,runKey:null,noteKey:null});this.login(e.id);}};}),
+      pickEmp,pinDots:dots(s.pin,!!s.pinErr),pinErr:s.pinErr,empKeys:keypad(k=>this.pressPin(k)),backToIdentify:()=>set({empScreen:'identify',pin:'',pinErr:''}),
+      toggleRemember:()=>set({remember:!s.remember}),rememberBg:s.remember?'#1F4D3B':'transparent',
+      me,resume:()=>set({empScreen:'today'}),switchEmp:()=>this.switchEmp(),sessionSince:s.sessionSince,
+      todayLong:WD_FULL[TODAY.getDay()]+', '+TODAY.getDate()+' de '+MONTHS[TODAY.getMonth()],greeting:now<720?'Bom dia':now<1080?'Boa tarde':'Boa noite',my,
+      run,runErr:s.runErr,backToday:()=>set({empScreen:'today',runKey:null,runErr:''}),finishRun:()=>run.allDone?set({empScreen:'today',runKey:null}):this.finishRun(runRows),
+      noteDraft:s.noteDraft,setNoteDraft:e=>set({noteDraft:e.target.value}),saveNote:()=>this.saveNote(),cancelNote:()=>set({noteKey:null,noteDraft:''}),
+      myLog,myLogEmpty:myLog.length===0,
+      isAdminGate:!isEmp&&!s.adminAuthed,isAdmin:!isEmp&&s.adminAuthed,adminDots:dots(s.adminPin,!!s.adminErr),adminErr:s.adminErr,adminKeys:keypad(k=>this.pressAdmin(k)),
+      logoutAdmin:()=>set({adminAuthed:false,adminPin:'',adminErr:''}),wide,narrow:!wide,nav,
+      pDash:s.page==='dash',pTeam:s.page==='team',pItems:s.page==='items',pCls:s.page==='cls',pHist:s.page==='hist',
+      f,dateOpts,empOpts,catOpts,clOpts,statusOpts,dash,setFDate:setF('date'),setFEmp:setF('emp'),setFCat:setF('cat'),setFCl:setF('cl'),setFStatus:setF('status'),
+      clearF:()=>this.setState(st=>({f:{date:st.f.date,emp:'all',cat:'all',cl:'all',status:'all'}})),
+      team,newEmp:()=>set({empModal:{d:{name:'',role:'',group:'Salão',pin:''},err:''}}),
+      itemQ:s.itemQ,setItemQ:e=>set({itemQ:e.target.value}),catChips,itemRows,itemEmpty:itemRows.length===0,
+      newItem:()=>set({itemModal:{d:{name:'',desc:'',cat:'Limpeza',required:false,allowNote:false,active:true},err:''}}),
+      itemModal,saveItem:()=>this.saveItem(),empModal,saveEmp:()=>this.saveEmp(),closeModals:()=>set({itemModal:null,empModal:null}),stop:e=>e.stopPropagation(),
+      clList,cl,clErr:s.clErr,pickQ:s.pickQ,setPickQ:e=>set({pickQ:e.target.value}),saveCl:()=>this.saveCl(),
+      cancelCl:()=>{const c=s.cls.find(x=>x.id===s.clSel);set({clDraft:c?normCl(c):null,clErr:''});},
+      newCl:()=>set({clSel:null,clDraft:{name:'',desc:'',items:[],period:'daily',days:[],time:'12:00',roles:[],emps:[],active:true},clErr:'',pickQ:''}),
+      hf,hist,hDateOpts,actionOpts,setHQ:setH('q'),setHDate:setH('date'),setHEmp:setH('emp'),setHAction:setH('action'),moreHist:()=>set({hLimit:s.hLimit+40}),
+      toastMsg:t.msg,toastDot:t.kind==='warn'?'#E0A33A':'#6FCF97',toastOpacity:s.toastOn?1:0,toastY:s.toastOn?'0px':'16px'
+    };
+  }
+}
+</script>
+</body>
+</html>
