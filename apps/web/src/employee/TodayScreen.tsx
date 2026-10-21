@@ -4,6 +4,7 @@ import { Avatar } from '../ui/Avatar';
 import { ProgressRing } from '../ui/ProgressRing';
 import { plural } from '../ui/status';
 import { ChecklistCard } from './ChecklistCard';
+import { OnDemandList } from './OnDemandList';
 import type { Today } from './types';
 
 type Props = { me: Employee; onOpen: (executionId: number) => void; onSwitch: () => void };
@@ -61,6 +62,13 @@ export function TodayScreen({ me, onOpen, onSwitch }: Props) {
           </div>
         )}
       </div>
+
+      {data.onDemand.length > 0 && (
+        <div className="stack">
+          <div className="section-label">Quando necessário</div>
+          <OnDemandList list={data.onDemand} onStarted={onOpen} />
+        </div>
+      )}
     </div>
   );
 }

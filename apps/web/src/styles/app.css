@@ -165,3 +165,9 @@ a { color: var(--primary); }
 .note-form textarea { width: 100%; border: 1px solid var(--border-dashed); border-radius: 12px; padding: 10px; font: 400 14px var(--font-ui); resize: none; background: var(--surface); outline: none; }
 .note-form textarea:focus { border-color: var(--primary); }
 .btn-sm { border: 0; border-radius: 10px; padding: 9px 14px; font: 600 13px var(--font-ui); }
+.btn-tint { background: var(--primary-tint); color: var(--primary); }
+.ondemand { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border: 1px dashed var(--border-dashed); border-radius: 16px; }
+.ondemand-name { font: 600 15px var(--font-ui); }
+.ondemand-meta { font: 400 12px var(--font-ui); color: var(--text-2); }
+.ondemand--compact { padding: 12px 14px; border-radius: 14px; }
+.ondemand--compact .ondemand-name { font-size: 14px; }

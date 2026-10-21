@@ -1,12 +1,15 @@
-import { cardStatus, finishMessage, missingRequiredMessage, compareCards, dueMinute, fmtMinute, greeting, longDate } from '@rastro/domain';
+import {
+  assigneesOf, cardStatus, compareCards, dueMinute, finishMessage, fmtMinute, greeting, longDate, missingRequiredMessage,
+} from '@rastro/domain';
 import { Router } from 'express';
+import { z } from 'zod';
 import type { AppContext } from '../context.js';
 import { HttpError, parse, route } from '../http.js';
+import { loadChecklists, loadEmployeesForAssignment, loadItems } from '../repos/config.js';
 import type { EmployeeRow } from '../repos/employees.js';
-import { type ExecutionRow, currentDay, itemsOf } from '../services/day.js';
 import { requireEmployee } from '../security/employee.js';
+import { type ExecutionRow, currentDay, itemsOf, syncDay } from '../services/day.js';
 import { assertEditable, executionView, ownExecution, setItemDone, setItemNote, visibleItem } from '../services/execution.js';
-import { z } from 'zod';
 
 const noteSchema = z.object({ note: z.string({ message: 'Informe a observação.' }) });
 const doneSchema = z.object({ done: z.boolean({ message: 'Informe se o item foi concluído.' }) });
@@ -35,12 +38,22 @@ export function meRoutes({ db, clock }: AppContext) {
       .filter((c) => c.total > 0)
       .sort(compareCards);
 
+    const startedIds = new Set(execs.map((e) => e.checklist_id));
+    const items = new Map(loadItems(db).map((i) => [i.id, i]));
+    const employees = loadEmployeesForAssignment(db);
+    const onDemand = loadChecklists(db)
+      .filter((c) => c.active && c.period === 'ondemand' && !startedIds.has(c.id))
+      .filter((c) => assigneesOf(c, employees).some((e) => e.id === emp.id))
+      .map((c) => ({ checklistId: c.id, name: c.name, description: c.description, itemCount: c.itemIds.filter((id) => items.get(id)?.active).length }))
+      .filter((c) => c.itemCount > 0);
+
     const total = cards.reduce((n, c) => n + c.total, 0);
     const done = cards.reduce((n, c) => n + c.done, 0);
     res.json({
       date: now.date, dateLabel: longDate(now.date), now: fmtMinute(now.minute), greeting: greeting(now.minute),
       summary: { total, done, pending: total - done, late: cards.reduce((n, c) => n + c.late, 0) },
       cards: cards.map(({ due: _due, late: _late, ...c }) => c),
+      onDemand,
     });
   }));
 
@@ -83,6 +96,27 @@ export function meRoutes({ db, clock }: AppContext) {
       throw new HttpError(422, missingRequiredMessage(missing.map((i) => i.name)), { missing: missing.map((i) => i.itemId) });
     const pending = items.filter((i) => i.status !== 'done').length;
     res.json({ pending, ...finishMessage(pending) });
+  }));
+
+  r.post('/me/ondemand/:checklistId/start', route((req, res) => {
+    const emp = res.locals.employee as EmployeeRow;
+    const now = currentDay(db, clock);
+    const c = loadChecklists(db).find((x) => x.id === req.params.checklistId && x.active);
+    if (!c) throw new HttpError(404, 'Checklist não encontrado.');
+    if (c.period !== 'ondemand') throw new HttpError(422, 'Este checklist não é sob demanda.');
+    if (!assigneesOf(c, loadEmployeesForAssignment(db)).some((e) => e.id === emp.id))
+      throw new HttpError(403, 'Este checklist não está atribuído a você.');
+
+    const existing = db
+      .prepare('SELECT id FROM executions WHERE op_date = ? AND checklist_id = ? AND employee_id = ? AND started_manually = 1')
+      .get(now.date, c.id, emp.id) as { id: number } | undefined;
+    if (existing) return res.json({ executionId: existing.id });
+
+    const { lastInsertRowid } = db
+      .prepare('INSERT INTO executions (op_date, checklist_id, employee_id, checklist_name, description, due_time, started_manually) VALUES (?, ?, ?, ?, ?, NULL, 1)')
+      .run(now.date, c.id, emp.id, c.name, c.description);
+    syncDay(db, now.date, now.dow);
+    res.status(201).json({ executionId: Number(lastInsertRowid) });
   }));
 
   return r;
