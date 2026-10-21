@@ -40,3 +40,11 @@ export async function employeeAgent(app: Parameters<typeof request.agent>[0], em
   if (res.status !== 201) throw new Error(`falha ao identificar ${employeeId}: ${res.status}`);
   return agent;
 }
+
+/** Agente com sessão de gestor (Marina). */
+export async function adminAgent(app: Parameters<typeof request.agent>[0]) {
+  const agent = request.agent(app);
+  const res = await agent.post('/api/admin/login').send({ pin: MANAGER_PIN });
+  if (res.status !== 201) throw new Error(`falha no login do gestor: ${res.status}`);
+  return agent;
+}

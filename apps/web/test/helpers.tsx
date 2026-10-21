@@ -26,3 +26,5 @@ export const execution = (o: object = {}) => ({
   ],
   ...o,
 });
+
+export const MARINA = { id: 'e6', name: 'Marina Alves', shortName: 'Marina A.', firstName: 'Marina', initials: 'MA', role: 'Gerente', group: 'Gerência', color: '#9C3B54' };

@@ -107,4 +107,12 @@ CREATE TABLE IF NOT EXISTS audit_events (
   note TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS audit_events_date ON audit_events (op_date, minute);
+
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  token_hash TEXT NOT NULL UNIQUE,
+  employee_id TEXT NOT NULL REFERENCES employees(id),
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
 `;
