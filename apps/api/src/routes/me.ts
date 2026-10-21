@@ -119,5 +119,16 @@ export function meRoutes({ db, clock }: AppContext) {
     res.status(201).json({ executionId: Number(lastInsertRowid) });
   }));
 
+  r.get('/me/activities', route((_req, res) => {
+    const emp = res.locals.employee as EmployeeRow;
+    const now = currentDay(db, clock);
+    const rows = db
+      .prepare('SELECT id, minute, item_name, checklist_name, action, note FROM audit_events WHERE op_date = ? AND employee_id = ? ORDER BY minute DESC, id DESC')
+      .all(now.date, emp.id) as { id: number; minute: number; item_name: string; checklist_name: string; action: string; note: string }[];
+    res.json(rows.map((e) => ({
+      id: e.id, time: fmtMinute(e.minute), itemName: e.item_name, checklistName: e.checklist_name, action: e.action, note: e.note,
+    })));
+  }));
+
   return r;
 }

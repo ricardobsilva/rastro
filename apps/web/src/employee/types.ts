@@ -19,3 +19,5 @@ export type Execution = {
   id: number; date: string; checklistId: string; name: string; description: string; dueTime: string | null;
   done: number; total: number; status: CardStatus; items: ExecItem[];
 };
+
+export type Activity = { id: number; time: string; itemName: string; checklistName: string; action: 'done' | 'undone' | 'note'; note: string };
