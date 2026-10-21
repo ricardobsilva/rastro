@@ -4,15 +4,17 @@ import type { Employee, Session } from '../types';
 import { useToast } from '../ui/Toast';
 import { IdentifyScreen } from './IdentifyScreen';
 import { ResumeScreen } from './ResumeScreen';
+import { RunScreen } from './RunScreen';
 import { TodayScreen } from './TodayScreen';
 
-type Screen = 'loading' | 'identify' | 'resume' | 'today';
+type Screen = 'loading' | 'identify' | 'resume' | 'today' | 'run';
 
 export function EmployeeApp() {
   const toast = useToast();
   const [screen, setScreen] = useState<Screen>('loading');
   const [me, setMe] = useState<Employee | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [runId, setRunId] = useState<number | null>(null);
 
   const fail = useCallback(
     (e: unknown) => {
@@ -67,7 +69,12 @@ export function EmployeeApp() {
     <div className="phone">
       {screen === 'identify' && <IdentifyScreen employees={employees} onPick={login} />}
       {screen === 'resume' && me && <ResumeScreen me={me} onContinue={() => setScreen('today')} onSwitch={logout} />}
-      {screen === 'today' && me && <TodayScreen me={me} onOpen={() => {}} onSwitch={logout} />}
+      {screen === 'today' && me && (
+        <TodayScreen me={me} onOpen={(id) => { setRunId(id); setScreen('run'); }} onSwitch={logout} />
+      )}
+      {screen === 'run' && me && runId !== null && (
+        <RunScreen executionId={runId} me={me} onBack={() => setScreen('today')} onSwitch={logout} onFinished={() => setScreen('today')} />
+      )}
     </div>
   );
 }

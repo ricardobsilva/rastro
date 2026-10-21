@@ -1,10 +1,14 @@
 import { cardStatus, compareCards, dueMinute, fmtMinute, greeting, longDate } from '@rastro/domain';
 import { Router } from 'express';
 import type { AppContext } from '../context.js';
-import { route } from '../http.js';
+import { parse, route } from '../http.js';
 import type { EmployeeRow } from '../repos/employees.js';
 import { type ExecutionRow, currentDay, itemsOf } from '../services/day.js';
 import { requireEmployee } from '../security/employee.js';
+import { assertEditable, executionView, ownExecution, setItemDone, visibleItem } from '../services/execution.js';
+import { z } from 'zod';
+
+const doneSchema = z.object({ done: z.boolean({ message: 'Informe se o item foi concluído.' }) });
 
 export function meRoutes({ db, clock }: AppContext) {
   const r = Router();
@@ -37,6 +41,23 @@ export function meRoutes({ db, clock }: AppContext) {
       summary: { total, done, pending: total - done, late: cards.reduce((n, c) => n + c.late, 0) },
       cards: cards.map(({ due: _due, late: _late, ...c }) => c),
     });
+  }));
+
+  r.get('/me/executions/:id', route((req, res) => {
+    const emp = res.locals.employee as EmployeeRow;
+    const now = currentDay(db, clock);
+    res.json(executionView(db, ownExecution(db, req.params.id!, emp, now.date), now));
+  }));
+
+  r.put('/me/executions/:id/items/:itemId', route((req, res) => {
+    const emp = res.locals.employee as EmployeeRow;
+    const { done } = parse(doneSchema, req.body);
+    const at = clock();
+    const now = currentDay(db, () => at);
+    const exec = ownExecution(db, req.params.id!, emp, now.date);
+    assertEditable(exec, now.date);
+    setItemDone(db, { now, at, emp, exec, item: visibleItem(db, exec, req.params.itemId!), done });
+    res.json(executionView(db, exec, now));
   }));
 
   return r;

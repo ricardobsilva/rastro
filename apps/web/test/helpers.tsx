@@ -10,3 +10,19 @@ export const EMPLOYEES = [
 ];
 export const JOAO = EMPLOYEES[0]!;
 export const ANA = EMPLOYEES[1]!;
+
+export const item = (o: object = {}) => ({
+  itemId: 'i1', name: 'Conferir organização das mesas', description: 'Mesas alinhadas.', required: true, allowNote: false,
+  status: 'pending', doneAt: null, undoneAt: null, note: '', ...o,
+});
+
+export const execution = (o: object = {}) => ({
+  id: 7, date: '2026-10-21', checklistId: 'c1', name: 'Abertura do restaurante', description: '', dueTime: '10:30',
+  done: 1, total: 3, status: 'progress',
+  items: [
+    item({ status: 'done', doneAt: '10:12' }),
+    item({ itemId: 'i2', name: 'Verificar guardanapos', required: false, description: '' }),
+    item({ itemId: 'i3', name: 'Conferir talheres', required: false, undoneAt: '10:52' }),
+  ],
+  ...o,
+});

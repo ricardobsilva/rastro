@@ -10,3 +10,12 @@ export type Today = {
   cards: TodayCard[];
   onDemand: OnDemand[];
 };
+
+export type ExecItem = {
+  itemId: string; name: string; description: string; required: boolean; allowNote: boolean;
+  status: 'done' | 'pending' | 'late'; doneAt: string | null; undoneAt: string | null; note: string;
+};
+export type Execution = {
+  id: number; date: string; checklistId: string; name: string; description: string; dueTime: string | null;
+  done: number; total: number; status: CardStatus; items: ExecItem[];
+};

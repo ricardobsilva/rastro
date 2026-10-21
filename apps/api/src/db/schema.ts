@@ -89,4 +89,22 @@ CREATE TABLE IF NOT EXISTS execution_items (
   note TEXT NOT NULL DEFAULT '',
   UNIQUE (execution_id, item_id)
 );
+
+-- Log de auditoria append-only: nunca há UPDATE nem DELETE nesta tabela.
+CREATE TABLE IF NOT EXISTS audit_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  op_date TEXT NOT NULL,
+  minute INTEGER NOT NULL,
+  at TEXT NOT NULL,
+  employee_id TEXT NOT NULL REFERENCES employees(id),
+  employee_name TEXT NOT NULL,
+  execution_id INTEGER REFERENCES executions(id),
+  checklist_id TEXT NOT NULL,
+  checklist_name TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  item_name TEXT NOT NULL,
+  action TEXT NOT NULL CHECK (action IN ('done','undone','note')),
+  note TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS audit_events_date ON audit_events (op_date, minute);
 `;
