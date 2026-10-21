@@ -37,7 +37,7 @@ export function loadItems(db: Db): ItemConfig[] {
 }
 
 export function loadEmployeesForAssignment(db: Db) {
-  return (db.prepare('SELECT id, grp, active FROM employees').all() as { id: string; grp: string; active: number }[]).map((e) => ({
+  return (db.prepare('SELECT id, grp, active FROM employees ORDER BY rowid').all() as { id: string; grp: string; active: number }[]).map((e) => ({
     id: e.id, group: e.grp, active: !!e.active,
   }));
 }

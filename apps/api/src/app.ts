@@ -4,6 +4,7 @@ import type { AppContext } from './context.js';
 import type { Db } from './db/index.js';
 import { errorHandler } from './http.js';
 import { adminAuthRoutes } from './routes/admin/auth.js';
+import { adminChecklistRoutes } from './routes/admin/checklists.js';
 import { adminEmployeeRoutes } from './routes/admin/employees.js';
 import { adminItemRoutes } from './routes/admin/items.js';
 import { deviceRoutes } from './routes/device.js';
@@ -33,6 +34,7 @@ export function createApp(deps: AppDeps) {
   app.use('/api', adminAuthRoutes(ctx));
   app.use('/api', adminItemRoutes(ctx));
   app.use('/api', adminEmployeeRoutes(ctx));
+  app.use('/api', adminChecklistRoutes(ctx));
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Rota não encontrada.' });
