@@ -35,6 +35,8 @@ npm install
 npm test          # testes de todos os pacotes
 npm run typecheck
 npm run dev       # API em :3333 e web em :5173 (proxy /api)
+npm run build     # gera as telas em apps/web/dist
+npm start         # produção: telas e API servidas juntas, numa porta só
 npm run seed      # só dados de domínio em apps/api/rastro.db (o mesmo que a API faz ao subir)
 npm run seed:demo # domínio + restaurante fictício Casa Brasa + 7 dias de histórico (só local, nunca em produção)
 ```
@@ -46,6 +48,38 @@ npm run seed:demo # domínio + restaurante fictício Casa Brasa + 7 dias de hist
 | `/` | Funcionário: layout mobile no celular, layout de estação no computador |
 | `/estacao` | Força a estação de trabalho em qualquer aparelho |
 | `/gestor` | Painel do gestor |
+
+## Deploy no Fly.io
+
+O repositório já traz `Dockerfile` e `fly.toml`: uma única máquina, com o SQLite num volume em `/data` (o disco da máquina é apagado a cada deploy; o volume, não).
+
+Na tela de deploy do Fly a partir do GitHub:
+
+| Campo | Valor |
+|---|---|
+| Working directory | `./` |
+| Config path | `fly.toml` |
+| Região | `gru` (São Paulo), a mesma do `fly.toml` |
+
+Se preferir a linha de comando (`flyctl`):
+
+```bash
+fly launch --copy-config --no-deploy   # usa o fly.toml do repositório
+fly volumes create rastro_data --region gru --size 1   # se o launch não tiver criado
+fly deploy
+fly scale count 1   # SQLite: nunca mais de uma máquina
+```
+
+Variáveis já definidas no `fly.toml`: `DB_PATH=/data/rastro.db`, `PORT=8080`, `TRUST_PROXY_HOPS=1` (IP real do visitante para o bloqueio de PIN). A checagem de saúde é `GET /api/health`. O Fly tira snapshots diários do volume; mesmo assim, exporte os dados de vez em quando em **Gestor → Exportar e importar**.
+
+Para testar a imagem localmente:
+
+```bash
+docker build -t rastro .
+docker run --rm -p 8080:8080 -e PORT=8080 -e DB_PATH=/data/rastro.db -v "$PWD/.data:/data" rastro
+```
+
+Sem Docker: `npm run build && npm start` (a API serve as telas de `apps/web/dist`).
 
 ## Dados em produção
 

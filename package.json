@@ -9,6 +9,8 @@
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev": "npm run dev -w @rastro/api & npm run dev -w @rastro/web",
+    "build": "npm run build -w @rastro/web",
+    "start": "node --import tsx apps/api/src/main.ts",
     "seed": "npm run seed -w @rastro/api",
     "seed:demo": "npm run seed:demo -w @rastro/api"
   },
@@ -16,5 +18,8 @@
     "typescript": "5.6.3",
     "vitest": "2.1.8",
     "@types/node": "20.17.10"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
