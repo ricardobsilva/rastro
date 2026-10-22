@@ -58,13 +58,24 @@ describe('US11 — acesso do gestor (web)', () => {
     expect(await screen.findByRole('button', { name: 'Painel' })).toHaveTextContent(/^Painel$/);
   });
 
-  it('Sair volta para o PIN (sucesso)', async () => {
+  it('Sair encerra a sessão e volta para a tela inicial (sucesso)', async () => {
     api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
     api.del.mockResolvedValue(null);
-    renderWithToast(<AdminApp />);
+    const go = vi.fn();
+    renderWithToast(<AdminApp go={go} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Sair' }));
     expect(api.del).toHaveBeenCalledWith('/api/admin/login');
-    expect(await screen.findByRole('heading', { name: 'Rastro · Painel do gestor' })).toBeInTheDocument();
+    expect(go).toHaveBeenCalledWith('/');
+    expect(screen.queryByRole('heading', { name: 'Rastro · Painel do gestor' })).not.toBeInTheDocument();
+  });
+
+  it('Sair com o servidor fora do ar ainda volta para a tela inicial (erro)', async () => {
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    api.del.mockRejectedValue(new ApiError(0, 'Sem conexão com o servidor.'));
+    const go = vi.fn();
+    renderWithToast(<AdminApp go={go} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Sair' }));
+    await vi.waitFor(() => expect(go).toHaveBeenCalledWith('/'));
   });
 
   it('servidor fora do ar na verificação inicial mostra erro (borda)', async () => {

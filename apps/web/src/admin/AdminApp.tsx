@@ -11,7 +11,7 @@ type Me = { manager: Employee; lateToday: number };
 
 const NAV: [PageId, string][] = [['dash', 'Painel'], ['team', 'Equipe'], ['items', 'Itens'], ['cls', 'Checklists'], ['hist', 'Histórico']];
 
-export function AdminApp() {
+export function AdminApp({ go: navigate = (path: string) => window.location.assign(path) }: { go?: (path: string) => void } = {}) {
   const toast = useToast();
   const [state, setState] = useState<{ kind: 'loading' } | { kind: 'gate' } | { kind: 'error'; message: string } | ({ kind: 'in' } & Me)>({ kind: 'loading' });
   const [page, setPage] = useState<PageId>('dash');
@@ -43,8 +43,7 @@ export function AdminApp() {
 
   async function logout() {
     await api.del('/api/admin/login').catch(() => {});
-    setState({ kind: 'gate' });
-    setPage('dash');
+    navigate('/');
   }
 
   if (state.kind === 'loading') return <div className="gate" aria-busy="true" />;
