@@ -1,4 +1,8 @@
-# Fly.io — uma única máquina com o SQLite num volume (o disco da máquina é apagado a cada deploy).
+# fly.toml app configuration file generated for rastro on 2026-10-22T19:51:05Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'rastro'
 primary_region = 'gru'
 
@@ -6,10 +10,9 @@ primary_region = 'gru'
   dockerfile = 'Dockerfile'
 
 [env]
+  DB_PATH = '/data/rastro.db'
   NODE_ENV = 'production'
   PORT = '8080'
-  DB_PATH = '/data/rastro.db'
-  # O proxy do Fly acrescenta o IP do visitante no X-Forwarded-For.
   TRUST_PROXY_HOPS = '1'
 
 [[mounts]]
@@ -26,13 +29,14 @@ primary_region = 'gru'
   processes = ['app']
 
   [[http_service.checks]]
-    grace_period = '15s'
     interval = '30s'
-    method = 'GET'
     timeout = '5s'
+    grace_period = '15s'
+    method = 'GET'
     path = '/api/health'
 
 [[vm]]
   memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 512
