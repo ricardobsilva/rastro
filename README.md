@@ -1,5 +1,11 @@
 # Rastro
 
+> **Este projeto é um playground para testar o uso de IA no desenvolvimento de software.**
+>
+> O Rastro foi construído com um assistente de IA (Claude Code), a partir de um protótipo feito no Claude Design. O objetivo é experimentar, na prática, como a IA se sai em um ciclo completo de produto: refinar histórias de usuário com critérios de aceite, implementar uma US de cada vez com TDD (casos de sucesso, erro e borda), revisar a interface no navegador e ajustar o produto a partir do feedback.
+>
+> O histórico do git registra essa evolução: um commit por história (US00 a US19) e os ajustes pedidos ao longo do caminho.
+
 Checklists operacionais para restaurantes, com rastreabilidade de cada marcação.
 
 - Backlog e critérios de aceite: [`docs/backlog.md`](docs/backlog.md)
