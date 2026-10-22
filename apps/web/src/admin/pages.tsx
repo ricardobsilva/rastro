@@ -1,17 +1,15 @@
 import type { ComponentType } from 'react';
-import type { PageId } from './context';
-
 import { ChecklistsPage } from './ChecklistsPage';
 import { DashboardPage } from './DashboardPage';
+import { HistoryPage } from './HistoryPage';
 import { ItemsPage } from './ItemsPage';
 import { TeamPage } from './TeamPage';
-
-const Soon = () => null;
+import type { PageId } from './context';
 
 export const PAGES: Record<PageId, ComponentType> = {
   dash: DashboardPage,
   team: TeamPage,
   items: ItemsPage,
   cls: ChecklistsPage,
-  hist: Soon,
+  hist: HistoryPage,
 };

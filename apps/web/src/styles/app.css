@@ -400,3 +400,4 @@ a { color: var(--primary); }
 .trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
 .trend-bar { width: 100%; max-width: 30px; border-radius: 6px 6px 2px 2px; transition: height .4s; }
 .cat-row { display: grid; grid-template-columns: 96px 1fr 40px; align-items: center; gap: 10px; font: 500 13px var(--font-ui); }
+.table-row.is-undone { background: #FDF6EA; }

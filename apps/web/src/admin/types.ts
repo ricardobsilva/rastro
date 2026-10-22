@@ -26,3 +26,9 @@ export type Dashboard = {
   byCategory: { category: string; n: number; pct: number }[];
   trend: { date: string; label: string; pct: number }[];
 };
+
+export type HistoryRow = {
+  id: number; date: string; dateLabel: string; time: string; checklistName: string; itemName: string;
+  employeeId: string; employeeName: string; initials: string; color: string; action: 'done' | 'undone' | 'note'; note: string;
+};
+export type HistoryPageData = { total: number; undone: number; rows: HistoryRow[] };
