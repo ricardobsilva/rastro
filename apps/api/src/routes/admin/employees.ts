@@ -1,13 +1,11 @@
-import { randomUUID } from 'node:crypto';
 import { GROUPS, MANAGER_GROUP } from '@rastro/domain';
 import { Router } from 'express';
 import { z } from 'zod';
 import type { AppContext } from '../../context.js';
 import { HttpError, parse, route } from '../../http.js';
-import { type EmployeeRow, getEmployee, toPublic } from '../../repos/employees.js';
+import { type EmployeeRow, getEmployee, insertEmployee, toPublic } from '../../repos/employees.js';
 import { requireAdmin } from '../../security/admin.js';
 
-const TONES = ['#C2502F', '#2F6F8F', '#8A5A12', '#5B4B8A', '#1F4D3B', '#4A5560', '#9C3B54'];
 const FILL = 'Preencha nome e cargo.';
 
 const schema = z.object({
@@ -45,11 +43,7 @@ export function adminEmployeeRoutes({ db, clock }: AppContext) {
         .run(data.name, data.role, data.group, pin, +data.active, current.id);
       return getEmployee(db, current.id)!;
     }
-    const id = `e_${randomUUID().slice(0, 8)}`;
-    const count = (db.prepare('SELECT COUNT(*) AS n FROM employees').get() as { n: number }).n;
-    db.prepare('INSERT INTO employees (id, name, role, grp, pin, color, active) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(id, data.name, data.role, data.group, pin, TONES[count % TONES.length], +data.active);
-    return getEmployee(db, id)!;
+    return insertEmployee(db, { name: data.name, role: data.role, group: data.group, pin, active: data.active });
   }
 
   r.get('/admin/employees', route((_req, res) => {

@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { GROUPS, PERIODS, type Period, assigneesOf, toMinute } from '@rastro/domain';
+import { GROUPS, MANAGER_GROUP, PERIODS, type Period, assigneesOf, toMinute } from '@rastro/domain';
 import { Router } from 'express';
 import type { AppContext } from '../../context.js';
 import { HttpError, route } from '../../http.js';
 import { type ChecklistConfig, loadChecklists, loadEmployeesForAssignment, loadItems } from '../../repos/config.js';
+import { insertEmployee } from '../../repos/employees.js';
 import { requireAdmin } from '../../security/admin.js';
 
 const fail = (msg: string): never => {
@@ -118,12 +119,37 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
     return ids;
   }
 
+  /** Pessoas novas do assistente: só nome e função; o cargo fica igual à função. */
+  function addNewEmployees(raw: unknown) {
+    if (raw === undefined) return;
+    if (!Array.isArray(raw)) fail('Lista de pessoas inválida.');
+    const list = raw as unknown[];
+    if (list.length > 30) fail('Adicione até 30 pessoas por vez.');
+    const active = db.prepare('SELECT name FROM employees WHERE active = 1').all() as { name: string }[];
+    const seen = new Map(active.map((e) => [e.name.trim().toLowerCase(), e.name]));
+    const fresh = new Set<string>();
+    for (const p of list) {
+      const { name: rawName, group } = (p ?? {}) as { name?: unknown; group?: unknown };
+      const name = typeof rawName === 'string' ? rawName.trim() : '';
+      if (!name) fail('Escreva o nome da pessoa.');
+      if (name.length > 80) fail('O nome pode ter até 80 caracteres.');
+      if (group === MANAGER_GROUP) fail('Para cadastrar um gestor, use a página Equipe.');
+      if (!(GROUPS as readonly unknown[]).includes(group)) fail('Função inválida.');
+      const key = name.toLowerCase();
+      if (fresh.has(key)) throw new HttpError(409, `${name} aparece duas vezes.`);
+      if (seen.has(key)) throw new HttpError(409, `${seen.get(key)} já está na equipe.`);
+      fresh.add(key);
+      insertEmployee(db, { name, role: group as string, group: group as string, pin: null, active: true });
+    }
+  }
+
   r.post('/admin/checklists/guided', route((req, res) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const name = typeof body.name === 'string' ? body.name.trim().toLowerCase() : '';
     if (name && loadChecklists(db).some((c) => c.name.trim().toLowerCase() === name))
       throw new HttpError(409, 'Já existe uma lista com esse nome.');
     const created = db.transaction(() => {
+      addNewEmployees(body.newEmployees);
       const itemIds = taskItemIds(body.tasks);
       const data = validate({ name: body.name, period: body.period, days: body.days, dueTime: body.dueTime, roles: body.roles, employeeIds: [], itemIds });
       return save(`c_${randomUUID().slice(0, 8)}`, data, true);

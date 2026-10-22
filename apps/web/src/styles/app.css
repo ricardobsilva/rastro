@@ -452,3 +452,12 @@ a { color: var(--primary); }
 .guide-invite { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 28px; border-radius: 20px; background: var(--primary-tint-2); border: 2px solid var(--primary-tint); }
 .guide-invite-title { margin: 0 0 4px; font: 700 26px var(--font-display); }
 .guide-invite-text { margin: 0; font: 400 19px/1.45 var(--font-ui); color: var(--text-3); max-width: 620px; }
+.guide-team { display: flex; flex-direction: column; border: 1px solid var(--track); border-radius: 16px; overflow: hidden; }
+.guide-team-row { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 12px 18px; font: 500 19px var(--font-ui); }
+.guide-team-row + .guide-team-row { border-top: 1px solid var(--track); }
+.guide-team-group { flex: 0 0 110px; font-weight: 700; color: var(--text); }
+.guide-team-names { color: var(--text-3); }
+.guide-people { list-style: none; padding-left: 0; }
+.guide-tag { display: inline-block; margin-right: 12px; padding: 2px 10px; border-radius: 999px; background: var(--success-bg); color: var(--success-fg); font: 700 15px var(--font-ui); }
+.guide-add { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 16px; background: var(--surface-alt); }
+.guide-add-title { font: 700 22px var(--font-display); }

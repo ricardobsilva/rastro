@@ -147,4 +147,91 @@ describe('US18 — assistente do primeiro checklist (API)', () => {
       expect(i2.active).toBe(true);
     });
   });
+
+  describe('pessoas novas na equipe', () => {
+    const PEDRO = { name: 'Pedro Ramos', group: 'Bar' };
+
+    it('cria as pessoas novas junto com a lista e já as atribui pela função (sucesso)', async () => {
+      const { app } = setup({ local: '2026-10-21T10:00' });
+      const admin = await adminAgent(app);
+      const res = await admin.post('/api/admin/checklists/guided').send({ ...GUIDED, roles: ['Bar'], newEmployees: [PEDRO, { name: 'Lia Mota', group: 'Limpeza' }] });
+      expect(res.status).toBe(201);
+      expect(res.body.assignees).toEqual(['Rafael Lima', 'Pedro Ramos']);
+
+      const emps = (await admin.get('/api/admin/employees')).body as { id: string; name: string; role: string; group: string; active: boolean; color: string }[];
+      const pedro = emps.find((e) => e.name === 'Pedro Ramos')!;
+      expect(pedro).toMatchObject({ role: 'Bar', group: 'Bar', active: true });
+      expect(pedro.color).toMatch(/^#[0-9A-F]{6}$/i);
+      expect(emps.find((e) => e.name === 'Lia Mota')).toMatchObject({ group: 'Limpeza', active: true });
+
+      const card = (await (await employeeAgent(app, pedro.id)).get('/api/me/today')).body.cards.find((c: { name: string }) => c.name === GUIDED.name);
+      expect(card).toBeDefined();
+    });
+
+    it('pessoa nova numa função que estava vazia permite escolher essa função (borda)', async () => {
+      const { app } = setup();
+      const admin = await adminAgent(app);
+      await admin.patch('/api/admin/employees/e7').send({ active: false });
+      const res = await admin.post('/api/admin/checklists/guided').send({ ...GUIDED, roles: ['Limpeza'], newEmployees: [{ name: 'Lia Mota', group: 'Limpeza' }] });
+      expect(res.status).toBe(201);
+      expect(res.body.assignees).toEqual(['Lia Mota']);
+    });
+
+    it('sem a lista de pessoas novas continua funcionando (borda)', async () => {
+      const { app } = setup();
+      const res = await (await adminAgent(app)).post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees: [] });
+      expect(res.status).toBe(201);
+    });
+
+    it('gestor não é cadastrado pelo assistente → 422 (erro)', async () => {
+      const { app } = setup();
+      const res = await (await adminAgent(app)).post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees: [{ name: 'Rita Luz', group: 'Gerência' }] });
+      expect(res.status).toBe(422);
+      expect(res.body.error).toBe('Para cadastrar um gestor, use a página Equipe.');
+    });
+
+    it('pessoa sem nome ou com função inválida → 422 (erro)', async () => {
+      const { app } = setup();
+      const admin = await adminAgent(app);
+      const semNome = await admin.post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees: [{ name: '  ', group: 'Bar' }] });
+      expect(semNome.status).toBe(422);
+      expect(semNome.body.error).toBe('Escreva o nome da pessoa.');
+      const funcao = await admin.post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees: [{ name: 'Pedro', group: 'Marte' }] });
+      expect(funcao.status).toBe(422);
+      expect(funcao.body.error).toBe('Função inválida.');
+      const formato = await admin.post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees: 'Pedro' });
+      expect(formato.status).toBe(422);
+    });
+
+    it('nome igual ao de alguém ativo → 409 (erro)', async () => {
+      const { app } = setup();
+      const res = await (await adminAgent(app)).post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees: [{ name: ' joão SILVA ', group: 'Salão' }] });
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe('João Silva já está na equipe.');
+    });
+
+    it('a mesma pessoa duas vezes na lista → 409 (borda)', async () => {
+      const { app } = setup();
+      const res = await (await adminAgent(app)).post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees: [PEDRO, { name: 'pedro ramos', group: 'Salão' }] });
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe('pedro ramos aparece duas vezes.');
+    });
+
+    it('mais de 30 pessoas novas → 422 (borda)', async () => {
+      const { app } = setup();
+      const newEmployees = Array.from({ length: 31 }, (_, i) => ({ name: `Pessoa ${i + 1}`, group: 'Salão' }));
+      const res = await (await adminAgent(app)).post('/api/admin/checklists/guided').send({ ...GUIDED, newEmployees });
+      expect(res.status).toBe(422);
+      expect(res.body.error).toBe('Adicione até 30 pessoas por vez.');
+    });
+
+    it('se a lista falhar, nenhuma pessoa nova fica salva (erro)', async () => {
+      const { app } = setup();
+      const admin = await adminAgent(app);
+      const before = (await admin.get('/api/admin/employees')).body.length;
+      const res = await admin.post('/api/admin/checklists/guided').send({ ...GUIDED, tasks: [], newEmployees: [PEDRO] });
+      expect(res.status).toBe(422);
+      expect((await admin.get('/api/admin/employees')).body).toHaveLength(before);
+    });
+  });
 });

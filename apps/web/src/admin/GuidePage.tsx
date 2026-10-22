@@ -1,4 +1,4 @@
-import { GROUPS, firstName } from '@rastro/domain';
+import { GROUPS, MANAGER_GROUP, firstName } from '@rastro/domain';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { api, errorMessage } from '../api/client';
 import { useResource } from '../api/useResource';
@@ -6,10 +6,13 @@ import { useAdmin } from './context';
 import type { AdminChecklist, AdminEmployee, AdminItem } from './types';
 
 type When = 'daily' | 'weekdays' | 'ondemand';
-type Answers = { name: string; tasks: string[]; roles: string[]; when: When | null; days: number[]; dueTime: string };
-type Step = 'welcome' | 'name' | 'tasks' | 'who' | 'when' | 'time' | 'review' | 'done';
+type NewPerson = { name: string; group: string };
+type Answers = { name: string; tasks: string[]; people: NewPerson[]; roles: string[]; when: When | null; days: number[]; dueTime: string };
+type Step = 'welcome' | 'name' | 'tasks' | 'team' | 'who' | 'when' | 'time' | 'review' | 'done';
 
-const EMPTY: Answers = { name: '', tasks: [], roles: [], when: null, days: [], dueTime: '' };
+const EMPTY: Answers = { name: '', tasks: [], people: [], roles: [], when: null, days: [], dueTime: '' };
+/** Gestor precisa de PIN, então é cadastrado na página Equipe, não aqui. */
+const TEAM_GROUPS = GROUPS.filter((g) => g !== MANAGER_GROUP);
 const NAME_IDEAS = ['Abertura do restaurante', 'Fechamento do restaurante', 'Limpeza da cozinha'];
 const TIMES = ['07:00', '08:00', '10:00', '11:00', '12:00', '15:00', '18:00', '22:00', '23:00'];
 const DAYS: [number, string][] = [[1, 'Segunda'], [2, 'Terça'], [3, 'Quarta'], [4, 'Quinta'], [5, 'Sexta'], [6, 'Sábado'], [0, 'Domingo']];
@@ -40,7 +43,7 @@ export function GuidePage() {
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<AdminChecklist | null>(null);
 
-  const order: Step[] = ['name', 'tasks', 'who', 'when', ...(a.when === 'ondemand' ? [] : (['time'] as Step[])), 'review'];
+  const order: Step[] = ['name', 'tasks', 'team', 'who', 'when', ...(a.when === 'ondemand' ? [] : (['time'] as Step[])), 'review'];
   const set = (p: Partial<Answers>) => {
     setA((x) => ({ ...x, ...p }));
     setError('');
@@ -51,7 +54,22 @@ export function GuidePage() {
   };
   const back = () => move(step === 'name' ? 'welcome' : order[order.indexOf(step) - 1]!);
 
-  const people = (group: string) => (emps.data ?? []).filter((e) => e.active && e.group === group).map((e) => e.firstName);
+  const current = (group: string) => (emps.data ?? []).filter((e) => e.active && e.group === group).map((e) => e.firstName);
+  const people = (group: string, list = a.people) => [...current(group), ...list.filter((p) => p.group === group).map((p) => firstName(p.name))];
+
+  function addPerson(p: NewPerson): string {
+    const key = norm(p.name);
+    const known = (emps.data ?? []).find((e) => e.active && norm(e.name) === key)?.name ?? a.people.find((x) => norm(x.name) === key)?.name;
+    if (known) return `${known} já está na equipe.`;
+    set({ people: [...a.people, p] });
+    return '';
+  }
+
+  /** Tirar a única pessoa de uma função já escolhida desmarca a função. */
+  function removePerson(name: string) {
+    const list = a.people.filter((p) => p.name !== name);
+    set({ people: list, roles: a.roles.filter((r) => people(r, list).length > 0) });
+  }
 
   /** Mensagem do que falta responder neste passo, ou '' se pode seguir. */
   function missing(): string {
@@ -85,10 +103,12 @@ export function GuidePage() {
         period: a.when,
         days: a.when === 'weekdays' ? [...a.days].sort((x, y) => x - y) : [],
         dueTime: a.when === 'ondemand' ? null : a.dueTime,
+        newEmployees: a.people,
       });
       setCreated(saved);
       cls.reload();
       items.reload();
+      emps.reload();
       move('done');
     } catch (e) {
       setError(errorMessage(e));
@@ -161,6 +181,15 @@ export function GuidePage() {
           </TasksStep>
         )}
 
+        {step === 'team' && (
+          <TeamStep
+            groups={TEAM_GROUPS.map((g) => ({ group: g, names: current(g) }))}
+            people={a.people} error={error} setError={setError} onAdd={addPerson} onRemove={removePerson}
+          >
+            {nav()}
+          </TeamStep>
+        )}
+
         {step === 'who' && (
           <>
             <Title step={step}>Quem vai fazer?</Title>
@@ -231,6 +260,11 @@ export function GuidePage() {
               </SummaryLine>
               <ol className="guide-summary-tasks">{a.tasks.map((t) => <li key={t}>{t}</li>)}</ol>
               <SummaryLine onChange={() => move('tasks')} label="Mudar as tarefas" />
+              {a.people.length > 0 && (
+                <SummaryLine onChange={() => move('team')} label="Mudar a equipe">
+                  Pessoas novas na equipe: {a.people.map((p) => `${p.name} (${p.group})`).join(', ')}.
+                </SummaryLine>
+              )}
               <SummaryLine onChange={() => move('who')} label="Mudar quem faz">
                 Quem faz: {a.roles.map((r) => `${r} (${people(r).join(', ')})`).join('; ')}.
               </SummaryLine>
@@ -361,6 +395,71 @@ function TimeStep({ value, error, onChange, children }: { value: string; error: 
         </>
       )}
       <Problem text={error} />
+      {children}
+    </>
+  );
+}
+
+type TeamProps = {
+  groups: { group: string; names: string[] }[]; people: NewPerson[]; error: string; children: ReactNode;
+  setError: (m: string) => void; onAdd: (p: NewPerson) => string; onRemove: (name: string) => void;
+};
+
+function TeamStep({ groups, people, error, children, setError, onAdd, onRemove }: TeamProps) {
+  const [name, setName] = useState('');
+  const [group, setGroup] = useState('');
+  function add() {
+    if (!name.trim()) return setError('Escreva o nome da pessoa.');
+    if (!group) return setError('Escolha a função da pessoa.');
+    const problem = onAdd({ name: name.trim(), group });
+    if (problem) return setError(problem);
+    setName('');
+    setGroup('');
+  }
+  return (
+    <>
+      <Title step="team">Quem trabalha com você?</Title>
+      <p className="guide-text">Esta é a sua equipe hoje. Se alguém novo começou, adicione aqui. Se não, é só tocar em “Próximo”.</p>
+      <div className="guide-team">
+        {groups.map(({ group: g, names }) => (
+          <div key={g} className="guide-team-row" data-testid={`guide-team-${g}`}>
+            <span className="guide-team-group">{g}</span>
+            <span className="guide-team-names">{names.length ? names.join(', ') : 'Ninguém ainda'}</span>
+          </div>
+        ))}
+      </div>
+
+      {people.length > 0 && (
+        <ul className="guide-tasks guide-people">
+          {people.map((p) => (
+            <li key={p.name} data-testid="guide-new-person">
+              <span>{p.name} · {p.group}</span>
+              <span className="guide-tag">nova</span>
+              <button type="button" className="guide-link" aria-label={`Tirar ${p.name}`} onClick={() => onRemove(p.name)}>Tirar</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="guide-add">
+        <div className="guide-add-title">Adicionar uma pessoa</div>
+        <label className="guide-label" htmlFor="guide-person">Nome da pessoa</label>
+        <input
+          id="guide-person" className="guide-input" value={name} maxLength={80} autoComplete="off" placeholder="Ex.: Pedro Ramos"
+          onChange={(e) => { setName(e.target.value); setError(''); }}
+        />
+        <div className="guide-label" id="guide-person-group">Função</div>
+        <div className="guide-choices" role="group" aria-labelledby="guide-person-group">
+          {groups.map(({ group: g }) => (
+            <button key={g} type="button" className="guide-choice" aria-pressed={group === g} onClick={() => { setGroup(g); setError(''); }}>{g}</button>
+          ))}
+        </div>
+        <Problem text={error} />
+        <div>
+          <button type="button" className="guide-btn guide-btn--primary" onClick={add}>Adicionar à equipe</button>
+        </div>
+        <p className="guide-text guide-text--small">Para cadastrar outro gestor, use a página Equipe: gestores precisam de um PIN.</p>
+      </div>
       {children}
     </>
   );
