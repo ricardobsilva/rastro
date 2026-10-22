@@ -36,6 +36,20 @@ function server(session: { employee: unknown; since: string | null }) {
 beforeEach(() => vi.resetAllMocks());
 
 describe('US10 — estação de trabalho', () => {
+  it('tela inicial oferece entrar como gestor (sucesso)', async () => {
+    server({ employee: null, since: null });
+    renderWithToast(<StationApp />);
+    expect(await screen.findByRole('heading', { name: 'Quem vai marcar tarefas agora?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Entrar como gestor' })).toBeInTheDocument();
+  });
+
+  it('com alguém marcando, o atalho do gestor some (borda)', async () => {
+    server({ employee: JOAO, since: '09:00' });
+    renderWithToast(<StationApp />);
+    expect(await screen.findByText(/Marcando como/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Entrar como gestor' })).not.toBeInTheDocument();
+  });
+
   it('sem sessão mostra a equipe com progresso; um toque entra (sucesso)', async () => {
     server({ employee: null, since: null });
     api.post.mockResolvedValue({ employee: JOAO, since: '11:40' });

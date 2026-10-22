@@ -10,6 +10,7 @@ import { barColor, pct, plural } from '../ui/status';
 import { ActivityList } from './ActivitiesScreen';
 import { ChecklistCard } from './ChecklistCard';
 import { ExecItemCard } from './ExecItemCard';
+import { ManagerLogin } from './ManagerLogin';
 import { NoteEditor } from './NoteEditor';
 import { OnDemandList } from './OnDemandList';
 import { runMeta } from './RunScreen';
@@ -70,6 +71,7 @@ export function StationApp() {
             <span className="station-time">{team.data?.now ?? '--:--'}</span>
             <span className="station-date">{team.data?.dateLabel}</span>
           </div>
+          {session && !me && <ManagerLogin />}
           {me && (
             <div className="station-who">
               <Avatar initials={me.initials} color={me.color} size={34} />

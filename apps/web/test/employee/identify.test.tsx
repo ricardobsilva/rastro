@@ -21,6 +21,13 @@ function mockServer(session: unknown, employees = EMPLOYEES) {
 beforeEach(() => vi.resetAllMocks());
 
 describe('US02 — identificação', () => {
+  it('tela inicial do celular oferece entrar como gestor (sucesso)', async () => {
+    mockServer({ employee: null, since: null });
+    renderWithToast(<EmployeeApp />);
+    expect(await screen.findByRole('heading', { name: 'Quem está trabalhando agora?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Entrar como gestor' })).toBeInTheDocument();
+  });
+
   it('sem sessão lista a equipe; um toque entra e mostra o toast (sucesso)', async () => {
     mockServer({ employee: null, since: null });
     api.post.mockResolvedValue({ employee: JOAO, since: '09:31' });

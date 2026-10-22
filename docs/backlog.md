@@ -234,7 +234,7 @@ Tokens de design, fontes (Bricolage Grotesque, Geist, Geist Mono), seed Casa Bra
 
 **Como** gestor, **quero** entrar na área administrativa com meu PIN, **para** que só a gerência altere configurações.
 
-**Aceite**: teclado numérico 3×4, 4 bolinhas, erro "PIN sem permissão de gestor.", toast "Acesso liberado · Marina Alves"; layout com sidebar (Painel com badge de atrasos, Equipe, Itens, Checklists, Histórico), "Sair"; abaixo de 900px a sidebar vira pílulas.
+**Aceite**: teclado numérico 3×4, 4 bolinhas, erro "PIN sem permissão de gestor.", toast "Acesso liberado · Marina Alves"; layout com sidebar (Painel com badge de atrasos, Equipe, Itens, Checklists, Histórico), "Sair"; abaixo de 900px a sidebar vira pílulas. A tela inicial (celular e estação, sem ninguém marcando) tem o botão "Entrar como gestor", que pede o PIN num modal e abre `/gestor`; cancelar fecha sem chamar a API.
 
 **Regras**: apenas funcionários **ativos** da função Gerência; todas as rotas `/api/admin/*` exigem sessão de gestor.
 

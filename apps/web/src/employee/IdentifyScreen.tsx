@@ -1,6 +1,7 @@
 import { RESTAURANT } from '../restaurant';
 import type { Employee } from '../types';
 import { Avatar } from '../ui/Avatar';
+import { ManagerLogin } from './ManagerLogin';
 
 type Props = { employees: Employee[]; onPick: (e: Employee) => void };
 
@@ -36,6 +37,7 @@ export function IdentifyScreen({ employees, onPick }: Props) {
           ))}
         </div>
       )}
+      <ManagerLogin />
     </div>
   );
 }
