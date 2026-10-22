@@ -2,7 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { openDb } from '../src/db/index.js';
-import { seed } from '../src/db/seed.js';
+import { seedCasaBrasa as seed } from '../src/db/seed-casa-brasa.js';
 
 describe('US00 — fundação', () => {
   describe('GET /api/health', () => {

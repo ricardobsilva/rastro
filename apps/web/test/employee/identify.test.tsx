@@ -21,6 +21,15 @@ function mockServer(session: unknown, employees = EMPLOYEES) {
 beforeEach(() => vi.resetAllMocks());
 
 describe('US02 — identificação', () => {
+  it('mostra o restaurante Zé Frôxin, sem subtítulo de demonstração (sucesso)', async () => {
+    mockServer({ employee: null, since: null });
+    const { container } = renderWithToast(<EmployeeApp />);
+    expect(await screen.findByText('Zé Frôxin')).toBeInTheDocument();
+    expect(screen.getByText('ZF')).toBeInTheDocument();
+    expect(screen.queryByText(/Casa Brasa|Pinheiros/)).not.toBeInTheDocument();
+    expect(container.querySelector('.restaurant-tagline')).toBeNull();
+  });
+
   it('tela inicial do celular oferece entrar como gestor (sucesso)', async () => {
     mockServer({ employee: null, since: null });
     renderWithToast(<EmployeeApp />);

@@ -1,12 +1,12 @@
-import { openDb } from './index.js';
-import { seed } from './seed.js';
+import { prepareDb } from './prepare.js';
+import { seedCasaBrasa } from './seed-casa-brasa.js';
 import { seedDemo } from './seed-demo.js';
 
 const path = process.env.DB_PATH ?? 'rastro.db';
-const db = openDb(path);
-seed(db);
-console.log(`Seed Casa Brasa aplicado em ${path}`);
+const db = prepareDb(path);
+console.log(`Dados de domínio aplicados em ${path} (gestor inicial e biblioteca de tarefas).`);
 if (process.argv.includes('--demo')) {
+  seedCasaBrasa(db);
   seedDemo(db, new Date());
-  console.log('Histórico de demonstração gerado (7 dias + hoje).');
+  console.log('Demonstração Casa Brasa aplicada: equipe, listas e 7 dias de histórico. Não use em produção.');
 }

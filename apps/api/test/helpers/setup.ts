@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
 import { openDb } from '../../src/db/index.js';
-import { seed } from '../../src/db/seed.js';
+import { seedCasaBrasa } from '../../src/db/seed-casa-brasa.js';
 
 export type TestClock = { now: Date; set(iso: string): void; advanceMinutes(n: number): void };
 
@@ -17,7 +17,7 @@ export function testClock(local = '2026-10-21T11:40'): TestClock {
 
 export function setup(opts: { local?: string; seed?: boolean } = {}) {
   const db = openDb();
-  if (opts.seed !== false) seed(db);
+  if (opts.seed !== false) seedCasaBrasa(db);
   const clock = testClock(opts.local);
   const app = createApp({ db, clock: () => clock.now });
   return { db, clock, app };

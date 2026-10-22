@@ -1,7 +1,9 @@
 import type { Db } from './index.js';
-import { CHECKLISTS, EMPLOYEES, ITEMS } from './seed-data.js';
+import { CHECKLISTS, EMPLOYEES } from './casa-brasa-data.js';
+import { ITEMS } from './seed-data.js';
 
-export function seed(db: Db): void {
+/** Restaurante fictício completo (equipe, itens e listas). Só para testes e demonstração local, nunca em produção. */
+export function seedCasaBrasa(db: Db): void {
   const insEmp = db.prepare(
     'INSERT OR IGNORE INTO employees (id, name, role, grp, pin, color, active) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );

@@ -20,8 +20,8 @@ npm install
 npm test          # testes de todos os pacotes
 npm run typecheck
 npm run dev       # API em :3333 e web em :5173 (proxy /api)
-npm run seed      # aplica o seed Casa Brasa em apps/api/rastro.db
-npm run seed:demo # seed + 7 dias de histórico e marcações de hoje (para validar com o cliente)
+npm run seed      # só dados de domínio em apps/api/rastro.db (o mesmo que a API faz ao subir)
+npm run seed:demo # domínio + restaurante fictício Casa Brasa + 7 dias de histórico (só local, nunca em produção)
 ```
 
 ## Endereços
@@ -32,4 +32,24 @@ npm run seed:demo # seed + 7 dias de histórico e marcações de hoje (para vali
 | `/estacao` | Força a estação de trabalho em qualquer aparelho |
 | `/gestor` | Painel do gestor |
 
-PIN de gestor no seed: `1234` (Marina Alves). Ele também libera cada aparelho novo no primeiro acesso.
+## Dados em produção
+
+Ao subir, a API (`apps/api/src/main.ts` → `prepareDb`) aplica **apenas dados de domínio** (`apps/api/src/db/seed-domain.ts`):
+
+- o gestor inicial **Rodrigo Cortez**, PIN `2200`;
+- a biblioteca de tarefas sugeridas (só as ativas).
+
+Ficam no código, sem passar pelo banco: as funções (Salão, Cozinha, Bar, Limpeza, Gerência), as categorias, as ideias de nome de lista do passo a passo e o nome do restaurante (`apps/web/src/restaurant.ts`).
+
+Nada de equipe, listas, execuções ou histórico: o gestor cadastra tudo aos poucos (o Painel convida para o passo a passo enquanto não houver listas). O seed de domínio pode rodar a cada reinício: ele não duplica nada nem desfaz o que o gestor mudou. Um teste (`apps/api/test/domain-seed.test.ts`) garante isso e que a inicialização nunca usa o seed de demonstração.
+
+> O PIN `2200` está fixo no código, então qualquer pessoa com acesso ao repositório o conhece. Peça ao gestor para trocá-lo em **Equipe → Editar** logo no primeiro acesso; o novo PIN não é sobrescrito ao reiniciar.
+
+## PINs de gestor
+
+| Ambiente | Gestor | PIN |
+|---|---|---|
+| Produção e local | Rodrigo Cortez | `2200` |
+| Só na demonstração (`seed:demo`) | Marina Alves | `1234` |
+
+O PIN de gestor também libera cada aparelho novo no primeiro acesso.

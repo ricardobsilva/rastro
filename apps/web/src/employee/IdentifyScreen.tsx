@@ -12,7 +12,7 @@ export function IdentifyScreen({ employees, onPick }: Props) {
         <div className="restaurant-logo">{RESTAURANT.initials}</div>
         <div>
           <div className="restaurant-name">{RESTAURANT.name}</div>
-          <div className="restaurant-tagline">{RESTAURANT.tagline}</div>
+          {RESTAURANT.tagline && <div className="restaurant-tagline">{RESTAURANT.tagline}</div>}
         </div>
       </div>
       <div className="identify-head">

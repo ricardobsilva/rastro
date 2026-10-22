@@ -1,7 +1,7 @@
 # Rastro — Backlog refinado (MVP)
 
 Fonte: `PrototipoChecklistRestaurante/design_handoff_rastro` (README + lógica `class Component` do protótipo).
-Cliente-piloto (seed): **Casa Brasa**. Idioma da UI: pt-BR. Fuso: `America/Sao_Paulo`.
+Restaurante: **Zé Frôxin**. Produção sobe só com dados de domínio (gestor inicial Rodrigo Cortez e biblioteca de tarefas); equipe e listas são cadastradas pelo gestor. Dados fictícios de teste e demonstração local: **Casa Brasa**. Idioma da UI: pt-BR. Fuso: `America/Sao_Paulo`.
 
 ## Convenções
 

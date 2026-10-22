@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { openDb } from '../src/db/index.js';
-import { seed } from '../src/db/seed.js';
+import { seedCasaBrasa as seed } from '../src/db/seed-casa-brasa.js';
 import { seedDemo } from '../src/db/seed-demo.js';
 
 const NOW = new Date('2026-10-21T11:40:00-03:00');
