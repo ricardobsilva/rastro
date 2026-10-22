@@ -222,6 +222,27 @@ describe('US18 — assistente do primeiro checklist (web)', () => {
       expect(screen.getByLabelText('Nome da lista')).toHaveValue('Abertura da varanda');
     });
 
+    it('com as primeiras ideias já usadas, mostra outras ideias até o limite de 4', async () => {
+      const taken = ['Abertura do restaurante', 'Fechamento do restaurante', 'Limpeza da cozinha'].map((name, i) => ({ id: `c${i}`, name }));
+      api.get.mockImplementation(async (url: string) => ({ '/api/admin/checklists': taken, '/api/admin/items': ITEMS, '/api/admin/employees': EMPS })[url]);
+      render();
+      await user.click(await screen.findByRole('button', { name: 'Começar' }));
+      const ideas = screen.getAllByTestId('guide-name-idea');
+      expect(ideas).toHaveLength(4);
+      expect(ideas.map((b) => b.textContent)).not.toContain('Limpeza da cozinha');
+      expect(screen.getByText('Um nome curto que todos entendam. Toque numa ideia ou escreva o seu.')).toBeInTheDocument();
+    });
+
+    it('se todas as ideias já existem, pede só para escrever o nome', async () => {
+      const { NAME_IDEAS } = await import('../../src/admin/GuidePage');
+      const taken = NAME_IDEAS.map((name, i) => ({ id: `c${i}`, name }));
+      api.get.mockImplementation(async (url: string) => ({ '/api/admin/checklists': taken, '/api/admin/items': ITEMS, '/api/admin/employees': EMPS })[url]);
+      render();
+      await user.click(await screen.findByRole('button', { name: 'Começar' }));
+      expect(await screen.findByText('Um nome curto que todos entendam. Escreva o nome abaixo.')).toBeInTheDocument();
+      expect(screen.queryAllByTestId('guide-name-idea')).toHaveLength(0);
+    });
+
     it('sugestão de nome preenche o campo e esconde nomes que já existem', async () => {
       render();
       await user.click(await screen.findByRole('button', { name: 'Começar' }));

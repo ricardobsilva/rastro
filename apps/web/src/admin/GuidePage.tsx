@@ -13,7 +13,12 @@ type Step = 'welcome' | 'name' | 'tasks' | 'team' | 'who' | 'when' | 'time' | 'r
 const EMPTY: Answers = { name: '', tasks: [], people: [], roles: [], when: null, days: [], dueTime: '' };
 /** Gestor precisa de PIN, então é cadastrado na página Equipe, não aqui. */
 const TEAM_GROUPS = GROUPS.filter((g) => g !== MANAGER_GROUP);
-const NAME_IDEAS = ['Abertura do restaurante', 'Fechamento do restaurante', 'Limpeza da cozinha'];
+export const NAME_IDEAS = [
+  'Abertura do restaurante', 'Fechamento do restaurante', 'Limpeza da cozinha', 'Limpeza dos banheiros',
+  'Abertura do salão', 'Fechamento da cozinha', 'Fechamento do bar', 'Conferência da geladeira',
+  'Recebimento de mercadorias', 'Limpeza semanal', 'Troca de turno', 'Preparação do almoço',
+];
+const MAX_NAME_IDEAS = 4;
 const TIMES = ['07:00', '08:00', '10:00', '11:00', '12:00', '15:00', '18:00', '22:00', '23:00'];
 const DAYS: [number, string][] = [[1, 'Segunda'], [2, 'Terça'], [3, 'Quarta'], [4, 'Quinta'], [5, 'Sexta'], [6, 'Sábado'], [0, 'Domingo']];
 const MAX_SUGGESTIONS = 8;
@@ -123,6 +128,7 @@ export function GuidePage() {
     move('name');
   }
 
+  const ideas = NAME_IDEAS.filter((n) => !cls.data?.some((c) => norm(c.name) === norm(n))).slice(0, MAX_NAME_IDEAS);
   const pos = order.indexOf(step);
   const counter = pos >= 0 ? `Passo ${pos + 1} de ${order.length}` : null;
   const nav = (primary: ReactNode = <button type="button" className="guide-btn guide-btn--primary" onClick={next}>Próximo</button>) => (
@@ -154,12 +160,14 @@ export function GuidePage() {
         {step === 'name' && (
           <>
             <Title step={step}>Como vai se chamar esta lista?</Title>
-            <p className="guide-text">Um nome curto que todos entendam. Toque numa ideia ou escreva o seu.</p>
-            <div className="guide-choices">
-              {NAME_IDEAS.filter((n) => !cls.data?.some((c) => norm(c.name) === norm(n))).map((n) => (
-                <button key={n} type="button" className="guide-choice" aria-pressed={a.name === n} onClick={() => set({ name: n })}>{n}</button>
-              ))}
-            </div>
+            <p className="guide-text">Um nome curto que todos entendam. {ideas.length ? 'Toque numa ideia ou escreva o seu.' : 'Escreva o nome abaixo.'}</p>
+            {ideas.length > 0 && (
+              <div className="guide-choices">
+                {ideas.map((n) => (
+                  <button key={n} type="button" className="guide-choice" data-testid="guide-name-idea" aria-pressed={a.name === n} onClick={() => set({ name: n })}>{n}</button>
+                ))}
+              </div>
+            )}
             <label className="guide-label" htmlFor="guide-name">Nome da lista</label>
             <input
               id="guide-name" className="guide-input" value={a.name} maxLength={120} autoComplete="off"
