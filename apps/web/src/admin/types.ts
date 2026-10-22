@@ -14,3 +14,15 @@ export type AdminChecklist = {
   id: string; name: string; description: string; period: Period; days: number[]; dueTime: string | null;
   roles: string[]; employeeIds: string[]; itemIds: string[]; active: boolean; assignees: string[];
 };
+
+type Person = { employeeId: string; name: string; firstName: string; role: string; color: string; initials: string };
+export type Dashboard = {
+  date: string; isToday: boolean; now: string; dateLabel: string;
+  kpis: { total: number; done: number; pending: number; late: number; pct: number; checklists: number };
+  byChecklist: { name: string; done: number; late: number; total: number }[];
+  lateCount: number;
+  lateList: (Person & { itemName: string; checklistName: string; due: string | null; delayMin: number | null })[];
+  pendingByEmployee: (Person & { pending: number; late: number })[];
+  byCategory: { category: string; n: number; pct: number }[];
+  trend: { date: string; label: string; pct: number }[];
+};
