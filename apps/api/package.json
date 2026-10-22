@@ -7,7 +7,8 @@
     "dev": "tsx watch src/main.ts",
     "seed": "tsx src/db/seed-cli.ts",
     "test": "vitest run",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "seed:demo": "tsx src/db/seed-cli.ts --demo"
   },
   "dependencies": {
     "@rastro/domain": "*",

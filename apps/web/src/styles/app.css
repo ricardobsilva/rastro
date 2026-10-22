@@ -325,6 +325,7 @@ a { color: var(--primary); }
 .table-empty { padding: 36px; text-align: center; font: 400 14px var(--font-ui); color: var(--text-2); }
 .field input.pin-input { width: 160px; font: 500 16px var(--font-mono); letter-spacing: .3em; }
 .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; align-items: start; }
+.team-grid .table-row { gap: 10px; }
 .table-row--click { cursor: pointer; }
 .table-row--click:hover { background: var(--surface-alt); }
 .table-row.is-selected { background: var(--primary-tint-2); }

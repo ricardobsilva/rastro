@@ -9,7 +9,7 @@ import { useAdmin } from './context';
 import type { AdminEmployee, TeamData, TeamRow } from './types';
 import { useDates } from './useDates';
 
-const COLS = 'minmax(180px,2fr) 70px 70px 1.2fr 80px 60px';
+const COLS = 'minmax(150px,2fr) 48px 48px minmax(100px,1.2fr) 72px 52px';
 const EMPTY_ROW = (id: string): TeamRow => ({ employeeId: id, total: 0, done: 0, late: 0, groups: [] });
 
 export function TeamPage() {
@@ -52,7 +52,7 @@ export function TeamPage() {
       {(emps.error || team.error) && <div className="banner banner--error">{emps.error ?? team.error}</div>}
       <div className="team-grid">
         <div className="table-wrap">
-          <div style={{ minWidth: 560 }}>
+          <div style={{ minWidth: 520 }}>
             <div className="table-row table-head" style={{ gridTemplateColumns: COLS }}>
               <span>Funcionário</span><span>Atrib.</span><span>Concl.</span><span>Execução</span><span>Pend.</span><span />
             </div>
