@@ -382,6 +382,30 @@ Tokens de design, fontes (Bricolage Grotesque, Geist, Geist Mono), seed Casa Bra
 
 ---
 
+## US19 — Exportar e importar dados
+
+**Como** gestor, **quero** baixar um arquivo com todos os dados e poder carregá-lo de volta, **para** ter uma cópia de segurança e conseguir restaurar o restaurante (por exemplo, numa troca de servidor).
+
+**Aceite**
+- Página "Exportar e importar" no menu do gestor.
+- "Exportar dados" baixa `rastro-dados-AAAA-MM-DD.json` (data do dia operacional), com o aviso de que o arquivo contém os PINs dos gestores.
+- "Escolher arquivo de dados" lê o arquivo e, antes de mudar qualquer coisa, mostra a data da exportação e os totais (funcionários, tarefas, listas, registros no histórico), com o aviso em vermelho de que todos os dados atuais serão apagados. Os botões são "Cancelar" e "Substituir todos os dados".
+- Ao terminar, mostra "Dados importados" e o botão "Entrar de novo".
+
+**Regras**
+- `GET /api/admin/export` e `POST /api/admin/import` exigem sessão de gestor; a importação aceita arquivos de até 50 MB, lidos só depois de conferir a sessão.
+- O arquivo traz `format: "rastro-export"`, `version: 1`, `exportedAt` e as tabelas de dados com as linhas exatamente como estão no banco: funcionários, itens, listas e seus vínculos, execuções, itens das execuções e o log de auditoria.
+- Aparelhos e sessões não são exportados. Ao importar, são apagados: todos entram de novo com o PIN.
+- A importação substitui tudo numa transação: se algo falhar, os dados atuais ficam intactos. Colunas desconhecidas são ignoradas.
+- É recusado (422) arquivo que não é do Rastro, de versão mais nova, incompleto ou corrompido, ou sem nenhum gestor ativo com PIN (ninguém conseguiria entrar).
+
+**Testes**
+- Sucesso: ida e volta (exportar → importar num banco novo → exportar de novo) dá tabelas idênticas; banco de produção vazio também exporta; resumo, confirmação e "Entrar de novo" na tela.
+- Erro: sem sessão → 401; arquivo de outro sistema, de versão mais nova, corrompido ou sem gestor → 422 sem mudar nada; falha do servidor mantém o resumo com a mensagem.
+- Borda: arquivo acima de 100 kB; tabela faltando; colunas desconhecidas; importar o mesmo arquivo duas vezes; sessões e aparelhos encerrados depois da importação; plural e singular no resumo.
+
+---
+
 ## Fora do escopo do MVP
 - "Declarado × verificado" (validação do gerente, foto obrigatória).
 - Notificações de atraso, multi-unidade, exportação de relatórios.

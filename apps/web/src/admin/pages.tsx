@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import { ChecklistsPage } from './ChecklistsPage';
 import { DashboardPage } from './DashboardPage';
+import { DataPage } from './DataPage';
 import { GuidePage } from './GuidePage';
 import { HistoryPage } from './HistoryPage';
 import { ItemsPage } from './ItemsPage';
@@ -14,4 +15,5 @@ export const PAGES: Record<PageId, ComponentType> = {
   cls: ChecklistsPage,
   hist: HistoryPage,
   guide: GuidePage,
+  data: DataPage,
 };

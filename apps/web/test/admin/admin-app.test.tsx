@@ -9,7 +9,7 @@ vi.mock('../../src/api/client', async (orig) => ({ ...(await orig<object>()), ap
 vi.mock('../../src/admin/pages', () => ({
   PAGES: {
     dash: () => <h1>Página Painel</h1>, team: () => <h1>Página Equipe</h1>, items: () => <h1>Página Itens</h1>,
-    cls: () => <h1>Página Checklists</h1>, hist: () => <h1>Página Histórico</h1>, guide: () => <h1>Página Passo a passo</h1>,
+    cls: () => <h1>Página Checklists</h1>, hist: () => <h1>Página Histórico</h1>, guide: () => <h1>Página Passo a passo</h1>, data: () => <h1>Página Dados</h1>,
   },
 }));
 
@@ -83,6 +83,13 @@ describe('US11 — acesso do gestor (web)', () => {
     renderWithToast(<AdminApp />);
     await userEvent.click(await screen.findByRole('button', { name: 'Passo a passo' }));
     expect(await screen.findByRole('heading', { name: 'Página Passo a passo' })).toBeInTheDocument();
+  });
+
+  it('menu tem "Exportar e importar" (sucesso)', async () => {
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    renderWithToast(<AdminApp />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Exportar e importar' }));
+    expect(await screen.findByRole('heading', { name: 'Página Dados' })).toBeInTheDocument();
   });
 
   it('servidor fora do ar na verificação inicial mostra erro (borda)', async () => {

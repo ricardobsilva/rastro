@@ -45,6 +45,10 @@ Nada de equipe, listas, execuções ou histórico: o gestor cadastra tudo aos po
 
 > O PIN `2200` está fixo no código, então qualquer pessoa com acesso ao repositório o conhece. Peça ao gestor para trocá-lo em **Equipe → Editar** logo no primeiro acesso; o novo PIN não é sobrescrito ao reiniciar.
 
+## Cópia dos dados
+
+Em **Gestor → Exportar e importar**, o gestor baixa um arquivo `.json` com todos os dados e pode carregá-lo de volta, o que substitui tudo (US19). O arquivo contém os PINs dos gestores: guarde-o com cuidado. Isso não substitui um backup automático do volume onde fica o `rastro.db`.
+
 ## PINs de gestor
 
 | Ambiente | Gestor | PIN |
