@@ -9,7 +9,7 @@ import { PAGES } from './pages';
 
 type Me = { manager: Employee; lateToday: number };
 
-const NAV: [PageId, string][] = [['dash', 'Painel'], ['team', 'Equipe'], ['items', 'Itens'], ['cls', 'Checklists'], ['hist', 'Histórico']];
+const NAV: [PageId, string][] = [['dash', 'Painel'], ['team', 'Equipe'], ['items', 'Itens'], ['cls', 'Checklists'], ['hist', 'Histórico'], ['guide', 'Passo a passo']];
 
 export function AdminApp({ go: navigate = (path: string) => window.location.assign(path) }: { go?: (path: string) => void } = {}) {
   const toast = useToast();

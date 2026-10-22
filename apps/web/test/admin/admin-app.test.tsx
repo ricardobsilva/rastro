@@ -9,7 +9,7 @@ vi.mock('../../src/api/client', async (orig) => ({ ...(await orig<object>()), ap
 vi.mock('../../src/admin/pages', () => ({
   PAGES: {
     dash: () => <h1>Página Painel</h1>, team: () => <h1>Página Equipe</h1>, items: () => <h1>Página Itens</h1>,
-    cls: () => <h1>Página Checklists</h1>, hist: () => <h1>Página Histórico</h1>,
+    cls: () => <h1>Página Checklists</h1>, hist: () => <h1>Página Histórico</h1>, guide: () => <h1>Página Passo a passo</h1>,
   },
 }));
 
@@ -76,6 +76,13 @@ describe('US11 — acesso do gestor (web)', () => {
     renderWithToast(<AdminApp go={go} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Sair' }));
     await vi.waitFor(() => expect(go).toHaveBeenCalledWith('/'));
+  });
+
+  it('menu tem "Passo a passo" que abre o assistente (sucesso)', async () => {
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    renderWithToast(<AdminApp />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Passo a passo' }));
+    expect(await screen.findByRole('heading', { name: 'Página Passo a passo' })).toBeInTheDocument();
   });
 
   it('servidor fora do ar na verificação inicial mostra erro (borda)', async () => {

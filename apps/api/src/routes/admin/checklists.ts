@@ -93,6 +93,44 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
     res.status(201).json(save(`c_${randomUUID().slice(0, 8)}`, data, true));
   }));
 
+  /** Tarefas em texto livre (assistente): reaproveita itens pelo nome e cria os que faltam. */
+  function taskItemIds(raw: unknown): string[] {
+    const tasks = (strings(raw) ?? fail('Escreva pelo menos uma tarefa.')).map((t) => t.trim()).filter(Boolean);
+    if (tasks.length === 0) fail('Escreva pelo menos uma tarefa.');
+    if (tasks.some((t) => t.length > 120)) fail('Cada tarefa pode ter até 120 caracteres.');
+    const byName = new Map(loadItems(db).map((i) => [i.name.trim().toLowerCase(), i]));
+    const ids: string[] = [];
+    for (const name of tasks) {
+      const key = name.toLowerCase();
+      let item = byName.get(key);
+      if (!item) {
+        item = { id: `i_${randomUUID().slice(0, 8)}`, name, description: '', category: 'Organização', required: false, allowNote: true, active: true };
+        db.prepare('INSERT INTO items (id, name, description, category, required, allow_note, active) VALUES (?, ?, ?, ?, 0, 1, 1)')
+          .run(item.id, item.name, item.description, item.category);
+        byName.set(key, item);
+      } else if (!item.active) {
+        db.prepare('UPDATE items SET active = 1 WHERE id = ?').run(item.id);
+        item.active = true;
+      }
+      if (!ids.includes(item.id)) ids.push(item.id);
+    }
+    if (ids.length > 30) fail('Uma lista pode ter até 30 tarefas.');
+    return ids;
+  }
+
+  r.post('/admin/checklists/guided', route((req, res) => {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const name = typeof body.name === 'string' ? body.name.trim().toLowerCase() : '';
+    if (name && loadChecklists(db).some((c) => c.name.trim().toLowerCase() === name))
+      throw new HttpError(409, 'Já existe uma lista com esse nome.');
+    const created = db.transaction(() => {
+      const itemIds = taskItemIds(body.tasks);
+      const data = validate({ name: body.name, period: body.period, days: body.days, dueTime: body.dueTime, roles: body.roles, employeeIds: [], itemIds });
+      return save(`c_${randomUUID().slice(0, 8)}`, data, true);
+    })();
+    res.status(201).json(created);
+  }));
+
   r.put('/admin/checklists/:id', route((req, res) => {
     const current = loadChecklists(db).find((c) => c.id === req.params.id);
     if (!current) throw new HttpError(404, 'Checklist não encontrado.');

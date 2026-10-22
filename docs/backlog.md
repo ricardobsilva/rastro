@@ -349,6 +349,37 @@ Tokens de design, fontes (Bricolage Grotesque, Geist, Geist Mono), seed Casa Bra
 
 ---
 
+## US18 — Assistente do primeiro checklist (passo a passo)
+
+**Como** gestor pouco acostumado com tecnologia, **quero** criar uma lista de tarefas respondendo uma pergunta por vez, em linguagem simples, **para** colocar o restaurante para funcionar sem precisar entender a tela completa de checklists.
+
+**Aceite**
+- Entrada: item "Passo a passo" no menu do gestor, botão "Criar com ajuda" na página Checklists e, no Painel, um convite em destaque enquanto não houver nenhum checklist.
+- Uma pergunta por tela, com "Passo N de 6", letras grandes, botões altos (≥ 56 px), "Voltar" sempre visível e sem arrastar-e-soltar. A palavra "checklist" aparece só uma vez ("lista de tarefas (checklist)").
+  1. **Boas-vindas**: o que vai acontecer e quanto tempo leva (uns 3 minutos); botão "Começar".
+  2. **Nome**: "Como vai se chamar esta lista?". Sugestões em botões (Abertura do restaurante, Fechamento do restaurante, Limpeza da cozinha) e campo livre.
+  3. **Tarefas**: "O que precisa ser feito?". Escrever e tocar "Adicionar" (ou Enter); cada tarefa aparece numerada com "Tirar". As tarefas já cadastradas aparecem como sugestões de um toque.
+  4. **Quem**: "Quem vai fazer?". Um botão grande por função, com os nomes das pessoas embaixo ("João, Ana"). Funções sem ninguém ativo ficam desabilitadas com "Ninguém nesta função".
+  5. **Quando**: "Em quais dias?". Três opções: "Todos os dias", "Só em alguns dias" (abre botões Seg–Dom) e "Só quando alguém pedir".
+  6. **Horário**: "Até que horas precisa estar pronto?". Horários comuns em botões e "Outro horário". Este passo é pulado quando a lista é "Só quando alguém pedir".
+  7. **Conferir**: um resumo em frase ("A lista **Abertura** tem 3 tarefas. Quem faz: Salão (João, Ana). Quando: todos os dias, até 10:30."), com "Mudar" em cada parte e o botão "Criar a lista".
+  8. **Pronto**: diz quem vai ver a lista e quando. Botões "Ver minhas listas" e "Criar outra lista".
+- Os erros aparecem em português simples ao lado da pergunta, e o assistente não avança sem resposta. Se o servidor falhar ao criar, o assistente continua no passo de conferência, com a mensagem, sem perder nada.
+
+**Regras**
+- `POST /api/admin/checklists/guided` cria tudo numa transação: se algo falhar, nada fica salvo, nem as tarefas novas.
+- Uma tarefa com o mesmo nome de um item existente (sem diferenciar maiúsculas, minúsculas nem espaços nas pontas) reaproveita esse item, e um item inativo volta a ficar ativo. Tarefas novas viram itens da categoria Organização, não obrigatórios e com observação permitida, ajustáveis depois em Itens.
+- Tarefas repetidas na lista contam uma vez; tarefas em branco são ignoradas; no máximo 30 tarefas, cada uma com até 120 caracteres.
+- "Só em alguns dias" usa a periodicidade de dias específicos. As demais validações são as mesmas da US14.
+- Já existir uma lista com o mesmo nome (sem diferenciar maiúsculas) retorna 409.
+
+**Testes**
+- Sucesso: cria lista diária com tarefas novas, que aparece hoje para o Salão na ordem escrita; reaproveita um item existente pelo nome; dias específicos; sob demanda sem horário. Na tela, o fluxo completo envia os dados certos e mostra "Pronto".
+- Erro: sem tarefas → 422; função inválida → 422 e nenhuma tarefa nova fica salva; nome repetido → 409; sem sessão de gestor → 401; avançar sem responder mostra a mensagem; falha do servidor mantém o resumo.
+- Borda: tarefas repetidas e em branco; tarefa com mais de 120 caracteres → 422; item inativo reativado; função sem ninguém desabilitada; "Só quando alguém pedir" pula o horário; "Voltar" preserva as respostas.
+
+---
+
 ## Fora do escopo do MVP
 - "Declarado × verificado" (validação do gerente, foto obrigatória).
 - Notificações de atraso, multi-unidade, exportação de relatórios.

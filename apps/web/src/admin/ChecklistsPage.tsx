@@ -7,6 +7,7 @@ import { Switch } from '../ui/Switch';
 import { useToast } from '../ui/Toast';
 import { toneOf } from '../ui/categories';
 import { plural } from '../ui/status';
+import { useAdmin } from './context';
 import { periodLabel } from './periodLabel';
 import type { AdminChecklist, AdminEmployee, AdminItem, Period } from './types';
 
@@ -20,6 +21,7 @@ const toDraft = (c: AdminChecklist): Draft => ({ ...c, dueTime: c.dueTime ?? '12
 
 export function ChecklistsPage() {
   const toast = useToast();
+  const { go } = useAdmin();
   const cls = useResource<AdminChecklist[]>('/api/admin/checklists');
   const items = useResource<AdminItem[]>('/api/admin/items');
   const emps = useResource<AdminEmployee[]>('/api/admin/employees');
@@ -74,7 +76,10 @@ export function ChecklistsPage() {
           <div className="eyebrow">Configuração</div>
           <h1 className="page-title">Checklists</h1>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => { setSelId(null); setDraft(NEW); setErr(''); }}>+ Criar checklist</button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn-secondary" onClick={() => go('guide')}>Criar com ajuda</button>
+          <button type="button" className="btn btn-primary" onClick={() => { setSelId(null); setDraft(NEW); setErr(''); }}>+ Criar checklist</button>
+        </div>
       </div>
       {cls.error && <div className="banner banner--error">{cls.error}</div>}
       <div className="cl-layout">

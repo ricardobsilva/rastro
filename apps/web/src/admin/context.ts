@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { Employee } from '../types';
 
-export type PageId = 'dash' | 'team' | 'items' | 'cls' | 'hist';
+export type PageId = 'dash' | 'team' | 'items' | 'cls' | 'hist' | 'guide';
 
 export type AdminCtx = {
   manager: Employee;

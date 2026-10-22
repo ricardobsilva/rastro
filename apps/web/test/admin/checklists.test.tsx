@@ -23,6 +23,13 @@ const render = () => renderWithToast(withAdmin(<ChecklistsPage />));
 const rows = () => screen.getAllByTestId('cl-item-row').map((r) => within(r).getByTestId('cl-item-name').textContent);
 
 describe('US14 — checklists (web)', () => {
+  it('"Criar com ajuda" abre o passo a passo (sucesso)', async () => {
+    const go = vi.fn();
+    renderWithToast(withAdmin(<ChecklistsPage />, { go }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Criar com ajuda' }));
+    expect(go).toHaveBeenCalledWith('guide');
+  });
+
   it('lista e abre o primeiro no editor, com responsáveis resolvidos (sucesso)', async () => {
     render();
     const list = await screen.findByRole('list', { name: 'Checklists' });

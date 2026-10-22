@@ -36,6 +36,26 @@ beforeEach(() => {
   server();
 });
 
+describe('US18 — convite do passo a passo no painel', () => {
+  it('sem nenhuma lista, o painel convida para o passo a passo (sucesso)', async () => {
+    const go = vi.fn();
+    api.get.mockImplementation(async (url: string) => {
+      if (url.startsWith('/api/admin/dashboard')) return DASH;
+      return ({ '/api/admin/dates': DATES, '/api/admin/checklists': [], '/api/admin/employees': EMPS } as Record<string, unknown>)[url];
+    });
+    renderWithToast(withAdmin(<DashboardPage />, { go }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Começar o passo a passo' }));
+    expect(go).toHaveBeenCalledWith('guide');
+  });
+
+  it('com listas cadastradas, o convite não aparece (borda)', async () => {
+    renderWithToast(withAdmin(<DashboardPage />));
+    expect(await screen.findByRole('heading', { name: 'Operação do dia' })).toBeInTheDocument();
+    await screen.findByText('Organização do salão');
+    expect(screen.queryByRole('button', { name: 'Começar o passo a passo' })).not.toBeInTheDocument();
+  });
+});
+
 describe('US15 — painel (web)', () => {
   it('mostra KPIs, gráficos e listas (sucesso)', async () => {
     renderWithToast(withAdmin(<DashboardPage />));

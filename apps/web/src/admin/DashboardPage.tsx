@@ -33,6 +33,16 @@ export function DashboardPage() {
         <h1 className="page-title">Operação do dia</h1>
       </div>
 
+      {cls.data?.length === 0 && (
+        <div className="guide-invite">
+          <div>
+            <h2 className="guide-invite-title">Vamos começar?</h2>
+            <p className="guide-invite-text">Ainda não há nenhuma lista de tarefas. O passo a passo ajuda você a criar a primeira em poucos minutos.</p>
+          </div>
+          <button type="button" className="guide-btn guide-btn--primary" onClick={() => go('guide')}>Começar o passo a passo</button>
+        </div>
+      )}
+
       <div className="filters">
         <select className="select" aria-label="Data" value={date ?? dates[0]?.value ?? ''} onChange={(e) => setDate(e.target.value === dates[0]?.value ? null : e.target.value)}>
           {dates.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
