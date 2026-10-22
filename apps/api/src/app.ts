@@ -8,6 +8,7 @@ import { adminChecklistRoutes } from './routes/admin/checklists.js';
 import { adminDashboardRoutes } from './routes/admin/dashboard.js';
 import { adminEmployeeRoutes } from './routes/admin/employees.js';
 import { adminItemRoutes } from './routes/admin/items.js';
+import { adminTeamRoutes } from './routes/admin/team.js';
 import { deviceRoutes } from './routes/device.js';
 import { meRoutes } from './routes/me.js';
 import { sessionRoutes } from './routes/session.js';
@@ -37,6 +38,7 @@ export function createApp(deps: AppDeps) {
   app.use('/api', adminEmployeeRoutes(ctx));
   app.use('/api', adminChecklistRoutes(ctx));
   app.use('/api', adminDashboardRoutes(ctx));
+  app.use('/api', adminTeamRoutes(ctx));
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Rota não encontrada.' });
