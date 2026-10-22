@@ -221,7 +221,7 @@ Tokens de design, fontes (Bricolage Grotesque, Geist, Geist Mono), seed Casa Bra
 - Sem sessão: grade de cartões grandes com progresso do dia por pessoa.
 - Com sessão, 3 colunas: Equipe (atual destacado, atrasos em vermelho, `d/t`), Meu dia (cartão selecionado com borda) com as últimas 5 marcações, e Execução (itens em grade, "Concluir checklist" no header). O primeiro checklist já vem selecionado.
 
-**Regras**: a estação abre pelo endereço `/estacao` (o computador fixo fica com esse favorito); o celular usa `/`.
+**Regras**: o endereço `/` escolhe o layout pelo aparelho: celular (user agent móvel ou tela de toque até 820px) abre o layout mobile; computador abre sempre o layout de estação, mesmo com a janela estreita. `/estacao` força a estação em qualquer aparelho.
 
 **Testes**
 - Sucesso: escolher pessoa na coluna Equipe troca a sessão e reseleciona o checklist.

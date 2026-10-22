@@ -28,8 +28,8 @@ npm run seed:demo # seed + 7 dias de histórico e marcações de hoje (para vali
 
 | Caminho | Uso |
 |---|---|
-| `/` | Funcionário no celular |
-| `/estacao` | Estação de trabalho compartilhada |
+| `/` | Funcionário: layout mobile no celular, layout de estação no computador |
+| `/estacao` | Força a estação de trabalho em qualquer aparelho |
 | `/gestor` | Painel do gestor |
 
 PIN de gestor no seed: `1234` (Marina Alves). Ele também libera cada aparelho novo no primeiro acesso.

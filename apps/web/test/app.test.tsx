@@ -13,13 +13,13 @@ describe('App — rotas', () => {
     expect(await screen.findByRole('heading', { name: 'Liberar este aparelho' })).toBeInTheDocument();
   });
 
-  it('/estacao abre o modo estação de trabalho (sucesso)', async () => {
+  it('/estacao força o modo estação mesmo no celular (borda)', async () => {
     api.get.mockImplementation(async (url: string) => {
       if (url === '/api/device') return { authorized: true };
       if (url === '/api/session') return { employee: null, since: null };
       return { now: '10:00', dateLabel: 'quarta-feira, 21 de outubro', members: [] };
     });
-    render(<App path="/estacao" />);
+    render(<App path="/estacao" phone />);
     expect(await screen.findByRole('heading', { name: 'Quem vai marcar tarefas agora?' })).toBeInTheDocument();
   });
 
@@ -29,7 +29,27 @@ describe('App — rotas', () => {
       if (url === '/api/session') return { employee: null, since: null };
       return [];
     });
-    render(<App path="/qualquer" />);
+    render(<App path="/qualquer" phone />);
     expect(await screen.findByRole('heading', { name: 'Quem está trabalhando agora?' })).toBeInTheDocument();
+  });
+
+  it('/ no celular abre o layout de celular (sucesso)', async () => {
+    api.get.mockImplementation(async (url: string) => {
+      if (url === '/api/device') return { authorized: true };
+      if (url === '/api/session') return { employee: null, since: null };
+      return [];
+    });
+    render(<App path="/" phone />);
+    expect(await screen.findByRole('heading', { name: 'Quem está trabalhando agora?' })).toBeInTheDocument();
+  });
+
+  it('/ no computador abre o layout de computador (sucesso)', async () => {
+    api.get.mockImplementation(async (url: string) => {
+      if (url === '/api/device') return { authorized: true };
+      if (url === '/api/session') return { employee: null, since: null };
+      return { now: '10:00', dateLabel: 'quarta-feira, 21 de outubro', members: [] };
+    });
+    render(<App path="/" phone={false} />);
+    expect(await screen.findByRole('heading', { name: 'Quem vai marcar tarefas agora?' })).toBeInTheDocument();
   });
 });
