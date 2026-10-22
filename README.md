@@ -6,6 +6,15 @@
 >
 > O histórico do git registra essa evolução: um commit por história (US00 a US19) e os ajustes pedidos ao longo do caminho.
 
+## Contribuições
+
+Contribuições são bem-vindas! Pode abrir uma issue com ideias, dúvidas ou problemas encontrados, ou mandar um pull request. Para manter o espírito do projeto:
+
+- descreva a mudança como uma história de usuário, com critérios de aceite, em [`docs/backlog.md`](docs/backlog.md);
+- escreva os testes antes do código, cobrindo casos de sucesso, erro e borda;
+- antes de enviar, rode `npm test` e `npm run typecheck`, que devem passar sem erros;
+- se usou IA na contribuição, conte como foi no pull request: o que funcionou bem e o que precisou de correção.
+
 Checklists operacionais para restaurantes, com rastreabilidade de cada marcação.
 
 - Backlog e critérios de aceite: [`docs/backlog.md`](docs/backlog.md)
