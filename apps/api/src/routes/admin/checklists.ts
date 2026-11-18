@@ -3,8 +3,9 @@ import { GROUPS, MANAGER_GROUP, PERIODS, type Period, assigneesOf, toMinute } fr
 import { Router } from 'express';
 import type { AppContext } from '../../context.js';
 import { HttpError, route } from '../../http.js';
-import { type ChecklistConfig, loadChecklists, loadEmployeesForAssignment, loadItems } from '../../repos/config.js';
-import { insertEmployee } from '../../repos/employees.js';
+import type { Stmt } from '../../db/index.js';
+import { type ChecklistConfig, type ItemConfig, loadChecklists, loadEmployeesForAssignment, loadItems } from '../../repos/config.js';
+import { countEmployees, insertEmployeeStmt } from '../../repos/employees.js';
 import { requireAdmin } from '../../security/admin.js';
 
 const fail = (msg: string): never => {
@@ -16,16 +17,19 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
   const r = Router();
   r.use('/admin/checklists', requireAdmin(db, clock));
 
-  const employeeNames = () =>
-    new Map((db.prepare('SELECT id, name FROM employees').all() as { id: string; name: string }[]).map((e) => [e.id, e.name]));
+  const employeeNames = async () =>
+    new Map(((await db.prepare('SELECT id, name FROM employees').all()) as { id: string; name: string }[]).map((e) => [e.id, e.name]));
 
-  const view = (c: ChecklistConfig) => {
-    const names = employeeNames();
-    return { ...c, assignees: assigneesOf(c, loadEmployeesForAssignment(db)).map((e) => names.get(e.id)!) };
+  const views = async (cs: ChecklistConfig[]) => {
+    const [names, employees] = await Promise.all([employeeNames(), loadEmployeesForAssignment(db)]);
+    return cs.map((c) => ({ ...c, assignees: assigneesOf(c, employees).map((e) => names.get(e.id)!) }));
   };
 
-  /** Valida na ordem do protótipo (nome → itens → responsáveis → dias → horário) e normaliza. */
-  function validate(body: Record<string, unknown>, current?: ChecklistConfig): Omit<ChecklistConfig, 'id'> {
+  /**
+   * Valida na ordem do protótipo (nome → itens → responsáveis → dias → horário) e normaliza.
+   * `items`: biblioteca a considerar (o assistente passa a atual mais as tarefas que vai criar).
+   */
+  async function validate(body: Record<string, unknown>, current?: ChecklistConfig, items?: Map<string, ItemConfig>): Promise<Omit<ChecklistConfig, 'id'>> {
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     if (!name) fail('Dê um nome ao checklist.');
     if (name.length > 120) fail('O nome pode ter até 120 caracteres.');
@@ -33,9 +37,9 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
     const itemIds = strings(body.itemIds) ?? fail('Adicione pelo menos um item.');
     if (itemIds.length === 0) fail('Adicione pelo menos um item.');
     if (new Set(itemIds).size !== itemIds.length) fail('Item repetido no checklist.');
-    const items = new Map(loadItems(db).map((i) => [i.id, i]));
+    const library = items ?? new Map((await loadItems(db)).map((i) => [i.id, i]));
     for (const id of itemIds) {
-      const it = items.get(id);
+      const it = library.get(id);
       // Itens novos precisam estar ativos; os que já estavam no checklist podem ter sido desativados depois.
       if (!it || (!it.active && !current?.itemIds.includes(id))) fail('Item inválido ou inativo.');
     }
@@ -44,8 +48,10 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
     const employeeIds = strings(body.employeeIds ?? []) ?? fail('Funcionário inválido.');
     if (roles.length === 0 && employeeIds.length === 0) fail('Associe pelo menos uma função ou pessoa.');
     if (roles.some((g) => !(GROUPS as readonly string[]).includes(g))) fail('Função inválida.');
-    const known = employeeNames();
-    if (employeeIds.some((id) => !known.has(id))) fail('Funcionário inválido.');
+    if (employeeIds.length) {
+      const known = await employeeNames();
+      if (employeeIds.some((id) => !known.has(id))) fail('Funcionário inválido.');
+    }
 
     const period = body.period as Period;
     if (!PERIODS.includes(period)) fail('Periodicidade inválida.');
@@ -72,60 +78,74 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
     };
   }
 
-  function save(id: string, c: Omit<ChecklistConfig, 'id'>, insert: boolean) {
-    db.transaction(() => {
-      const args = [c.name, c.description, c.period, JSON.stringify(c.days), c.dueTime, +c.active, id];
-      if (insert) db.prepare('INSERT INTO checklists (name, description, period, days, due_time, active, id) VALUES (?, ?, ?, ?, ?, ?, ?)').run(...args);
-      else db.prepare('UPDATE checklists SET name = ?, description = ?, period = ?, days = ?, due_time = ?, active = ? WHERE id = ?').run(...args);
-      for (const t of ['checklist_items', 'checklist_roles', 'checklist_employees']) db.prepare(`DELETE FROM ${t} WHERE checklist_id = ?`).run(id);
-      c.itemIds.forEach((itemId, pos) => db.prepare('INSERT INTO checklist_items VALUES (?, ?, ?)').run(id, itemId, pos));
-      c.roles.forEach((g) => db.prepare('INSERT INTO checklist_roles VALUES (?, ?)').run(id, g));
-      c.employeeIds.forEach((e) => db.prepare('INSERT INTO checklist_employees VALUES (?, ?)').run(id, e));
-    })();
-    return view(loadChecklists(db).find((x) => x.id === id)!);
+  /** Comandos que gravam o checklist e suas associações (vão num lote atômico). */
+  function saveStmts(id: string, c: Omit<ChecklistConfig, 'id'>, insert: boolean): Stmt[] {
+    const args = [c.name, c.description, c.period, JSON.stringify(c.days), c.dueTime, +c.active, id];
+    return [
+      insert
+        ? { sql: 'INSERT INTO checklists (name, description, period, days, due_time, active, id) VALUES (?, ?, ?, ?, ?, ?, ?)', args }
+        : { sql: 'UPDATE checklists SET name = ?, description = ?, period = ?, days = ?, due_time = ?, active = ? WHERE id = ?', args },
+      ...['checklist_items', 'checklist_roles', 'checklist_employees'].map((t) => ({ sql: `DELETE FROM ${t} WHERE checklist_id = ?`, args: [id] })),
+      ...c.itemIds.map((itemId, pos) => ({ sql: 'INSERT INTO checklist_items VALUES (?, ?, ?)', args: [id, itemId, pos] })),
+      ...c.roles.map((g) => ({ sql: 'INSERT INTO checklist_roles VALUES (?, ?)', args: [id, g] })),
+      ...c.employeeIds.map((e) => ({ sql: 'INSERT INTO checklist_employees VALUES (?, ?)', args: [id, e] })),
+    ];
   }
 
-  r.get('/admin/checklists', route((_req, res) => {
-    res.json(loadChecklists(db).map(view));
+  async function saved(id: string) {
+    return (await views([(await loadChecklists(db)).find((x) => x.id === id)!]))[0];
+  }
+
+  r.get('/admin/checklists', route(async (_req, res) => {
+    res.json(await views(await loadChecklists(db)));
   }));
 
-  r.post('/admin/checklists', route((req, res) => {
-    const data = validate(req.body ?? {});
-    res.status(201).json(save(`c_${randomUUID().slice(0, 8)}`, data, true));
+  r.post('/admin/checklists', route(async (req, res) => {
+    const data = await validate(req.body ?? {});
+    const id = `c_${randomUUID().slice(0, 8)}`;
+    await db.batch(saveStmts(id, data, true));
+    res.status(201).json(await saved(id));
   }));
 
   /** Tarefas em texto livre (assistente): reaproveita itens pelo nome e cria os que faltam. */
-  function taskItemIds(raw: unknown): string[] {
+  async function taskItems(raw: unknown, stmts: Stmt[]) {
     const tasks = (strings(raw) ?? fail('Escreva pelo menos uma tarefa.')).map((t) => t.trim()).filter(Boolean);
     if (tasks.length === 0) fail('Escreva pelo menos uma tarefa.');
     if (tasks.some((t) => t.length > 120)) fail('Cada tarefa pode ter até 120 caracteres.');
-    const byName = new Map(loadItems(db).map((i) => [i.name.trim().toLowerCase(), i]));
+    const library = new Map((await loadItems(db)).map((i) => [i.id, i]));
+    const byName = new Map([...library.values()].map((i) => [i.name.trim().toLowerCase(), i]));
     const ids: string[] = [];
     for (const name of tasks) {
       const key = name.toLowerCase();
       let item = byName.get(key);
       if (!item) {
         item = { id: `i_${randomUUID().slice(0, 8)}`, name, description: '', category: 'Organização', required: false, allowNote: true, active: true };
-        db.prepare('INSERT INTO items (id, name, description, category, required, allow_note, active) VALUES (?, ?, ?, ?, 0, 1, 1)')
-          .run(item.id, item.name, item.description, item.category);
+        stmts.push({
+          sql: 'INSERT INTO items (id, name, description, category, required, allow_note, active) VALUES (?, ?, ?, ?, 0, 1, 1)',
+          args: [item.id, item.name, item.description, item.category],
+        });
         byName.set(key, item);
+        library.set(item.id, item);
       } else if (!item.active) {
-        db.prepare('UPDATE items SET active = 1 WHERE id = ?').run(item.id);
+        stmts.push({ sql: 'UPDATE items SET active = 1 WHERE id = ?', args: [item.id] });
         item.active = true;
       }
       if (!ids.includes(item.id)) ids.push(item.id);
     }
     if (ids.length > 30) fail('Uma lista pode ter até 30 tarefas.');
-    return ids;
+    return { ids, library };
   }
 
   /** Pessoas novas do assistente: só nome e função; o cargo fica igual à função. */
-  function addNewEmployees(raw: unknown) {
+  async function addNewEmployees(raw: unknown, stmts: Stmt[]) {
     if (raw === undefined) return;
     if (!Array.isArray(raw)) fail('Lista de pessoas inválida.');
     const list = raw as unknown[];
     if (list.length > 30) fail('Adicione até 30 pessoas por vez.');
-    const active = db.prepare('SELECT name FROM employees WHERE active = 1').all() as { name: string }[];
+    const [active, count] = await Promise.all([
+      db.prepare('SELECT name FROM employees WHERE active = 1').all() as Promise<{ name: string }[]>,
+      countEmployees(db),
+    ]);
     const seen = new Map(active.map((e) => [e.name.trim().toLowerCase(), e.name]));
     const fresh = new Set<string>();
     for (const p of list) {
@@ -138,29 +158,31 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
       const key = name.toLowerCase();
       if (fresh.has(key)) throw new HttpError(409, `${name} aparece duas vezes.`);
       if (seen.has(key)) throw new HttpError(409, `${seen.get(key)} já está na equipe.`);
+      stmts.push(insertEmployeeStmt({ name, role: group as string, group: group as string, pin: null, active: true }, count + fresh.size).stmt);
       fresh.add(key);
-      insertEmployee(db, { name, role: group as string, group: group as string, pin: null, active: true });
     }
   }
 
-  r.post('/admin/checklists/guided', route((req, res) => {
+  r.post('/admin/checklists/guided', route(async (req, res) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const name = typeof body.name === 'string' ? body.name.trim().toLowerCase() : '';
-    if (name && loadChecklists(db).some((c) => c.name.trim().toLowerCase() === name))
+    if (name && (await loadChecklists(db)).some((c) => c.name.trim().toLowerCase() === name))
       throw new HttpError(409, 'Já existe uma lista com esse nome.');
-    const created = db.transaction(() => {
-      addNewEmployees(body.newEmployees);
-      const itemIds = taskItemIds(body.tasks);
-      const data = validate({ name: body.name, period: body.period, days: body.days, dueTime: body.dueTime, roles: body.roles, employeeIds: [], itemIds });
-      return save(`c_${randomUUID().slice(0, 8)}`, data, true);
-    })();
-    res.status(201).json(created);
+    // Tudo é validado antes e gravado num único lote: se algo falhar, nada muda.
+    const stmts: Stmt[] = [];
+    await addNewEmployees(body.newEmployees, stmts);
+    const { ids: itemIds, library } = await taskItems(body.tasks, stmts);
+    const data = await validate({ name: body.name, period: body.period, days: body.days, dueTime: body.dueTime, roles: body.roles, employeeIds: [], itemIds }, undefined, library);
+    const id = `c_${randomUUID().slice(0, 8)}`;
+    await db.batch([...stmts, ...saveStmts(id, data, true)]);
+    res.status(201).json(await saved(id));
   }));
 
-  r.put('/admin/checklists/:id', route((req, res) => {
-    const current = loadChecklists(db).find((c) => c.id === req.params.id);
+  r.put('/admin/checklists/:id', route(async (req, res) => {
+    const current = (await loadChecklists(db)).find((c) => c.id === req.params.id);
     if (!current) throw new HttpError(404, 'Checklist não encontrado.');
-    res.json(save(current.id, validate(req.body ?? {}, current), false));
+    await db.batch(saveStmts(current.id, await validate(req.body ?? {}, current), false));
+    res.json(await saved(current.id));
   }));
 
   return r;

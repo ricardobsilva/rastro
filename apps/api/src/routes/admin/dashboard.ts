@@ -15,12 +15,12 @@ export function adminDashboardRoutes({ db, clock }: AppContext) {
   const r = Router();
   r.use(['/admin/dashboard', '/admin/dates'], requireAdmin(db, clock));
 
-  r.get('/admin/dates', route((_req, res) => {
-    res.json(dateOptions(currentDay(db, clock).date));
+  r.get('/admin/dates', route(async (_req, res) => {
+    res.json(dateOptions((await currentDay(db, clock)).date));
   }));
 
-  r.get('/admin/dashboard', route((req, res) => {
-    const now = currentDay(db, clock);
+  r.get('/admin/dashboard', route(async (req, res) => {
+    const now = await currentDay(db, clock);
     const date = parseReportDate(req.query.date, now.date);
     const status = typeof req.query.status === 'string' ? req.query.status : 'all';
     if (!STATUSES.includes(status)) throw new HttpError(422, 'Status inválido.');
@@ -29,9 +29,16 @@ export function adminDashboardRoutes({ db, clock }: AppContext) {
       rows.filter((x) => (!f.emp || x.employeeId === f.emp) && (!f.cat || x.category === f.cat) && (!f.cl || x.checklistId === f.cl)
         && (!withStatus || status === 'all' || x.status === status));
 
-    const rows = filter(reportRows(db, date, now));
+    // Dia pedido + tendência de 8 dias: tudo lido em paralelo.
+    const trendDates = Array.from({ length: 8 }, (_, i) => addDays(now.date, i - 7));
+    const [dayRows, empRows, ...trendRows] = await Promise.all([
+      reportRows(db, date, now),
+      db.prepare('SELECT * FROM employees').all(),
+      ...trendDates.map((d) => reportRows(db, d, now)),
+    ]);
+    const rows = filter(dayRows);
     const isToday = date === now.date;
-    const emps = new Map((db.prepare('SELECT * FROM employees').all() as EmployeeRow[]).map((e) => [e.id, e]));
+    const emps = new Map((empRows as EmployeeRow[]).map((e) => [e.id, e]));
     const count = (s: string) => rows.filter((x) => x.status === s).length;
     const done = count('done');
 
@@ -72,9 +79,8 @@ export function adminDashboardRoutes({ db, clock }: AppContext) {
         const g = rows.filter((x) => x.category === c);
         return { category: c, n: g.length, pct: pctOf(g.filter((x) => x.status === 'done').length, g.length) };
       }).filter((c) => c.n > 0),
-      trend: Array.from({ length: 8 }, (_, i) => {
-        const d = addDays(now.date, i - 7);
-        const tr = filter(reportRows(db, d, now), false);
+      trend: trendDates.map((d, i) => {
+        const tr = filter(trendRows[i] as ReportRow[], false);
         return { date: d, label: d === now.date ? 'Hoje' : WEEKDAYS_SHORT[dayOfWeek(d)], pct: pctOf(tr.filter((x) => x.status === 'done').length, tr.length) };
       }),
     });

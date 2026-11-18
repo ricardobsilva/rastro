@@ -1,6 +1,6 @@
 import { addDays, dayOfWeek, operationalNow } from '@rastro/domain';
 import { syncDay } from '../services/day.js';
-import type { Db } from './index.js';
+import type { Db, Stmt } from './index.js';
 
 // Marcações de hoje do protótipo: [checklist, funcionário, item, HH:mm, observação?]
 const TODAY_MARKS: [string, string, string, string, string?][] = [
@@ -28,58 +28,58 @@ function mulberry(a: number) {
  * Dados de demonstração para validar com o cliente: 7 dias anteriores (≈95% feito, alguns atrasos) e as marcações de hoje.
  * Não roda se já houver eventos, para nunca misturar com uso real.
  */
-export function seedDemo(db: Db, at: Date): void {
-  if (!db.prepare("SELECT 1 FROM employees WHERE id = 'e1'").get()) throw new Error('Rode o seed base antes do seed de demonstração.');
-  if (db.prepare('SELECT 1 FROM audit_events LIMIT 1').get()) return;
+export async function seedDemo(db: Db, at: Date): Promise<void> {
+  if (!(await db.prepare("SELECT 1 FROM employees WHERE id = 'e1'").get())) throw new Error('Rode o seed base antes do seed de demonstração.');
+  if (await db.prepare('SELECT 1 FROM audit_events LIMIT 1').get()) return;
   const now = operationalNow(at);
   const rnd = mulberry(11);
-  const names = new Map((db.prepare('SELECT id, name FROM employees').all() as { id: string; name: string }[]).map((e) => [e.id, e.name]));
+  const names = new Map(((await db.prepare('SELECT id, name FROM employees').all()) as { id: string; name: string }[]).map((e) => [e.id, e.name]));
 
+  const writes: Stmt[] = [];
   const mark = db.prepare('UPDATE execution_items SET done = 1, done_at = ?, note = ? WHERE id = ?');
   const event = db.prepare(`INSERT INTO audit_events (op_date, minute, at, employee_id, employee_name, execution_id, checklist_id, checklist_name, item_id, item_name, action, note)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   type Row = { id: number; execution_id: number; item_id: string; item_name: string; position: number; employee_id: string; checklist_id: string; checklist_name: string; due_time: string | null };
-  const rowsOf = (date: string) =>
-    db.prepare(`SELECT ei.id, ei.execution_id, ei.item_id, ei.item_name, ei.position, e.employee_id, e.checklist_id, e.checklist_name, e.due_time
-      FROM execution_items ei JOIN executions e ON e.id = ei.execution_id WHERE e.op_date = ? AND e.visible = 1 AND ei.visible = 1`).all(date) as Row[];
+  const rowsOf = async (date: string) =>
+    (await db.prepare(`SELECT ei.id, ei.execution_id, ei.item_id, ei.item_name, ei.position, e.employee_id, e.checklist_id, e.checklist_name, e.due_time
+      FROM execution_items ei JOIN executions e ON e.id = ei.execution_id WHERE e.op_date = ? AND e.visible = 1 AND ei.visible = 1`).all(date)) as Row[];
   const log = (date: string, minute: number, r: Row, action: string, note = '') =>
-    event.run(date, minute, at.toISOString(), r.employee_id, names.get(r.employee_id), r.execution_id, r.checklist_id, r.checklist_name, r.item_id, r.item_name, action, note);
+    writes.push(event.bind(date, minute, at.toISOString(), r.employee_id, names.get(r.employee_id) ?? null, r.execution_id, r.checklist_id, r.checklist_name, r.item_id, r.item_name, action, note));
 
-  db.transaction(() => {
-    for (let d = 7; d >= 1; d--) {
-      const date = addDays(now.date, -d);
-      syncDay(db, date, dayOfWeek(date));
-      // Renomeação simulada: dias mais antigos mostram o nome anterior do checklist.
-      if (d >= 5) db.prepare("UPDATE executions SET checklist_name = 'Abertura do salão' WHERE op_date = ? AND checklist_id = 'c1'").run(date);
-      for (const r of rowsOf(date)) {
-        if (rnd() < 0.05) continue;
-        const [h, m] = (r.due_time ?? '12:00').split(':').map(Number) as [number, number];
-        const due = h * 60 + m;
-        const minute = Math.min(1439, rnd() < 0.08 ? due + 5 + Math.floor(rnd() * 35) : due - 55 + r.position * 7 + Math.floor(rnd() * 6));
-        const name = d >= 5 && r.checklist_id === 'c1' ? 'Abertura do salão' : r.checklist_name;
-        mark.run(minute, '', r.id);
-        log(date, minute, { ...r, checklist_name: name }, 'done');
-      }
+  for (let d = 7; d >= 1; d--) {
+    const date = addDays(now.date, -d);
+    await syncDay(db, date, dayOfWeek(date));
+    // Renomeação simulada: dias mais antigos mostram o nome anterior do checklist.
+    if (d >= 5) writes.push(db.prepare("UPDATE executions SET checklist_name = 'Abertura do salão' WHERE op_date = ? AND checklist_id = 'c1'").bind(date));
+    for (const r of await rowsOf(date)) {
+      if (rnd() < 0.05) continue;
+      const [h, m] = (r.due_time ?? '12:00').split(':').map(Number) as [number, number];
+      const due = h * 60 + m;
+      const minute = Math.min(1439, rnd() < 0.08 ? due + 5 + Math.floor(rnd() * 35) : due - 55 + r.position * 7 + Math.floor(rnd() * 6));
+      const name = d >= 5 && r.checklist_id === 'c1' ? 'Abertura do salão' : r.checklist_name;
+      writes.push(mark.bind(minute, '', r.id));
+      log(date, minute, { ...r, checklist_name: name }, 'done');
     }
+  }
 
-    syncDay(db, now.date, now.dow);
-    const today = rowsOf(now.date);
-    for (const [cl, emp, item, hhmm, note] of TODAY_MARKS) {
-      const [h, m] = hhmm.split(':').map(Number) as [number, number];
-      const minute = h * 60 + m;
-      if (minute > now.minute) continue;
-      const r = today.find((x) => x.checklist_id === cl && x.employee_id === emp && x.item_id === item);
-      if (!r) continue;
-      mark.run(minute, note ?? '', r.id);
-      log(now.date, minute, r, 'done');
-      if (note) log(now.date, minute, r, 'note', note);
-    }
-    // Uma desmarcação, como no protótipo.
-    const recount = today.find((x) => x.checklist_id === 'c3' && x.employee_id === 'e3' && x.item_id === 'i12');
-    if (recount && now.minute >= 652) {
-      log(now.date, 640, recount, 'done');
-      db.prepare('UPDATE execution_items SET undone_at = 652 WHERE id = ?').run(recount.id);
-      log(now.date, 652, recount, 'undone', 'Contagem divergente, vou recontar.');
-    }
-  })();
+  await syncDay(db, now.date, now.dow);
+  const today = await rowsOf(now.date);
+  for (const [cl, emp, item, hhmm, note] of TODAY_MARKS) {
+    const [h, m] = hhmm.split(':').map(Number) as [number, number];
+    const minute = h * 60 + m;
+    if (minute > now.minute) continue;
+    const r = today.find((x) => x.checklist_id === cl && x.employee_id === emp && x.item_id === item);
+    if (!r) continue;
+    writes.push(mark.bind(minute, note ?? '', r.id));
+    log(now.date, minute, r, 'done');
+    if (note) log(now.date, minute, r, 'note', note);
+  }
+  // Uma desmarcação, como no protótipo.
+  const recount = today.find((x) => x.checklist_id === 'c3' && x.employee_id === 'e3' && x.item_id === 'i12');
+  if (recount && now.minute >= 652) {
+    log(now.date, 640, recount, 'done');
+    writes.push(db.prepare('UPDATE execution_items SET undone_at = 652 WHERE id = ?').bind(recount.id));
+    log(now.date, 652, recount, 'undone', 'Contagem divergente, vou recontar.');
+  }
+  await db.batch(writes);
 }

@@ -12,14 +12,16 @@
     "build": "npm run build -w @rastro/web",
     "start": "node --import tsx apps/api/src/main.ts",
     "seed": "npm run seed -w @rastro/api",
-    "seed:demo": "npm run seed:demo -w @rastro/api"
+    "seed:demo": "npm run seed:demo -w @rastro/api",
+    "build:vercel": "npm run build && node scripts/build-vercel.mjs"
   },
   "devDependencies": {
     "typescript": "5.6.3",
     "vitest": "2.1.8",
-    "@types/node": "20.17.10"
+    "@types/node": "20.17.10",
+    "esbuild": "0.21.5"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20"
   }
 }

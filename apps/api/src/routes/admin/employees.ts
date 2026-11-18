@@ -23,41 +23,41 @@ export function adminEmployeeRoutes({ db, clock }: AppContext) {
   r.use('/admin/employees', requireAdmin(db, clock));
 
   /** Aplica regras de PIN/gestor e grava. `current` ausente = criação. */
-  function save(input: unknown, current?: EmployeeRow) {
+  async function save(input: unknown, current?: EmployeeRow) {
     const base = current ? { name: current.name, role: current.role, group: current.grp, active: !!current.active } : {};
     const data = parse(schema, { ...base, ...(input as object) });
     const isManager = data.group === MANAGER_GROUP;
     const pin = isManager ? (data.pin ?? current?.pin ?? null) : null;
     if (isManager && !pin) throw new HttpError(422, 'Gestores precisam de um PIN de 4 números.');
-    if (pin && db.prepare('SELECT 1 FROM employees WHERE pin = ? AND id != ?').get(pin, current?.id ?? ''))
+    if (pin && (await db.prepare('SELECT 1 FROM employees WHERE pin = ? AND id != ?').get(pin, current?.id ?? '')))
       throw new HttpError(409, 'Esse PIN já está em uso.');
 
     const losesManager = current && current.grp === MANAGER_GROUP && current.active && (!isManager || !data.active);
     if (losesManager) {
-      const others = db.prepare("SELECT COUNT(*) AS n FROM employees WHERE grp = ? AND active = 1 AND id != ?").get(MANAGER_GROUP, current.id) as { n: number };
+      const others = (await db.prepare("SELECT COUNT(*) AS n FROM employees WHERE grp = ? AND active = 1 AND id != ?").get(MANAGER_GROUP, current.id)) as { n: number };
       if (others.n === 0) throw new HttpError(422, 'É preciso manter pelo menos um gestor ativo.');
     }
 
     if (current) {
-      db.prepare('UPDATE employees SET name = ?, role = ?, grp = ?, pin = ?, active = ? WHERE id = ?')
+      await db.prepare('UPDATE employees SET name = ?, role = ?, grp = ?, pin = ?, active = ? WHERE id = ?')
         .run(data.name, data.role, data.group, pin, +data.active, current.id);
-      return getEmployee(db, current.id)!;
+      return (await getEmployee(db, current.id))!;
     }
     return insertEmployee(db, { name: data.name, role: data.role, group: data.group, pin, active: data.active });
   }
 
-  r.get('/admin/employees', route((_req, res) => {
-    res.json((db.prepare('SELECT * FROM employees ORDER BY active DESC, rowid').all() as EmployeeRow[]).map(view));
+  r.get('/admin/employees', route(async (_req, res) => {
+    res.json(((await db.prepare('SELECT * FROM employees ORDER BY active DESC, rowid').all()) as EmployeeRow[]).map(view));
   }));
 
-  r.post('/admin/employees', route((req, res) => {
-    res.status(201).json(view(save(req.body)));
+  r.post('/admin/employees', route(async (req, res) => {
+    res.status(201).json(view(await save(req.body)));
   }));
 
-  r.patch('/admin/employees/:id', route((req, res) => {
-    const current = getEmployee(db, req.params.id!);
+  r.patch('/admin/employees/:id', route(async (req, res) => {
+    const current = await getEmployee(db, req.params.id!);
     if (!current) throw new HttpError(404, 'Funcionário não encontrado.');
-    res.json(view(save(req.body, current)));
+    res.json(view(await save(req.body, current)));
   }));
 
   return r;

@@ -1,7 +1,7 @@
 import { type ItemStatus, type OperationalNow, WEEKDAYS_SHORT, addDays, dueMinute, fmtMinute, shortDate } from '@rastro/domain';
 import type { Db } from '../db/index.js';
 import { HttpError } from '../http.js';
-import { type ExecutionRow, itemsOf } from './day.js';
+import { type ExecutionRow, itemsOfMany } from './day.js';
 
 export const HISTORY_DAYS = 7;
 
@@ -11,11 +11,12 @@ export type ReportRow = {
 };
 
 /** Linhas (uma por item atribuído) de um dia. Dias anteriores são avaliados no fim do dia: pendente com prazo = não feito. */
-export function reportRows(db: Db, date: string, now: OperationalNow): ReportRow[] {
+export async function reportRows(db: Db, date: string, now: OperationalNow): Promise<ReportRow[]> {
   const minute = date === now.date ? now.minute : Number.POSITIVE_INFINITY;
-  const execs = db.prepare('SELECT * FROM executions WHERE op_date = ? AND visible = 1 ORDER BY id').all(date) as ExecutionRow[];
+  const execs = (await db.prepare('SELECT * FROM executions WHERE op_date = ? AND visible = 1 ORDER BY id').all(date)) as ExecutionRow[];
+  const items = await itemsOfMany(db, execs, () => minute);
   return execs.flatMap((e) =>
-    itemsOf(db, e, minute).map((i) => ({
+    items.get(e.id)!.map((i) => ({
       date, executionId: e.id, checklistId: e.checklist_id, checklistName: e.checklist_name, dueTime: e.due_time, due: dueMinute(e.due_time),
       employeeId: e.employee_id, itemId: i.item_id, itemName: i.item_name, category: i.category, status: i.status,
       doneAt: i.done && i.done_at !== null ? fmtMinute(i.done_at) : null, note: i.note,

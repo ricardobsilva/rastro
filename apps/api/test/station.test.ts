@@ -6,7 +6,7 @@ type Member = { id: string; shortName: string; done: number; total: number; late
 
 describe('US10 — estação de trabalho: progresso da equipe', () => {
   it('lista ativos com progresso do dia, relógio e data (sucesso)', async () => {
-    const { app } = setup({ local: '2026-10-21T10:00' });
+    const { app } = await setup({ local: '2026-10-21T10:00' });
     const joao = await employeeAgent(app, 'e1');
     const id = (await joao.get('/api/me/today')).body.cards[0].executionId;
     await joao.put(`/api/me/executions/${id}/items/i1`).send({ done: true });
@@ -23,14 +23,14 @@ describe('US10 — estação de trabalho: progresso da equipe', () => {
   });
 
   it('sem aparelho autorizado → 401 (erro)', async () => {
-    const { app } = setup();
+    const { app } = await setup();
     expect((await request(app).get('/api/station/team')).status).toBe(401);
   });
 
   it('atrasos contados e funcionário sem tarefas com total 0 (borda)', async () => {
-    const { app, db } = setup({ local: '2026-10-21T11:40' });
-    db.prepare("INSERT INTO employees (id, name, role, grp, color) VALUES ('e9', 'Lia Prado', 'Hostess', 'Bar', '#000')").run();
-    db.prepare("DELETE FROM checklist_employees WHERE employee_id = 'e5'").run();
+    const { app, db } = await setup({ local: '2026-10-21T11:40' });
+    await db.prepare("INSERT INTO employees (id, name, role, grp, color) VALUES ('e9', 'Lia Prado', 'Hostess', 'Bar', '#000')").run();
+    await db.prepare("DELETE FROM checklist_employees WHERE employee_id = 'e5'").run();
     const members = (await (await authorizedAgent(app)).get('/api/station/team')).body.members as Member[];
     expect(members.find((m) => m.id === 'e1')).toMatchObject({ total: 12, late: 9 });
     expect(members.find((m) => m.id === 'e9')).toMatchObject({ done: 0, total: 0, late: 0 });

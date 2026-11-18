@@ -1,27 +1,28 @@
+import type { Db } from '../src/db/index.js';
 import { describe, expect, it } from 'vitest';
 import { employeeAgent, setup } from './helpers/setup.js';
 
 type Agent = Awaited<ReturnType<typeof employeeAgent>>;
 const execId = async (agent: Agent, cl: string) =>
   ((await agent.get('/api/me/today')).body.cards as { executionId: number; checklistId: string }[]).find((c) => c.checklistId === cl)!.executionId;
-const notes = (db: ReturnType<typeof setup>['db']) =>
-  db.prepare("SELECT note, item_name FROM audit_events WHERE action = 'note' ORDER BY id").all();
+const notes = async (db: Db) =>
+  await db.prepare("SELECT note, item_name FROM audit_events WHERE action = 'note' ORDER BY id").all();
 const itemOf = (body: { items: { itemId: string; note: string }[] }, id: string) => body.items.find((i) => i.itemId === id)!;
 
 describe('US05 — observações', () => {
   describe('sucesso', () => {
     it('salva a observação (aparada) e registra evento "note"', async () => {
-      const { app, db } = setup();
+      const { app, db } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       const res = await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: '  Restam 3 sacos de 5 kg.  ' });
       expect(res.status).toBe(200);
       expect(itemOf(res.body, 'i5').note).toBe('Restam 3 sacos de 5 kg.');
-      expect(notes(db)).toEqual([{ note: 'Restam 3 sacos de 5 kg.', item_name: 'Conferir disponibilidade de arroz' }]);
+      expect((await notes(db))).toEqual([{ note: 'Restam 3 sacos de 5 kg.', item_name: 'Conferir disponibilidade de arroz' }]);
     });
 
     it('pode observar item ainda não marcado, sem marcá-lo', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       const res = await agent.put(`/api/me/executions/${id}/items/i3/note`).send({ note: 'Faltam 12 garfos' });
@@ -32,7 +33,7 @@ describe('US05 — observações', () => {
 
   describe('erro', () => {
     it('item que não permite observação → 422', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       const res = await agent.put(`/api/me/executions/${id}/items/i1/note`).send({ note: 'x' });
@@ -41,7 +42,7 @@ describe('US05 — observações', () => {
     });
 
     it('acima de 500 caracteres → 422', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       const res = await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: 'a'.repeat(501) });
@@ -50,7 +51,7 @@ describe('US05 — observações', () => {
     });
 
     it('nota não-texto → 422; execução de outro → 403', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       const joao = await employeeAgent(app, 'e1');
       const ana = await employeeAgent(app, 'e2');
       const id = await execId(joao, 'c1');
@@ -61,35 +62,35 @@ describe('US05 — observações', () => {
 
   describe('borda', () => {
     it('exatamente 500 caracteres é aceito', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       expect((await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: 'a'.repeat(500) })).status).toBe(200);
     });
 
     it('salvar vazio ou só espaços limpa a observação e não gera evento', async () => {
-      const { app, db } = setup();
+      const { app, db } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: 'algo' });
       const res = await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: '   ' });
       expect(itemOf(res.body, 'i5').note).toBe('');
-      expect(notes(db)).toHaveLength(1);
+      expect((await notes(db))).toHaveLength(1);
     });
 
     it('editar substitui o texto e gera novo evento; repetir o mesmo texto não gera', async () => {
-      const { app, db } = setup();
+      const { app, db } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: 'v1' });
       await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: 'v2' });
       const res = await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: 'v2' });
       expect(itemOf(res.body, 'i5').note).toBe('v2');
-      expect(notes(db).map((n) => (n as { note: string }).note)).toEqual(['v1', 'v2']);
+      expect((await notes(db)).map((n) => (n as { note: string }).note)).toEqual(['v1', 'v2']);
     });
 
     it('desmarcar e remarcar preserva a observação', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       await agent.put(`/api/me/executions/${id}/items/i5/note`).send({ note: 'ok' });
@@ -99,7 +100,7 @@ describe('US05 — observações', () => {
     });
 
     it('dia anterior → 409', async () => {
-      const { app, clock } = setup({ local: '2026-10-21T10:00' });
+      const { app, clock } = await setup({ local: '2026-10-21T10:00' });
       const agent = await employeeAgent(app, 'e1');
       const id = await execId(agent, 'c1');
       clock.set('2026-10-22T10:00');

@@ -10,12 +10,12 @@ export const pinSchema = z.object({
 export type Manager = { id: string; name: string; role: string; color: string };
 
 /** Valida PIN de gestor ativo (função Gerência), com limite de tentativas. */
-export function checkManagerPin(db: Db, guard: PinGuard, key: string, body: unknown): Manager {
+export async function checkManagerPin(db: Db, guard: PinGuard, key: string, body: unknown): Promise<Manager> {
   const { pin } = parse(pinSchema, body);
   if (guard.isLocked(key)) throw new HttpError(429, 'Muitas tentativas. Tente novamente em alguns minutos.');
-  const manager = db
+  const manager = (await db
     .prepare("SELECT id, name, role, color FROM employees WHERE pin = ? AND active = 1 AND grp = 'Gerência'")
-    .get(pin) as Manager | undefined;
+    .get(pin)) as Manager | undefined;
   if (!manager) {
     guard.fail(key);
     throw new HttpError(401, 'PIN sem permissão de gestor.');

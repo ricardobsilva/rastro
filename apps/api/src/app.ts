@@ -24,7 +24,7 @@ export type AppDeps = {
   clock?: () => Date;
   /** Pasta do `vite build`. Em produção a API serve as telas; no desenvolvimento quem serve é o Vite. */
   staticDir?: string;
-  /** Proxies confiáveis à frente da API (no Fly.io, 1). Padrão: só loopback. */
+  /** Proxies confiáveis à frente da API (na Vercel, 1). Padrão: só loopback. */
   trustProxy?: number | string;
 };
 

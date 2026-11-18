@@ -8,7 +8,7 @@ const execId = async (agent: Agent, cl: string) =>
 
 describe('US08 — minhas atividades', () => {
   it('lista os eventos de hoje do próprio funcionário, mais recentes primeiro (sucesso)', async () => {
-    const { app, clock } = setup({ local: '2026-10-21T09:52' });
+    const { app, clock } = await setup({ local: '2026-10-21T09:52' });
     const agent = await employeeAgent(app, 'e1');
     const id = await execId(agent, 'c1');
     await agent.put(`/api/me/executions/${id}/items/i1`).send({ done: true });
@@ -26,12 +26,12 @@ describe('US08 — minhas atividades', () => {
   });
 
   it('sem sessão → 401 (erro)', async () => {
-    const { app } = setup();
+    const { app } = await setup();
     expect((await request(app).get('/api/me/activities')).status).toBe(401);
   });
 
   it('não mostra eventos de outros funcionários nem de outros dias (borda)', async () => {
-    const { app, clock } = setup({ local: '2026-10-20T10:00' });
+    const { app, clock } = await setup({ local: '2026-10-20T10:00' });
     const joao = await employeeAgent(app, 'e1');
     await joao.put(`/api/me/executions/${await execId(joao, 'c1')}/items/i1`).send({ done: true });
     clock.set('2026-10-21T10:00');
@@ -42,7 +42,7 @@ describe('US08 — minhas atividades', () => {
   });
 
   it('empate de horário ordena pela ordem de criação, mais recente primeiro (borda)', async () => {
-    const { app } = setup({ local: '2026-10-21T10:00' });
+    const { app } = await setup({ local: '2026-10-21T10:00' });
     const agent = await employeeAgent(app, 'e1');
     const id = await execId(agent, 'c1');
     await agent.put(`/api/me/executions/${id}/items/i1`).send({ done: true });

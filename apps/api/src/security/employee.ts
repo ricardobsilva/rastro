@@ -8,11 +8,13 @@ import { findDevice } from './device.js';
 export const requireEmployee =
   (db: Db): RequestHandler =>
   (req, res, next) => {
-    const device = findDevice(db, req);
-    if (!device) return next(new HttpError(401, 'Aparelho não autorizado.'));
-    const emp = device.employee_id ? getEmployee(db, device.employee_id) : undefined;
-    if (!emp || !emp.active) return next(new HttpError(401, 'Identifique-se para continuar.'));
-    res.locals.device = device;
-    res.locals.employee = emp;
-    next();
+    (async () => {
+      const device = await findDevice(db, req);
+      if (!device) return next(new HttpError(401, 'Aparelho não autorizado.'));
+      const emp = device.employee_id ? await getEmployee(db, device.employee_id) : undefined;
+      if (!emp || !emp.active) return next(new HttpError(401, 'Identifique-se para continuar.'));
+      res.locals.device = device;
+      res.locals.employee = emp;
+      next();
+    })().catch(next);
   };

@@ -1,9 +1,10 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';
+import { dbConfigFromEnv } from './db/index.js';
 import { prepareDb } from './db/prepare.js';
 
-const db = prepareDb(process.env.DB_PATH ?? 'rastro.db');
+const db = await prepareDb(dbConfigFromEnv());
 const port = Number(process.env.PORT ?? 3333);
 // Telas geradas pelo `npm run build`; se não existirem (desenvolvimento), o Vite serve.
 const webBuild = process.env.STATIC_DIR ?? fileURLToPath(new URL('../../web/dist', import.meta.url));

@@ -11,7 +11,7 @@ async function mark(agent: Agent, cl: string, items: string[]) {
 describe('US15 — painel do gestor', () => {
   describe('datas', () => {
     it('hoje + 7 dias anteriores com rótulos (sucesso)', async () => {
-      const { app } = setup({ local: '2026-10-21T10:00' });
+      const { app } = await setup({ local: '2026-10-21T10:00' });
       const res = await (await adminAgent(app)).get('/api/admin/dates');
       expect(res.body).toHaveLength(8);
       expect(res.body.slice(0, 3)).toEqual([
@@ -22,7 +22,7 @@ describe('US15 — painel do gestor', () => {
 
   describe('sucesso', () => {
     it('KPIs, conclusão por checklist, atrasos e pendências do dia', async () => {
-      const { app, clock } = setup({ local: '2026-10-21T10:00' });
+      const { app, clock } = await setup({ local: '2026-10-21T10:00' });
       const joao = await employeeAgent(app, 'e1');
       await mark(joao, 'c1', ['i1', 'i2', 'i3', 'i4', 'i5', 'i6']);
       clock.set('2026-10-21T11:40');
@@ -45,7 +45,7 @@ describe('US15 — painel do gestor', () => {
     });
 
     it('filtros por funcionário, categoria, checklist e status', async () => {
-      const { app } = setup({ local: '2026-10-21T10:00' });
+      const { app } = await setup({ local: '2026-10-21T10:00' });
       const joao = await employeeAgent(app, 'e1');
       await mark(joao, 'c1', ['i1']);
       const admin = await adminAgent(app);
@@ -58,7 +58,7 @@ describe('US15 — painel do gestor', () => {
     });
 
     it('dia anterior: itens não feitos contam como atrasados ("não feito")', async () => {
-      const { app, clock } = setup({ local: '2026-10-20T10:00' });
+      const { app, clock } = await setup({ local: '2026-10-20T10:00' });
       const joao = await employeeAgent(app, 'e1');
       await mark(joao, 'c1', ['i1']);
       clock.set('2026-10-21T08:00');
@@ -71,7 +71,7 @@ describe('US15 — painel do gestor', () => {
 
   describe('erro', () => {
     it('data inválida ou fora da janela → 422; status inválido → 422', async () => {
-      const { app } = setup({ local: '2026-10-21T10:00' });
+      const { app } = await setup({ local: '2026-10-21T10:00' });
       const admin = await adminAgent(app);
       for (const q of ['date=ontem', 'date=2026-10-13', 'date=2026-10-22', 'status=feito']) {
         const res = await admin.get(`/api/admin/dashboard?${q}`);
@@ -81,14 +81,14 @@ describe('US15 — painel do gestor', () => {
     });
 
     it('sem gestor → 401', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       expect((await request(app).get('/api/admin/dashboard')).status).toBe(401);
     });
   });
 
   describe('borda', () => {
     it('filtro com id inexistente devolve vazio, com 0% e sem divisão por zero', async () => {
-      const { app } = setup();
+      const { app } = await setup();
       const res = await (await adminAgent(app)).get('/api/admin/dashboard?employeeId=zz');
       expect(res.status).toBe(200);
       expect(res.body.kpis).toEqual({ total: 0, done: 0, pending: 0, late: 0, pct: 0, checklists: 0 });
@@ -97,7 +97,7 @@ describe('US15 — painel do gestor', () => {
     });
 
     it('filtro de status não afeta a tendência de 8 dias', async () => {
-      const { app } = setup({ local: '2026-10-21T10:00' });
+      const { app } = await setup({ local: '2026-10-21T10:00' });
       const joao = await employeeAgent(app, 'e1');
       await mark(joao, 'c1', ['i1']);
       const admin = await adminAgent(app);
@@ -108,10 +108,10 @@ describe('US15 — painel do gestor', () => {
     });
 
     it('nome antigo de checklist aparece nos dias anteriores', async () => {
-      const { app, db, clock } = setup({ local: '2026-10-20T10:00' });
+      const { app, db, clock } = await setup({ local: '2026-10-20T10:00' });
       await (await employeeAgent(app, 'e1')).get('/api/me/today');
       clock.set('2026-10-21T10:00');
-      db.prepare("UPDATE checklists SET name = 'Abertura nova' WHERE id = 'c1'").run();
+      await db.prepare("UPDATE checklists SET name = 'Abertura nova' WHERE id = 'c1'").run();
       const admin = await adminAgent(app);
       const names = (await admin.get('/api/admin/dashboard?date=2026-10-20')).body.byChecklist.map((c: { name: string }) => c.name);
       expect(names).toContain('Abertura do restaurante');

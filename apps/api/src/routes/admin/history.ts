@@ -19,7 +19,7 @@ export function adminHistoryRoutes({ db, clock }: AppContext) {
   const r = Router();
   r.use('/admin/history', requireAdmin(db, clock));
 
-  r.get('/admin/history', route((req, res) => {
+  r.get('/admin/history', route(async (req, res) => {
     const { date, employeeId, action, q } = req.query as Record<string, string | undefined>;
     if (action && action !== 'all' && !ACTIONS.includes(action)) throw new HttpError(422, 'Ação inválida.');
     if (date && date !== 'all' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new HttpError(422, 'Data inválida.');
@@ -29,14 +29,14 @@ export function adminHistoryRoutes({ db, clock }: AppContext) {
     if (date && date !== 'all') { where.push('op_date = ?'); args.push(date); }
     if (employeeId && employeeId !== 'all') { where.push('employee_id = ?'); args.push(employeeId); }
     if (action && action !== 'all') { where.push('action = ?'); args.push(action); }
-    let rows = db
+    let rows = (await db
       .prepare(`SELECT * FROM audit_events ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY op_date DESC, minute DESC, id DESC`)
-      .all(...args) as EventRow[];
+      .all(...args)) as EventRow[];
     const query = fold((q ?? '').trim());
     if (query) rows = rows.filter((e) => fold(e.item_name).includes(query) || fold(e.checklist_name).includes(query));
 
-    const today = currentDay(db, clock).date;
-    const colors = new Map((db.prepare('SELECT id, color FROM employees').all() as { id: string; color: string }[]).map((e) => [e.id, e.color]));
+    const today = (await currentDay(db, clock)).date;
+    const colors = new Map(((await db.prepare('SELECT id, color FROM employees').all()) as { id: string; color: string }[]).map((e) => [e.id, e.color]));
     const offset = Math.max(0, int(req.query.offset, 0));
     const limit = Math.min(200, Math.max(1, int(req.query.limit, 40)));
     res.json({

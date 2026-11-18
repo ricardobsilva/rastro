@@ -7,7 +7,7 @@ import { seedCasaBrasa as seed } from '../src/db/seed-casa-brasa.js';
 describe('US00 — fundação', () => {
   describe('GET /api/health', () => {
     it('responde 200 com status ok (sucesso)', async () => {
-      const app = createApp({ db: openDb() });
+      const app = createApp({ db: await openDb() });
       const res = await request(app).get('/api/health');
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ status: 'ok' });
@@ -16,7 +16,7 @@ describe('US00 — fundação', () => {
 
   describe('rotas inexistentes', () => {
     it('respondem 404 em JSON (erro)', async () => {
-      const app = createApp({ db: openDb() });
+      const app = createApp({ db: await openDb() });
       const res = await request(app).get('/api/nao-existe');
       expect(res.status).toBe(404);
       expect(res.type).toMatch(/json/);
@@ -25,33 +25,33 @@ describe('US00 — fundação', () => {
   });
 
   describe('seed Casa Brasa', () => {
-    it('popula funcionários, itens e checklists (sucesso)', () => {
-      const db = openDb();
-      seed(db);
-      const count = (t: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as { n: number }).n;
-      expect(count('employees')).toBe(8);
-      expect(count('items')).toBe(26);
-      expect(count('checklists')).toBe(11);
-      expect(count('checklist_items')).toBeGreaterThan(0);
+    it('popula funcionários, itens e checklists (sucesso)', async () => {
+      const db = await openDb();
+      await seed(db);
+      const count = async (t: string) => (await db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as { n: number }).n;
+      expect(await count('employees')).toBe(8);
+      expect(await count('items')).toBe(26);
+      expect(await count('checklists')).toBe(11);
+      expect(await count('checklist_items')).toBeGreaterThan(0);
     });
 
-    it('é idempotente: rodar duas vezes não duplica (borda)', () => {
-      const db = openDb();
-      seed(db);
-      seed(db);
-      const count = (t: string) => (db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as { n: number }).n;
-      expect(count('employees')).toBe(8);
-      expect(count('items')).toBe(26);
-      expect(count('checklists')).toBe(11);
-      expect(count('checklist_items')).toBe(40);
+    it('é idempotente: rodar duas vezes não duplica (borda)', async () => {
+      const db = await openDb();
+      await seed(db);
+      await seed(db);
+      const count = async (t: string) => (await db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as { n: number }).n;
+      expect(await count('employees')).toBe(8);
+      expect(await count('items')).toBe(26);
+      expect(await count('checklists')).toBe(11);
+      expect(await count('checklist_items')).toBe(40);
     });
 
-    it('preserva a ordem dos itens no checklist (borda)', () => {
-      const db = openDb();
-      seed(db);
-      const ids = db
+    it('preserva a ordem dos itens no checklist (borda)', async () => {
+      const db = await openDb();
+      await seed(db);
+      const ids = (await db
         .prepare('SELECT item_id FROM checklist_items WHERE checklist_id = ? ORDER BY position')
-        .all('c4')
+        .all('c4'))
         .map((r) => (r as { item_id: string }).item_id);
       expect(ids).toEqual(['i7', 'i8', 'i11', 'i10', 'i6']);
     });

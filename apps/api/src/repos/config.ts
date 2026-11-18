@@ -1,5 +1,5 @@
 import type { Period } from '@rastro/domain';
-import type { Db } from '../db/index.js';
+import type { Db, Stmt } from '../db/index.js';
 
 export type ChecklistConfig = {
   id: string; name: string; description: string; period: Period; days: number[]; dueTime: string | null; active: boolean;
@@ -13,11 +13,50 @@ export type ItemConfig = {
 type ChecklistRow = { id: string; name: string; description: string; period: Period; days: string; due_time: string | null; active: number };
 type ItemRow = { id: string; name: string; description: string; category: string; required: number; allow_note: number; active: number };
 
-export function loadChecklists(db: Db): ChecklistConfig[] {
-  const rows = db.prepare('SELECT * FROM checklists ORDER BY rowid').all() as ChecklistRow[];
-  const items = db.prepare('SELECT checklist_id, item_id FROM checklist_items ORDER BY checklist_id, position').all() as { checklist_id: string; item_id: string }[];
-  const roles = db.prepare('SELECT checklist_id, grp FROM checklist_roles ORDER BY rowid').all() as { checklist_id: string; grp: string }[];
-  const emps = db.prepare('SELECT checklist_id, employee_id FROM checklist_employees ORDER BY rowid').all() as { checklist_id: string; employee_id: string }[];
+const CONFIG_QUERIES = {
+  checklists: 'SELECT * FROM checklists ORDER BY rowid',
+  checklistItems: 'SELECT checklist_id, item_id FROM checklist_items ORDER BY checklist_id, position',
+  checklistRoles: 'SELECT checklist_id, grp FROM checklist_roles ORDER BY rowid',
+  checklistEmployees: 'SELECT checklist_id, employee_id FROM checklist_employees ORDER BY rowid',
+  items: 'SELECT * FROM items ORDER BY rowid',
+  employees: 'SELECT id, grp, active FROM employees ORDER BY rowid',
+};
+
+export type Config = {
+  checklists: ChecklistConfig[];
+  items: ItemConfig[];
+  employees: { id: string; group: string; active: boolean }[];
+};
+
+/**
+ * Checklists, itens e equipe numa única ida ao banco.
+ * `extra`: leituras adicionais que vão no mesmo lote; os resultados voltam em `extra`.
+ */
+export async function loadConfig(db: Db, extra: Stmt[] = []): Promise<Config & { extra: unknown[][] }> {
+  const [cl, ci, cr, ce, it, em, ...rest] = await db.readMany([
+    ...Object.values(CONFIG_QUERIES).map((sql) => ({ sql, args: [] })),
+    ...extra,
+  ]);
+  return {
+    checklists: toChecklists(cl as ChecklistRow[], ci as ChecklistItemRow[], cr as ChecklistRoleRow[], ce as ChecklistEmployeeRow[]),
+    items: (it as ItemRow[]).map(toItem),
+    employees: toAssignment(em as EmployeeAssignmentRow[]),
+    extra: rest,
+  };
+}
+
+type ChecklistItemRow = { checklist_id: string; item_id: string };
+type ChecklistRoleRow = { checklist_id: string; grp: string };
+type ChecklistEmployeeRow = { checklist_id: string; employee_id: string };
+type EmployeeAssignmentRow = { id: string; grp: string; active: number };
+
+export async function loadChecklists(db: Db): Promise<ChecklistConfig[]> {
+  const q = CONFIG_QUERIES;
+  const [rows, items, roles, emps] = await db.readMany([q.checklists, q.checklistItems, q.checklistRoles, q.checklistEmployees].map((sql) => ({ sql, args: [] })));
+  return toChecklists(rows as ChecklistRow[], items as ChecklistItemRow[], roles as ChecklistRoleRow[], emps as ChecklistEmployeeRow[]);
+}
+
+function toChecklists(rows: ChecklistRow[], items: ChecklistItemRow[], roles: ChecklistRoleRow[], emps: ChecklistEmployeeRow[]): ChecklistConfig[] {
   return rows.map((r) => ({
     id: r.id, name: r.name, description: r.description, period: r.period, days: JSON.parse(r.days) as number[],
     dueTime: r.due_time, active: !!r.active,
@@ -32,12 +71,12 @@ export const toItem = (r: ItemRow): ItemConfig => ({
   required: !!r.required, allowNote: !!r.allow_note, active: !!r.active,
 });
 
-export function loadItems(db: Db): ItemConfig[] {
-  return (db.prepare('SELECT * FROM items ORDER BY rowid').all() as ItemRow[]).map(toItem);
+export async function loadItems(db: Db): Promise<ItemConfig[]> {
+  return ((await db.prepare(CONFIG_QUERIES.items).all()) as ItemRow[]).map(toItem);
 }
 
-export function loadEmployeesForAssignment(db: Db) {
-  return (db.prepare('SELECT id, grp, active FROM employees ORDER BY rowid').all() as { id: string; grp: string; active: number }[]).map((e) => ({
-    id: e.id, group: e.grp, active: !!e.active,
-  }));
+const toAssignment = (rows: EmployeeAssignmentRow[]) => rows.map((e) => ({ id: e.id, group: e.grp, active: !!e.active }));
+
+export async function loadEmployeesForAssignment(db: Db) {
+  return toAssignment((await db.prepare(CONFIG_QUERIES.employees).all()) as EmployeeAssignmentRow[]);
 }

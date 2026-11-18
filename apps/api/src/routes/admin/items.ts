@@ -20,38 +20,38 @@ export function adminItemRoutes({ db, clock }: AppContext) {
   const r = Router();
   r.use('/admin/items', requireAdmin(db, clock));
 
-  const withUsage = (items: ItemConfig[]) => {
-    const cls = loadChecklists(db);
+  const withUsage = async (items: ItemConfig[]) => {
+    const cls = await loadChecklists(db);
     return items.map((i) => ({ ...i, usedIn: cls.filter((c) => c.itemIds.includes(i.id)).map((c) => c.name) }));
   };
-  const assertUniqueName = (name: string, exceptId?: string) => {
-    const clash = loadItems(db).find((i) => i.id !== exceptId && i.name.trim().toLowerCase() === name.toLowerCase());
+  const assertUniqueName = async (name: string, exceptId?: string) => {
+    const clash = (await loadItems(db)).find((i) => i.id !== exceptId && i.name.trim().toLowerCase() === name.toLowerCase());
     if (clash) throw new HttpError(409, 'Já existe um item com esse nome.');
   };
-  const save = (i: ItemConfig, insert: boolean) => {
+  const save = async (i: ItemConfig, insert: boolean) => {
     const sql = insert
       ? 'INSERT INTO items (name, description, category, required, allow_note, active, id) VALUES (?, ?, ?, ?, ?, ?, ?)'
       : 'UPDATE items SET name = ?, description = ?, category = ?, required = ?, allow_note = ?, active = ? WHERE id = ?';
-    db.prepare(sql).run(i.name, i.description, i.category, +i.required, +i.allowNote, +i.active, i.id);
-    return withUsage([i])[0];
+    await db.prepare(sql).run(i.name, i.description, i.category, +i.required, +i.allowNote, +i.active, i.id);
+    return (await withUsage([i]))[0];
   };
 
-  r.get('/admin/items', route((_req, res) => {
-    res.json(withUsage(loadItems(db)));
+  r.get('/admin/items', route(async (_req, res) => {
+    res.json(await withUsage(await loadItems(db)));
   }));
 
-  r.post('/admin/items', route((req, res) => {
+  r.post('/admin/items', route(async (req, res) => {
     const data = parse(itemSchema, req.body);
-    assertUniqueName(data.name);
-    res.status(201).json(save({ id: `i_${randomUUID().slice(0, 8)}`, ...data }, true));
+    await assertUniqueName(data.name);
+    res.status(201).json(await save({ id: `i_${randomUUID().slice(0, 8)}`, ...data }, true));
   }));
 
-  r.patch('/admin/items/:id', route((req, res) => {
-    const current = loadItems(db).find((i) => i.id === req.params.id);
+  r.patch('/admin/items/:id', route(async (req, res) => {
+    const current = (await loadItems(db)).find((i) => i.id === req.params.id);
     if (!current) throw new HttpError(404, 'Item não encontrado.');
     const data = parse(itemSchema, { ...current, ...req.body });
-    assertUniqueName(data.name, current.id);
-    res.json(save({ ...current, ...data }, false));
+    await assertUniqueName(data.name, current.id);
+    res.json(await save({ ...current, ...data }, false));
   }));
 
   return r;

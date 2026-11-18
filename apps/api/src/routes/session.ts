@@ -14,31 +14,31 @@ export function sessionRoutes({ db, clock }: AppContext) {
 
   const sinceLabel = (iso: string | null) => (iso ? fmtMinute(operationalNow(new Date(iso)).minute) : null);
 
-  r.get('/employees', route((_req, res) => {
-    res.json(listActiveEmployees(db).map(toPublic));
+  r.get('/employees', route(async (_req, res) => {
+    res.json((await listActiveEmployees(db)).map(toPublic));
   }));
 
-  r.get('/session', route((_req, res) => {
+  r.get('/session', route(async (_req, res) => {
     const device = res.locals.device as DeviceRow;
-    const emp = device.employee_id ? getEmployee(db, device.employee_id) : undefined;
+    const emp = device.employee_id ? await getEmployee(db, device.employee_id) : undefined;
     if (!emp || !emp.active) return res.json({ employee: null, since: null });
     res.json({ employee: toPublic(emp), since: sinceLabel(device.session_since) });
   }));
 
-  r.post('/session', route((req, res) => {
+  r.post('/session', route(async (req, res) => {
     const device = res.locals.device as DeviceRow;
     const { employeeId } = parse(loginSchema, req.body);
-    const emp = getEmployee(db, employeeId);
+    const emp = await getEmployee(db, employeeId);
     if (!emp) throw new HttpError(404, 'Funcionário não encontrado.');
     if (!emp.active) throw new HttpError(403, 'Funcionário inativo.');
     const since = clock().toISOString();
-    db.prepare('UPDATE devices SET employee_id = ?, session_since = ? WHERE id = ?').run(emp.id, since, device.id);
+    await db.prepare('UPDATE devices SET employee_id = ?, session_since = ? WHERE id = ?').run(emp.id, since, device.id);
     res.status(201).json({ employee: toPublic(emp), since: sinceLabel(since) });
   }));
 
-  r.delete('/session', route((_req, res) => {
+  r.delete('/session', route(async (_req, res) => {
     const device = res.locals.device as DeviceRow;
-    db.prepare('UPDATE devices SET employee_id = NULL, session_since = NULL WHERE id = ?').run(device.id);
+    await db.prepare('UPDATE devices SET employee_id = NULL, session_since = NULL WHERE id = ?').run(device.id);
     res.status(204).end();
   }));
 

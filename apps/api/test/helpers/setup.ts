@@ -15,9 +15,9 @@ export function testClock(local = '2026-10-21T11:40'): TestClock {
   return c;
 }
 
-export function setup(opts: { local?: string; seed?: boolean } = {}) {
-  const db = openDb();
-  if (opts.seed !== false) seedCasaBrasa(db);
+export async function setup(opts: { local?: string; seed?: boolean } = {}) {
+  const db = await openDb();
+  if (opts.seed !== false) await seedCasaBrasa(db);
   const clock = testClock(opts.local);
   const app = createApp({ db, clock: () => clock.now });
   return { db, clock, app };

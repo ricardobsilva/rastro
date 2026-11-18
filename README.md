@@ -25,7 +25,7 @@ Checklists operacionais para restaurantes, com rastreabilidade de cada marcaçã
 | Pacote | Conteúdo |
 |---|---|
 | `packages/domain` | Regras de negócio puras (sem I/O) |
-| `apps/api` | API Express + SQLite (better-sqlite3) |
+| `apps/api` | API Express + SQLite (libSQL: arquivo local ou Turso) |
 | `apps/web` | React + Vite |
 
 ## Comandos
@@ -49,41 +49,46 @@ npm run seed:demo # domínio + restaurante fictício Casa Brasa + 7 dias de hist
 | `/estacao` | Força a estação de trabalho em qualquer aparelho |
 | `/gestor` | Painel do gestor |
 
-## Deploy no Fly.io
+## Deploy na Vercel
 
-O repositório já traz `Dockerfile` e `fly.toml`: uma única máquina, com o SQLite num volume em `/data` (o disco da máquina é apagado a cada deploy; o volume, não).
+Produção roda na Vercel, com o banco no [Turso](https://turso.tech) (SQLite hospedado). A Vercel não tem disco persistente, por isso o banco fica fora dela; o SQL é o mesmo do SQLite local.
 
-Na tela de deploy do Fly a partir do GitHub:
+`npm run build:vercel` gera `.vercel/output` ([Build Output API](https://vercel.com/docs/build-output-api/v3)): as telas do Vite como arquivos estáticos e a API inteira como uma única função Node (`apps/api/src/vercel.ts`, empacotada com esbuild, usando o cliente HTTP do Turso, sem binário nativo). As rotas: `/api/*` vai para a função; caminhos sem extensão abrem o app.
 
-| Campo | Valor |
+### 1. Banco no Turso
+
+```bash
+turso db create rastro --location <região>   # perto da região das funções na Vercel
+turso db show rastro --url                   # → TURSO_DATABASE_URL (libsql://…)
+turso db tokens create rastro                # → TURSO_AUTH_TOKEN
+```
+
+Também dá para criar pela integração do Turso no Marketplace da Vercel, que já preenche as variáveis. O esquema e o gestor inicial são criados sozinhos na primeira requisição.
+
+### 2. Projeto na Vercel
+
+Importe o repositório. O `vercel.json` já define a instalação (`npm ci`) e o build (`npm run build:vercel`); deixe *Framework Preset* em **Other** e *Root Directory* em `./`.
+
+| Variável de ambiente | Valor |
 |---|---|
-| Working directory | `./` |
-| Config path | `fly.toml` |
-| Região | `gru` (São Paulo), a mesma do `fly.toml` |
+| `TURSO_DATABASE_URL` | `libsql://rastro-<conta>.turso.io` |
+| `TURSO_AUTH_TOKEN` | token do passo 1 |
 
-Se preferir a linha de comando (`flyctl`):
+As funções rodam em São Paulo (`gru1`, em `vercel.json` e `scripts/build-vercel.mjs`), a mesma região do banco no Turso (`aws-sa-east-1`). Se mudar o banco de lugar, mude também a região das funções: cada requisição faz algumas consultas, e a distância entre função e banco pesa mais do que a distância até o usuário.
 
-```bash
-fly launch --copy-config --no-deploy   # usa o fly.toml do repositório
-fly volumes create rastro_data --region gru --size 1   # se o launch não tiver criado
-fly deploy
-fly scale count 1   # SQLite: nunca mais de uma máquina
-```
+### Limites a conhecer
 
-Variáveis já definidas no `fly.toml`: `DB_PATH=/data/rastro.db`, `PORT=8080`, `TRUST_PROXY_HOPS=1` (IP real do visitante para o bloqueio de PIN). A checagem de saúde é `GET /api/health`. O Fly tira snapshots diários do volume; mesmo assim, exporte os dados de vez em quando em **Gestor → Exportar e importar**.
+- **Importação de dados:** a Vercel aceita no máximo 4,5 MB por requisição. Arquivos de exportação maiores que isso não sobem pela tela.
+- **Bloqueio de PIN:** as 5 tentativas erradas são contadas por instância da função, e não no banco. Com várias instâncias ativas, o limite fica mais frouxo.
+- **Polling:** as telas recarregam a cada 30 s. A sincronização do dia só escreve no banco quando algo muda; um teste garante que consultas repetidas não escrevem nada.
 
-Para testar a imagem localmente:
+### Local
 
-```bash
-docker build -t rastro .
-docker run --rm -p 8080:8080 -e PORT=8080 -e DB_PATH=/data/rastro.db -v "$PWD/.data:/data" rastro
-```
-
-Sem Docker: `npm run build && npm start` (a API serve as telas de `apps/web/dist`).
+Sem `TURSO_DATABASE_URL`, a API usa um arquivo SQLite local (`DB_PATH`, padrão `rastro.db`). `npm run build && npm start` serve telas e API juntas, como antes. Para apontar o ambiente local para o Turso, defina as duas variáveis. `npm run seed:demo` se recusa a rodar num banco `libsql://`.
 
 ## Dados em produção
 
-Ao subir, a API (`apps/api/src/main.ts` → `prepareDb`) aplica **apenas dados de domínio** (`apps/api/src/db/seed-domain.ts`):
+Ao subir (localmente, `apps/api/src/main.ts`; na Vercel, na primeira requisição de cada instância, `apps/api/src/vercel.ts`), a API (`prepareDb`) aplica **apenas dados de domínio** (`apps/api/src/db/seed-domain.ts`):
 
 - o gestor inicial **Rodrigo Cortez**, PIN `2200`;
 - a biblioteca de tarefas sugeridas (só as ativas).
@@ -96,7 +101,7 @@ Nada de equipe, listas, execuções ou histórico: o gestor cadastra tudo aos po
 
 ## Cópia dos dados
 
-Em **Gestor → Exportar e importar**, o gestor baixa um arquivo `.json` com todos os dados e pode carregá-lo de volta, o que substitui tudo (US19). O arquivo contém os PINs dos gestores: guarde-o com cuidado. Isso não substitui um backup automático do volume onde fica o `rastro.db`.
+Em **Gestor → Exportar e importar**, o gestor baixa um arquivo `.json` com todos os dados e pode carregá-lo de volta, o que substitui tudo (US19). O arquivo contém os PINs dos gestores: guarde-o com cuidado. Isso não substitui o backup do banco: o Turso guarda o histórico e permite restaurar a um ponto no tempo, conforme o plano.
 
 ## PINs de gestor
 

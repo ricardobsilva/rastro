@@ -10,7 +10,7 @@ async function mark(agent: Agent, id: number, items: string[]) {
 
 describe('US06 — concluir checklist', () => {
   it('tudo feito → concluído (sucesso)', async () => {
-    const { app } = setup();
+    const { app } = await setup();
     const agent = await employeeAgent(app, 'e1');
     const id = await execId(agent, 'c2');
     await mark(agent, id, ['i14', 'i25', 'i15']);
@@ -20,7 +20,7 @@ describe('US06 — concluir checklist', () => {
   });
 
   it('obrigatório pendente bloqueia com a lista de nomes → 422 (erro)', async () => {
-    const { app } = setup();
+    const { app } = await setup();
     const agent = await employeeAgent(app, 'e1');
     const id = await execId(agent, 'c1');
     await mark(agent, id, ['i1', 'i4', 'i6']);
@@ -31,7 +31,7 @@ describe('US06 — concluir checklist', () => {
   });
 
   it('só opcionais pendentes → salva com aviso (borda)', async () => {
-    const { app } = setup();
+    const { app } = await setup();
     const agent = await employeeAgent(app, 'e1');
     const id = await execId(agent, 'c1');
     await mark(agent, id, ['i1', 'i3', 'i4', 'i6']);
@@ -40,8 +40,8 @@ describe('US06 — concluir checklist', () => {
   });
 
   it('checklist sem obrigatórios conclui mesmo sem nada feito (borda)', async () => {
-    const { app, db } = setup();
-    db.prepare("UPDATE items SET required = 0 WHERE id = 'i15'").run();
+    const { app, db } = await setup();
+    await db.prepare("UPDATE items SET required = 0 WHERE id = 'i15'").run();
     const agent = await employeeAgent(app, 'e1');
     const id = await execId(agent, 'c2');
     const res = await agent.post(`/api/me/executions/${id}/finish`);
@@ -49,7 +49,7 @@ describe('US06 — concluir checklist', () => {
   });
 
   it('obrigatório desmarcado depois volta a bloquear (borda)', async () => {
-    const { app } = setup();
+    const { app } = await setup();
     const agent = await employeeAgent(app, 'e1');
     const id = await execId(agent, 'c2');
     await mark(agent, id, ['i14', 'i25', 'i15']);
@@ -59,7 +59,7 @@ describe('US06 — concluir checklist', () => {
   });
 
   it('de outro funcionário → 403; inexistente → 404 (erro)', async () => {
-    const { app } = setup();
+    const { app } = await setup();
     const joao = await employeeAgent(app, 'e1');
     const ana = await employeeAgent(app, 'e2');
     const id = await execId(joao, 'c1');

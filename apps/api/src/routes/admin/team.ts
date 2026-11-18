@@ -24,21 +24,21 @@ export function adminTeamRoutes({ db, clock }: AppContext) {
   const r = Router();
   r.use('/admin/team', requireAdmin(db, clock));
 
-  const load = (rawDate: unknown) => {
-    const now = currentDay(db, clock);
+  const load = async (rawDate: unknown) => {
+    const now = await currentDay(db, clock);
     const date = parseReportDate(rawDate, now.date);
-    return { now, date, rows: reportRows(db, date, now) };
+    return { now, date, rows: await reportRows(db, date, now) };
   };
 
-  r.get('/admin/team', route((req, res) => {
-    const { now, date, rows } = load(req.query.date);
-    const ids = (db.prepare('SELECT id FROM employees ORDER BY active DESC, rowid').all() as { id: string }[]).map((e) => e.id);
+  r.get('/admin/team', route(async (req, res) => {
+    const { now, date, rows } = await load(req.query.date);
+    const ids = ((await db.prepare('SELECT id FROM employees ORDER BY active DESC, rowid').all()) as { id: string }[]).map((e) => e.id);
     res.json({ date, isToday: date === now.date, dateLabel: longDate(date), rows: ids.map((id) => teamRow(id, rows)) });
   }));
 
-  r.get('/admin/team/:id', route((req, res) => {
-    if (!db.prepare('SELECT 1 FROM employees WHERE id = ?').get(req.params.id)) throw new HttpError(404, 'Funcionário não encontrado.');
-    res.json(teamRow(req.params.id!, load(req.query.date).rows));
+  r.get('/admin/team/:id', route(async (req, res) => {
+    if (!(await db.prepare('SELECT 1 FROM employees WHERE id = ?').get(req.params.id!))) throw new HttpError(404, 'Funcionário não encontrado.');
+    res.json(teamRow(req.params.id!, (await load(req.query.date)).rows));
   }));
 
   return r;

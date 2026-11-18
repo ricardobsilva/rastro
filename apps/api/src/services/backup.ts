@@ -1,5 +1,6 @@
 import { MANAGER_GROUP } from '@rastro/domain';
-import type { Db } from '../db/index.js';
+import type { InValue } from '@libsql/client';
+import type { Db, Stmt } from '../db/index.js';
 import { HttpError } from '../http.js';
 
 export const EXPORT_FORMAT = 'rastro-export';
@@ -18,9 +19,9 @@ export type ExportFile = { format: string; version: number; exportedAt: string; 
 
 const CORRUPTED = 'O arquivo está incompleto ou corrompido.';
 
-export function exportData(db: Db, at: Date): ExportFile {
-  const tables: Record<string, Row[]> = {};
-  for (const t of EXPORT_TABLES) tables[t] = db.prepare(`SELECT * FROM ${t} ORDER BY rowid`).all() as Row[];
+export async function exportData(db: Db, at: Date): Promise<ExportFile> {
+  const results = await db.readMany(EXPORT_TABLES.map((t) => ({ sql: `SELECT * FROM ${t} ORDER BY rowid`, args: [] })));
+  const tables: Record<string, Row[]> = Object.fromEntries(EXPORT_TABLES.map((t, i) => [t, results[i] as Row[]]));
   return { format: EXPORT_FORMAT, version: EXPORT_VERSION, exportedAt: at.toISOString(), tables };
 }
 
@@ -43,17 +44,18 @@ function validate(data: unknown): Record<string, Row[]> {
  * Substitui todos os dados pelos do arquivo, numa transação: ou entra tudo, ou nada muda.
  * Sessões e aparelhos são encerrados, então todos entram de novo com o PIN.
  */
-export function importData(db: Db, data: unknown): Record<string, number> {
+export async function importData(db: Db, data: unknown): Promise<Record<string, number>> {
   const tables = validate(data);
+  const columns = await db.readMany(EXPORT_TABLES.map((t) => ({ sql: `PRAGMA table_info(${t})`, args: [] })));
+  const stmts: Stmt[] = [...SESSION_TABLES, ...[...EXPORT_TABLES].reverse()].map((t) => ({ sql: `DELETE FROM ${t}`, args: [] }));
+  EXPORT_TABLES.forEach((t, i) => {
+    const cols = (columns[i] as { name: string }[]).map((c) => c.name);
+    const insert = db.prepare(`INSERT INTO ${t} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`);
+    for (const row of tables[t]!) stmts.push(insert.bind(...cols.map((c) => (row[c] ?? null) as InValue)));
+  });
   try {
-    db.transaction(() => {
-      for (const t of [...SESSION_TABLES, ...[...EXPORT_TABLES].reverse()]) db.prepare(`DELETE FROM ${t}`).run();
-      for (const t of EXPORT_TABLES) {
-        const cols = (db.prepare(`PRAGMA table_info(${t})`).all() as { name: string }[]).map((c) => c.name);
-        const insert = db.prepare(`INSERT INTO ${t} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`);
-        for (const row of tables[t]!) insert.run(...cols.map((c) => row[c] ?? null));
-      }
-    })();
+    // Um único lote atômico: ou entra tudo, ou nada muda.
+    await db.batch(stmts);
   } catch {
     throw new HttpError(422, CORRUPTED);
   }
