@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { authorizedAgent, employeeAgent, setup } from './helpers/setup.js';
+import { rolesToEmployees } from '../src/db/migrate.js';
 
 type Card = { executionId: number; checklistId: string; name: string; dueTime: string | null; done: number; total: number; status: string };
 
@@ -71,10 +72,14 @@ describe('US03 — Meu dia', () => {
       expect(ids((await today(agent)).cards)).toEqual(['c6', 'c11']);
     });
 
-    it('função + pessoa da mesma função geram uma única instância', async () => {
+    it('atribuição antiga por função vira as pessoas ativas dela, uma instância cada', async () => {
       const { app, db } = await setup();
-      await db.prepare("INSERT INTO checklist_employees VALUES ('c1', 'e1')").run();
-      expect(ids((await today(await employeeAgent(app, 'e1'))).cards).filter((c) => c === 'c1')).toHaveLength(1);
+      await db.prepare("INSERT INTO checklist_roles VALUES ('c4', 'Cozinha')").run();
+      await rolesToEmployees(db);
+      expect(await db.prepare("SELECT employee_id FROM checklist_employees WHERE checklist_id = 'c4' ORDER BY employee_id").all())
+        .toEqual([{ employee_id: 'e3' }, { employee_id: 'e4' }]);
+      expect(await db.prepare('SELECT COUNT(*) AS n FROM checklist_roles').get()).toEqual({ n: 0 });
+      expect(ids((await today(await employeeAgent(app, 'e4'))).cards).filter((c) => c === 'c4')).toHaveLength(1);
     });
 
     it('checklist inativo some, inclusive depois de já ter sido gerado hoje', async () => {

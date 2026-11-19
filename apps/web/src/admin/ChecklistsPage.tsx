@@ -15,7 +15,7 @@ type Draft = Omit<AdminChecklist, 'id' | 'assignees'> & { id?: string };
 
 const PERIODS: [Period, string][] = [['daily', 'Diariamente'], ['weekdays', 'Dias específicos'], ['weekly', 'Semanalmente'], ['ondemand', 'Sob demanda']];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const NEW: Draft = { name: '', description: '', period: 'daily', days: [], dueTime: '12:00', roles: [], employeeIds: [], itemIds: [], active: true };
+const NEW: Draft = { name: '', description: '', period: 'daily', days: [], dueTime: '12:00', employeeIds: [], itemIds: [], active: true };
 
 const toDraft = (c: AdminChecklist): Draft => ({ ...c, dueTime: c.dueTime ?? '12:00' });
 
@@ -67,6 +67,15 @@ export function ChecklistsPage() {
   }
 
   const activeEmps = (emps.data ?? []).filter((e) => e.active);
+  // Função é atalho: marca (ou desmarca) todas as pessoas ativas dela; depois dá para tirar quem não deve ver.
+  const groupIds = (g: string) => activeEmps.filter((e) => e.group === g).map((e) => e.id);
+  const groups = GROUPS.filter((g) => groupIds(g).length > 0);
+  const fullGroups = groups.filter((g) => groupIds(g).every((id) => draft?.employeeIds.includes(id)));
+  const toggleGroup = (g: (typeof GROUPS)[number]) => {
+    if (!draft) return;
+    const ids = groupIds(g);
+    upd({ employeeIds: fullGroups.includes(g) ? draft.employeeIds.filter((id) => !ids.includes(id)) : [...new Set([...draft.employeeIds, ...ids])] });
+  };
   const empName = new Map((emps.data ?? []).map((e) => [e.id, e.name]));
 
   return (
@@ -152,14 +161,14 @@ export function ChecklistsPage() {
               <div className="field-label">Responsáveis</div>
               <div className="who-row">
                 <span className="who-label">Funções</span>
-                <ChipGroup options={GROUPS} value={draft.roles as (typeof GROUPS)[number][]}
-                  onToggle={(g) => upd({ roles: draft.roles.includes(g) ? draft.roles.filter((x) => x !== g) : [...draft.roles, g] })} />
+                <ChipGroup options={groups} value={fullGroups} onToggle={toggleGroup} />
               </div>
               <div className="who-row">
                 <span className="who-label">Pessoas</span>
                 <ChipGroup options={activeEmps.map((e) => e.id)} labels={Object.fromEntries(activeEmps.map((e) => [e.id, e.firstName]))} value={draft.employeeIds}
                   onToggle={(id) => upd({ employeeIds: draft.employeeIds.includes(id) ? draft.employeeIds.filter((x) => x !== id) : [...draft.employeeIds, id] })} />
               </div>
+              <div className="muted-sm">Escolher uma função marca todas as pessoas dela. Desmarque quem não deve ver.</div>
               <ResolvedAssignees draft={draft} employees={emps.data ?? []} names={empName} />
             </div>
 

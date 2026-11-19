@@ -1,5 +1,6 @@
 import type { Db, Stmt } from './index.js';
 import { CHECKLISTS, EMPLOYEES } from './casa-brasa-data.js';
+import { rolesToEmployees } from './migrate.js';
 import { ITEMS } from './seed-data.js';
 
 /** Restaurante fictício completo (equipe, itens e listas). Só para testes e demonstração local, nunca em produção. */
@@ -31,4 +32,6 @@ export async function seedCasaBrasa(db: Db): Promise<void> {
     c.employees.forEach((empId) => stmts.push(insClEmp.bind(c.id, empId)));
   }
   await db.batch(stmts);
+  // Os dados descrevem algumas listas por função; viram as pessoas ativas dela.
+  await rolesToEmployees(db);
 }

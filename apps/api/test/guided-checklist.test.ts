@@ -20,7 +20,7 @@ describe('US18 — assistente do primeiro checklist (API)', () => {
       const admin = await adminAgent(app);
       const res = await admin.post('/api/admin/checklists/guided').send(GUIDED);
       expect(res.status).toBe(201);
-      expect(res.body).toMatchObject({ name: 'Abertura da varanda', period: 'daily', dueTime: '11:00', roles: ['Salão'], assignees: ['João Silva', 'Ana Costa'] });
+      expect(res.body).toMatchObject({ name: 'Abertura da varanda', period: 'daily', dueTime: '11:00', employeeIds: ['e1', 'e2'], assignees: ['João Silva', 'Ana Costa'] });
       expect(res.body.itemIds).toHaveLength(3);
 
       const items = (await admin.get('/api/admin/items')).body as Item[];

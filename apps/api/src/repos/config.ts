@@ -3,7 +3,7 @@ import type { Db, Stmt } from '../db/index.js';
 
 export type ChecklistConfig = {
   id: string; name: string; description: string; period: Period; days: number[]; dueTime: string | null; active: boolean;
-  itemIds: string[]; roles: string[]; employeeIds: string[];
+  itemIds: string[]; employeeIds: string[];
 };
 
 export type ItemConfig = {
@@ -16,7 +16,6 @@ type ItemRow = { id: string; name: string; description: string; category: string
 const CONFIG_QUERIES = {
   checklists: 'SELECT * FROM checklists ORDER BY rowid',
   checklistItems: 'SELECT checklist_id, item_id FROM checklist_items ORDER BY checklist_id, position',
-  checklistRoles: 'SELECT checklist_id, grp FROM checklist_roles ORDER BY rowid',
   checklistEmployees: 'SELECT checklist_id, employee_id FROM checklist_employees ORDER BY rowid',
   items: 'SELECT * FROM items ORDER BY rowid',
   employees: 'SELECT id, grp, active FROM employees ORDER BY rowid',
@@ -33,12 +32,12 @@ export type Config = {
  * `extra`: leituras adicionais que vão no mesmo lote; os resultados voltam em `extra`.
  */
 export async function loadConfig(db: Db, extra: Stmt[] = []): Promise<Config & { extra: unknown[][] }> {
-  const [cl, ci, cr, ce, it, em, ...rest] = await db.readMany([
+  const [cl, ci, ce, it, em, ...rest] = await db.readMany([
     ...Object.values(CONFIG_QUERIES).map((sql) => ({ sql, args: [] })),
     ...extra,
   ]);
   return {
-    checklists: toChecklists(cl as ChecklistRow[], ci as ChecklistItemRow[], cr as ChecklistRoleRow[], ce as ChecklistEmployeeRow[]),
+    checklists: toChecklists(cl as ChecklistRow[], ci as ChecklistItemRow[], ce as ChecklistEmployeeRow[]),
     items: (it as ItemRow[]).map(toItem),
     employees: toAssignment(em as EmployeeAssignmentRow[]),
     extra: rest,
@@ -46,22 +45,20 @@ export async function loadConfig(db: Db, extra: Stmt[] = []): Promise<Config & {
 }
 
 type ChecklistItemRow = { checklist_id: string; item_id: string };
-type ChecklistRoleRow = { checklist_id: string; grp: string };
 type ChecklistEmployeeRow = { checklist_id: string; employee_id: string };
 type EmployeeAssignmentRow = { id: string; grp: string; active: number };
 
 export async function loadChecklists(db: Db): Promise<ChecklistConfig[]> {
   const q = CONFIG_QUERIES;
-  const [rows, items, roles, emps] = await db.readMany([q.checklists, q.checklistItems, q.checklistRoles, q.checklistEmployees].map((sql) => ({ sql, args: [] })));
-  return toChecklists(rows as ChecklistRow[], items as ChecklistItemRow[], roles as ChecklistRoleRow[], emps as ChecklistEmployeeRow[]);
+  const [rows, items, emps] = await db.readMany([q.checklists, q.checklistItems, q.checklistEmployees].map((sql) => ({ sql, args: [] })));
+  return toChecklists(rows as ChecklistRow[], items as ChecklistItemRow[], emps as ChecklistEmployeeRow[]);
 }
 
-function toChecklists(rows: ChecklistRow[], items: ChecklistItemRow[], roles: ChecklistRoleRow[], emps: ChecklistEmployeeRow[]): ChecklistConfig[] {
+function toChecklists(rows: ChecklistRow[], items: ChecklistItemRow[], emps: ChecklistEmployeeRow[]): ChecklistConfig[] {
   return rows.map((r) => ({
     id: r.id, name: r.name, description: r.description, period: r.period, days: JSON.parse(r.days) as number[],
     dueTime: r.due_time, active: !!r.active,
     itemIds: items.filter((i) => i.checklist_id === r.id).map((i) => i.item_id),
-    roles: roles.filter((x) => x.checklist_id === r.id).map((x) => x.grp),
     employeeIds: emps.filter((x) => x.checklist_id === r.id).map((x) => x.employee_id),
   }));
 }

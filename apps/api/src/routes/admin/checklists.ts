@@ -29,7 +29,9 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
    * Valida na ordem do protótipo (nome → itens → responsáveis → dias → horário) e normaliza.
    * `items`: biblioteca a considerar (o assistente passa a atual mais as tarefas que vai criar).
    */
-  async function validate(body: Record<string, unknown>, current?: ChecklistConfig, items?: Map<string, ItemConfig>): Promise<Omit<ChecklistConfig, 'id'>> {
+  async function validate(
+    body: Record<string, unknown>, current?: ChecklistConfig, items?: Map<string, ItemConfig>, newEmployeeIds: string[] = [],
+  ): Promise<Omit<ChecklistConfig, 'id'>> {
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     if (!name) fail('Dê um nome ao checklist.');
     if (name.length > 120) fail('O nome pode ter até 120 caracteres.');
@@ -44,14 +46,10 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
       if (!it || (!it.active && !current?.itemIds.includes(id))) fail('Item inválido ou inativo.');
     }
 
-    const roles = strings(body.roles ?? []) ?? fail('Função inválida.');
     const employeeIds = strings(body.employeeIds ?? []) ?? fail('Funcionário inválido.');
-    if (roles.length === 0 && employeeIds.length === 0) fail('Associe pelo menos uma função ou pessoa.');
-    if (roles.some((g) => !(GROUPS as readonly string[]).includes(g))) fail('Função inválida.');
-    if (employeeIds.length) {
-      const known = await employeeNames();
-      if (employeeIds.some((id) => !known.has(id))) fail('Funcionário inválido.');
-    }
+    if (employeeIds.length === 0) fail('Escolha pelo menos uma pessoa.');
+    const known = await employeeNames();
+    if (employeeIds.some((id) => !known.has(id) && !newEmployeeIds.includes(id))) fail('Funcionário inválido.');
 
     const period = body.period as Period;
     if (!PERIODS.includes(period)) fail('Periodicidade inválida.');
@@ -74,7 +72,7 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
     if (description.length > 300) fail('A descrição pode ter até 300 caracteres.');
     return {
       name, description, period, days, dueTime, active: body.active !== false,
-      itemIds, roles: [...new Set(roles)], employeeIds: [...new Set(employeeIds)],
+      itemIds, employeeIds: [...new Set(employeeIds)],
     };
   }
 
@@ -85,9 +83,8 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
       insert
         ? { sql: 'INSERT INTO checklists (name, description, period, days, due_time, active, id) VALUES (?, ?, ?, ?, ?, ?, ?)', args }
         : { sql: 'UPDATE checklists SET name = ?, description = ?, period = ?, days = ?, due_time = ?, active = ? WHERE id = ?', args },
-      ...['checklist_items', 'checklist_roles', 'checklist_employees'].map((t) => ({ sql: `DELETE FROM ${t} WHERE checklist_id = ?`, args: [id] })),
+      ...['checklist_items', 'checklist_employees'].map((t) => ({ sql: `DELETE FROM ${t} WHERE checklist_id = ?`, args: [id] })),
       ...c.itemIds.map((itemId, pos) => ({ sql: 'INSERT INTO checklist_items VALUES (?, ?, ?)', args: [id, itemId, pos] })),
-      ...c.roles.map((g) => ({ sql: 'INSERT INTO checklist_roles VALUES (?, ?)', args: [id, g] })),
       ...c.employeeIds.map((e) => ({ sql: 'INSERT INTO checklist_employees VALUES (?, ?)', args: [id, e] })),
     ];
   }
@@ -137,8 +134,9 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
   }
 
   /** Pessoas novas do assistente: só nome e função; o cargo fica igual à função. */
-  async function addNewEmployees(raw: unknown, stmts: Stmt[]) {
-    if (raw === undefined) return;
+  async function addNewEmployees(raw: unknown, stmts: Stmt[]): Promise<{ id: string; group: string }[]> {
+    const created: { id: string; group: string }[] = [];
+    if (raw === undefined) return created;
     if (!Array.isArray(raw)) fail('Lista de pessoas inválida.');
     const list = raw as unknown[];
     if (list.length > 30) fail('Adicione até 30 pessoas por vez.');
@@ -158,9 +156,12 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
       const key = name.toLowerCase();
       if (fresh.has(key)) throw new HttpError(409, `${name} aparece duas vezes.`);
       if (seen.has(key)) throw new HttpError(409, `${seen.get(key)} já está na equipe.`);
-      stmts.push(insertEmployeeStmt({ name, role: group as string, group: group as string, pin: null, active: true }, count + fresh.size).stmt);
+      const { id, stmt } = insertEmployeeStmt({ name, role: group as string, group: group as string, pin: null, active: true }, count + fresh.size);
+      stmts.push(stmt);
+      created.push({ id, group: group as string });
       fresh.add(key);
     }
+    return created;
   }
 
   r.post('/admin/checklists/guided', route(async (req, res) => {
@@ -170,9 +171,17 @@ export function adminChecklistRoutes({ db, clock }: AppContext) {
       throw new HttpError(409, 'Já existe uma lista com esse nome.');
     // Tudo é validado antes e gravado num único lote: se algo falhar, nada muda.
     const stmts: Stmt[] = [];
-    await addNewEmployees(body.newEmployees, stmts);
+    const created = await addNewEmployees(body.newEmployees, stmts);
     const { ids: itemIds, library } = await taskItems(body.tasks, stmts);
-    const data = await validate({ name: body.name, period: body.period, days: body.days, dueTime: body.dueTime, roles: body.roles, employeeIds: [], itemIds }, undefined, library);
+    // No assistente se escolhe a função: ela vira as pessoas ativas dela, inclusive as recém-cadastradas.
+    const roles = strings(body.roles ?? []) ?? fail('Função inválida.');
+    if (roles.some((g) => !(GROUPS as readonly string[]).includes(g))) fail('Função inválida.');
+    const team = [...(await loadEmployeesForAssignment(db)).filter((e) => e.active), ...created];
+    const employeeIds = team.filter((e) => roles.includes(e.group)).map((e) => e.id);
+    const data = await validate(
+      { name: body.name, period: body.period, days: body.days, dueTime: body.dueTime, employeeIds, itemIds },
+      undefined, library, created.map((e) => e.id),
+    );
     const id = `c_${randomUUID().slice(0, 8)}`;
     await db.batch([...stmts, ...saveStmts(id, data, true)]);
     res.status(201).json(await saved(id));

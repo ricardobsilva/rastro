@@ -1,6 +1,7 @@
 import { MANAGER_GROUP } from '@rastro/domain';
 import type { InValue } from '@libsql/client';
 import type { Db, Stmt } from '../db/index.js';
+import { rolesToEmployees } from '../db/migrate.js';
 import { HttpError } from '../http.js';
 
 export const EXPORT_FORMAT = 'rastro-export';
@@ -59,5 +60,7 @@ export async function importData(db: Db, data: unknown): Promise<Record<string, 
   } catch {
     throw new HttpError(422, CORRUPTED);
   }
+  // Backups antigos podem trazer atribuições por função.
+  await rolesToEmployees(db);
   return Object.fromEntries(EXPORT_TABLES.map((t) => [t, tables[t]!.length]));
 }

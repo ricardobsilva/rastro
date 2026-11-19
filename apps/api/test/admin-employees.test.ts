@@ -108,10 +108,13 @@ describe('US13 — cadastro de funcionários', () => {
       expect(await db.prepare('SELECT pin FROM employees WHERE id = ?').get(res.body.id)).toEqual({ pin: null });
     });
 
-    it('trocar de função muda os checklists de hoje', async () => {
+    it('trocar de função não muda os checklists: eles são atribuídos à pessoa', async () => {
       const { app } = await setup();
+      const before = (await (await employeeAgent(app, 'e1')).get('/api/me/today')).body.cards.map((c: { checklistId: string }) => c.checklistId);
       await (await adminAgent(app)).patch('/api/admin/employees/e1').send({ group: 'Bar' });
-      expect((await (await employeeAgent(app, 'e1')).get('/api/me/today')).body.cards).toEqual([]);
+      const after = (await (await employeeAgent(app, 'e1')).get('/api/me/today')).body.cards.map((c: { checklistId: string }) => c.checklistId);
+      expect(after).toEqual(before);
+      expect(after.length).toBeGreaterThan(0);
     });
   });
 });

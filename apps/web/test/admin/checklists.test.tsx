@@ -12,8 +12,8 @@ const it_ = (id: string, name: string, o: object = {}) => ({ id, name, descripti
 const ITEMS = [it_('i1', 'Conferir mesas', { required: true }), it_('i2', 'Verificar guardanapos'), it_('i3', 'Conferir talheres'), it_('i9', 'Validade dos perecíveis'), it_('i24', 'Abastecer limpeza', { active: false })];
 const emp = (id: string, name: string, group: string, active = true) => ({ id, name, firstName: name.split(' ')[0], shortName: name, initials: 'XX', role: 'r', group, color: '#000', active, hasPin: false, isManager: false });
 const EMPS = [emp('e1', 'João Silva', 'Salão'), emp('e2', 'Ana Costa', 'Salão'), emp('e5', 'Rafael Lima', 'Bar'), emp('e8', 'Paula Nunes', 'Salão', false)];
-const CL = (o: object = {}) => ({ id: 'c1', name: 'Abertura do restaurante', description: 'Antes de abrir.', period: 'daily', days: [], dueTime: '10:30', roles: ['Salão'], employeeIds: [], itemIds: ['i1', 'i2', 'i3'], active: true, assignees: ['João Silva', 'Ana Costa'], ...o });
-const CLS = [CL(), CL({ id: 'c8', name: 'Limpeza da coifa', period: 'weekly', days: [3], dueTime: '15:00', roles: [], employeeIds: ['e5'], itemIds: ['i1'], assignees: ['Rafael Lima'] })];
+const CL = (o: object = {}) => ({ id: 'c1', name: 'Abertura do restaurante', description: 'Antes de abrir.', period: 'daily', days: [], dueTime: '10:30', employeeIds: ['e1', 'e2'], itemIds: ['i1', 'i2', 'i3'], active: true, assignees: ['João Silva', 'Ana Costa'], ...o });
+const CLS = [CL(), CL({ id: 'c8', name: 'Limpeza da coifa', period: 'weekly', days: [3], dueTime: '15:00', employeeIds: ['e5'], itemIds: ['i1'], assignees: ['Rafael Lima'] })];
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -56,7 +56,7 @@ describe('US14 — checklists (web)', () => {
     await userEvent.click(within(lib).getByRole('button', { name: /Validade dos perecíveis/ }));
     expect(rows()).toEqual(['Verificar guardanapos', 'Conferir mesas', 'Validade dos perecíveis']);
     await userEvent.click(screen.getByRole('button', { name: 'Salvar checklist' }));
-    expect(api.put).toHaveBeenCalledWith('/api/admin/checklists/c1', expect.objectContaining({ itemIds: ['i2', 'i1', 'i9'], roles: ['Salão'] }));
+    expect(api.put).toHaveBeenCalledWith('/api/admin/checklists/c1', expect.objectContaining({ itemIds: ['i2', 'i1', 'i9'], employeeIds: ['e1', 'e2'] }));
     expect(await screen.findByRole('status')).toHaveTextContent('Checklist atualizado. O histórico anterior foi preservado.');
   });
 
@@ -71,13 +71,30 @@ describe('US14 — checklists (web)', () => {
   });
 
   it('erro de validação do servidor aparece no editor (erro)', async () => {
-    api.put.mockRejectedValue(new ApiError(422, 'Associe pelo menos uma função ou pessoa.'));
+    api.put.mockRejectedValue(new ApiError(422, 'Escolha pelo menos uma pessoa.'));
     render();
     await screen.findByRole('heading', { name: 'Editar checklist' });
     await userEvent.click(screen.getByRole('button', { name: 'Salão' }));
     expect(screen.getByText('Ninguém receberá este checklist ainda.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Salvar checklist' }));
-    expect(await screen.findByText('Associe pelo menos uma função ou pessoa.')).toBeInTheDocument();
+    expect(await screen.findByText('Escolha pelo menos uma pessoa.')).toBeInTheDocument();
+  });
+
+  it('função marca todas as pessoas dela e dá para tirar uma; só as marcadas recebem (sucesso)', async () => {
+    api.put.mockResolvedValue(CL());
+    render();
+    await screen.findByRole('heading', { name: 'Editar checklist' });
+    const salao = screen.getByRole('button', { name: 'Salão' });
+    expect(salao).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'João' }));
+    expect(salao).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Aparecerá no “Meu dia” de: Ana Costa.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Bar' }));
+    expect(screen.getByRole('button', { name: 'Rafael' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(salao);
+    expect(screen.getByRole('button', { name: 'João' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar checklist' }));
+    expect(api.put).toHaveBeenCalledWith('/api/admin/checklists/c1', expect.objectContaining({ employeeIds: ['e2', 'e5', 'e1'] }));
   });
 
   it('novo checklist: POST com periodicidade e dias; semanal mantém um só dia (sucesso/borda)', async () => {

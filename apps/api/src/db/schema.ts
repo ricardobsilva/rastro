@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS checklist_items (
   PRIMARY KEY (checklist_id, item_id)
 );
 
+-- Legado: atribuição por função. Fica vazia; ver db/migrate.ts.
 CREATE TABLE IF NOT EXISTS checklist_roles (
   checklist_id TEXT NOT NULL REFERENCES checklists(id),
   grp TEXT NOT NULL,

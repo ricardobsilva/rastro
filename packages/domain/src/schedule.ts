@@ -12,10 +12,10 @@ export function appliesOn(c: { active: boolean; period: Period; days: number[] }
   return c.days.includes(dow);
 }
 
-/** Funcionários ativos que recebem o checklist: união de funções e pessoas. */
-export function assigneesOf<E extends { id: string; group: string; active: boolean }>(
-  c: { roles: string[]; employeeIds: string[] },
-  employees: E[],
-): E[] {
-  return employees.filter((e) => e.active && (c.employeeIds.includes(e.id) || c.roles.includes(e.group)));
+/**
+ * Funcionários ativos que recebem o checklist: só as pessoas escolhidas.
+ * A função é apenas um atalho na tela para marcar várias pessoas de uma vez.
+ */
+export function assigneesOf<E extends { id: string; active: boolean }>(c: { employeeIds: string[] }, employees: E[]): E[] {
+  return employees.filter((e) => e.active && c.employeeIds.includes(e.id));
 }

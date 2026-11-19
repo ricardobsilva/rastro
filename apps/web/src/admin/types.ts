@@ -12,7 +12,7 @@ export type TeamData = { date: string; dateLabel: string; isToday: boolean; rows
 export type Period = 'daily' | 'weekdays' | 'weekly' | 'ondemand';
 export type AdminChecklist = {
   id: string; name: string; description: string; period: Period; days: number[]; dueTime: string | null;
-  roles: string[]; employeeIds: string[]; itemIds: string[]; active: boolean; assignees: string[];
+  employeeIds: string[]; itemIds: string[]; active: boolean; assignees: string[];
 };
 
 type Person = { employeeId: string; name: string; firstName: string; role: string; color: string; initials: string };

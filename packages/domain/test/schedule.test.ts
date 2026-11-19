@@ -42,19 +42,15 @@ describe('assigneesOf', () => {
     { id: 'e8', group: 'Salão', active: false },
   ];
 
-  it('união de funções e pessoas (sucesso)', () => {
-    expect(assigneesOf({ roles: ['Salão'], employeeIds: ['e3'] }, emps).map((e) => e.id)).toEqual(['e1', 'e2', 'e3']);
-  });
-
-  it('pessoa que também está na função aparece uma vez (borda)', () => {
-    expect(assigneesOf({ roles: ['Salão'], employeeIds: ['e1'] }, emps).map((e) => e.id)).toEqual(['e1', 'e2']);
+  it('só as pessoas escolhidas recebem, mesmo que outras sejam da mesma função (sucesso)', () => {
+    expect(assigneesOf({ employeeIds: ['e2', 'e3'] }, emps).map((e) => e.id)).toEqual(['e2', 'e3']);
   });
 
   it('inativos nunca recebem, nem atribuídos pessoalmente (borda)', () => {
-    expect(assigneesOf({ roles: [], employeeIds: ['e8'] }, emps)).toEqual([]);
+    expect(assigneesOf({ employeeIds: ['e8'] }, emps)).toEqual([]);
   });
 
   it('sem responsáveis ninguém recebe (erro de configuração)', () => {
-    expect(assigneesOf({ roles: [], employeeIds: [] }, emps)).toEqual([]);
+    expect(assigneesOf({ employeeIds: [] }, emps)).toEqual([]);
   });
 });

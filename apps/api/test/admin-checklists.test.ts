@@ -4,7 +4,7 @@ import { adminAgent, employeeAgent, setup } from './helpers/setup.js';
 
 const NEW = {
   name: 'Abertura do bar (tarde)', description: '', period: 'daily', days: [], dueTime: '16:00',
-  roles: ['Bar'], employeeIds: ['e2'], itemIds: ['i13', 'i12'], active: true,
+  employeeIds: ['e2', 'e5'], itemIds: ['i13', 'i12'], active: true,
 };
 
 describe('US14 — cadastro de checklists', () => {
@@ -15,7 +15,7 @@ describe('US14 — cadastro de checklists', () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(11);
       expect(res.body[0]).toMatchObject({
-        id: 'c1', name: 'Abertura do restaurante', period: 'daily', dueTime: '10:30', roles: ['Salão'], employeeIds: [],
+        id: 'c1', name: 'Abertura do restaurante', period: 'daily', dueTime: '10:30', employeeIds: ['e1', 'e2'],
         itemIds: ['i1', 'i2', 'i3', 'i4', 'i5', 'i6'], active: true, assignees: ['João Silva', 'Ana Costa'],
       });
     });
@@ -54,7 +54,7 @@ describe('US14 — cadastro de checklists', () => {
     it.each([
       [{ name: '  ' }, 'Dê um nome ao checklist.'],
       [{ itemIds: [] }, 'Adicione pelo menos um item.'],
-      [{ roles: [], employeeIds: [] }, 'Associe pelo menos uma função ou pessoa.'],
+      [{ employeeIds: [] }, 'Escolha pelo menos uma pessoa.'],
       [{ period: 'weekdays', days: [] }, 'Escolha os dias da semana.'],
       [{ period: 'weekly', days: [] }, 'Escolha os dias da semana.'],
       [{ dueTime: '' }, 'Defina o horário esperado de execução.'],
@@ -71,7 +71,6 @@ describe('US14 — cadastro de checklists', () => {
       [{ itemIds: ['i24'] }, 'Item inválido ou inativo.'],
       [{ itemIds: ['zz'] }, 'Item inválido ou inativo.'],
       [{ employeeIds: ['zz'] }, 'Funcionário inválido.'],
-      [{ roles: ['Diretoria'] }, 'Função inválida.'],
       [{ period: 'mensal' }, 'Periodicidade inválida.'],
       [{ period: 'weekdays', days: [7] }, 'Dia da semana inválido.'],
     ])('%j → "%s"', async (patch, msg) => {
@@ -116,9 +115,24 @@ describe('US14 — cadastro de checklists', () => {
       await joao.put(`/api/me/executions/${card.executionId}/items/i14`).send({ done: true });
       const admin = await adminAgent(app);
       const c2 = (await admin.get('/api/admin/checklists')).body.find((c: { id: string }) => c.id === 'c2');
-      await admin.put('/api/admin/checklists/c2').send({ ...c2, roles: [], employeeIds: ['e5'] });
+      await admin.put('/api/admin/checklists/c2').send({ ...c2, employeeIds: ['e5'] });
       expect((await joao.get('/api/me/today')).body.cards.map((c: { checklistId: string }) => c.checklistId)).not.toContain('c2');
       expect(await db.prepare("SELECT COUNT(*) AS n FROM audit_events WHERE checklist_id = 'c2'").get()).toEqual({ n: 1 });
+    });
+
+    it('pessoa de uma função recebe sozinha: os colegas da mesma função não veem', async () => {
+      const { app } = await setup({ local: '2026-10-21T10:00' });
+      const res = await (await adminAgent(app)).post('/api/admin/checklists').send({ ...NEW, employeeIds: ['e1'] });
+      expect(res.body.assignees).toEqual(['João Silva']);
+      const has = async (id: string) => (await (await employeeAgent(app, id)).get('/api/me/today')).body.cards.some((c: { name: string }) => c.name === NEW.name);
+      expect(await has('e1')).toBe(true);
+      expect(await has('e2')).toBe(false);
+    });
+
+    it('papéis enviados por clientes antigos são ignorados', async () => {
+      const { app } = await setup();
+      const res = await (await adminAgent(app)).post('/api/admin/checklists').send({ ...NEW, roles: ['Salão'], employeeIds: ['e5'] });
+      expect(res.body.assignees).toEqual(['Rafael Lima']);
     });
 
     it('dias são guardados ordenados e sem repetição', async () => {
