@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appliesOn, assigneesOf } from '../src/schedule.js';
+import { appliesOn, assigneesOf, sameUnit, worksAt } from '../src/schedule.js';
 
 const cl = (o: Partial<Parameters<typeof appliesOn>[0]> = {}) => ({ active: true, period: 'daily' as const, days: [] as number[], ...o });
 
@@ -52,5 +52,27 @@ describe('assigneesOf', () => {
 
   it('sem responsáveis ninguém recebe (erro de configuração)', () => {
     expect(assigneesOf({ employeeIds: [] }, emps)).toEqual([]);
+  });
+});
+
+describe('unidades', () => {
+  const ana = { id: 'e1', active: true, unitIds: ['farol'] };
+  const rui = { id: 'e2', active: true, unitIds: ['farol', 'ponta'] };
+  const bia = { id: 'e3', active: true, unitIds: [] as string[] };
+
+  it('só recebe quem trabalha na unidade do checklist (sucesso)', () => {
+    expect(assigneesOf({ employeeIds: ['e1', 'e2'], unitId: 'ponta' }, [ana, rui]).map((e) => e.id)).toEqual(['e2']);
+  });
+
+  it('pessoa sem unidade vale para todas; checklist sem unidade vai para todos os escolhidos (borda)', () => {
+    expect(worksAt(bia, 'ponta')).toBe(true);
+    expect(assigneesOf({ employeeIds: ['e1', 'e2', 'e3'], unitId: null }, [ana, rui, bia])).toHaveLength(3);
+  });
+
+  it('aparelho de uma unidade não usa checklist da outra; sem unidade vale em qualquer um (borda)', () => {
+    expect(sameUnit('farol', 'ponta')).toBe(false);
+    expect(sameUnit('farol', 'farol')).toBe(true);
+    expect(sameUnit(null, 'ponta')).toBe(true);
+    expect(sameUnit('farol', null)).toBe(true);
   });
 });

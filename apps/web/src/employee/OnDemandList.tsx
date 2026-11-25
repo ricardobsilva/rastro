@@ -3,9 +3,9 @@ import { useToast } from '../ui/Toast';
 import { plural } from '../ui/status';
 import type { OnDemand } from './types';
 
-type Props = { list: OnDemand[]; onStarted: (executionId: number) => void; compact?: boolean };
+type Props = { list: OnDemand[]; onStarted: (executionId: number) => void; compact?: boolean; showUnit?: boolean };
 
-export function OnDemandList({ list, onStarted, compact }: Props) {
+export function OnDemandList({ list, onStarted, compact, showUnit }: Props) {
   const toast = useToast();
 
   async function start(c: OnDemand) {
@@ -24,7 +24,7 @@ export function OnDemandList({ list, onStarted, compact }: Props) {
           <div>
             <div className="ondemand-name">{c.name}</div>
             <div className="ondemand-meta">
-              {compact ? 'Sob demanda' : [plural(c.itemCount, 'item', 'itens'), c.description].filter(Boolean).join(' · ')}
+              {[showUnit && c.unit, ...(compact ? ['Sob demanda'] : [plural(c.itemCount, 'item', 'itens'), c.description])].filter(Boolean).join(' · ')}
             </div>
           </div>
           <button type="button" className="btn-sm btn-tint" aria-label={`Iniciar ${c.name}`} onClick={() => start(c)}>

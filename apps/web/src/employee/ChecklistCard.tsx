@@ -1,9 +1,9 @@
 import { STATUS, barColor, pct, plural } from '../ui/status';
 import type { TodayCard } from './types';
 
-type Props = { card: TodayCard; onOpen: () => void; selected?: boolean; compact?: boolean };
+type Props = { card: TodayCard; onOpen: () => void; selected?: boolean; compact?: boolean; showUnit?: boolean };
 
-export function ChecklistCard({ card, onOpen, selected, compact }: Props) {
+export function ChecklistCard({ card, onOpen, selected, compact, showUnit }: Props) {
   const st = STATUS[card.status];
   return (
     <button type="button" className={`cl-card${compact ? ' cl-card--compact' : ''}${selected ? ' is-selected' : ''}`} onClick={onOpen}>
@@ -11,7 +11,7 @@ export function ChecklistCard({ card, onOpen, selected, compact }: Props) {
         <div style={{ minWidth: 0 }}>
           <div className="cl-card-name">{card.name}</div>
           <div className="cl-card-meta">
-            {card.dueTime ? `Até ${card.dueTime}` : 'Sob demanda'} · {plural(card.total, 'item', 'itens')}
+            {showUnit && card.unit ? `${card.unit} · ` : ''}{card.dueTime ? `Até ${card.dueTime}` : 'Sob demanda'} · {plural(card.total, 'item', 'itens')}
           </div>
         </div>
         <span className="chip" style={{ color: st.fg, background: st.bg }}>{st.label}</span>

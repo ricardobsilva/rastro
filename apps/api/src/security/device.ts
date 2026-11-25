@@ -5,13 +5,13 @@ import { hashToken } from './tokens.js';
 
 export const DEVICE_COOKIE = 'rastro_device';
 
-export type DeviceRow = { id: number; employee_id: string | null; session_since: string | null };
+export type DeviceRow = { id: number; employee_id: string | null; session_since: string | null; unit_id: string | null };
 
 export async function findDevice(db: Db, req: Request): Promise<DeviceRow | undefined> {
   const token = req.cookies?.[DEVICE_COOKIE];
   if (typeof token !== 'string' || !token) return undefined;
   return (await db
-    .prepare('SELECT id, employee_id, session_since FROM devices WHERE token_hash = ?')
+    .prepare('SELECT id, employee_id, session_since, unit_id FROM devices WHERE token_hash = ?')
     .get(hashToken(token))) as DeviceRow | undefined;
 }
 

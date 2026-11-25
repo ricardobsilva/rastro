@@ -4,7 +4,7 @@ import { type ItemConfig, loadConfig } from '../repos/config.js';
 
 type ExistingExec = {
   id: number; checklist_id: string; employee_id: string; checklist_name: string; description: string;
-  due_time: string | null; started_manually: number; visible: number;
+  due_time: string | null; started_manually: number; visible: number; unit_id: string | null;
 };
 type ExistingItem = {
   id: number; execution_id: number; item_id: string; item_name: string; description: string; category: string;
@@ -22,7 +22,7 @@ type ExistingItem = {
  */
 export async function syncDay(db: Db, date: string, dow: number): Promise<void> {
   const config = await loadConfig(db, [
-    { sql: 'SELECT id, checklist_id, employee_id, checklist_name, description, due_time, started_manually, visible FROM executions WHERE op_date = ?', args: [date] },
+    { sql: 'SELECT id, checklist_id, employee_id, checklist_name, description, due_time, started_manually, visible, unit_id FROM executions WHERE op_date = ?', args: [date] },
     { sql: `SELECT ei.id, ei.execution_id, ei.item_id, ei.item_name, ei.description, ei.category, ei.required, ei.allow_note, ei.position, ei.visible
       FROM execution_items ei JOIN executions e ON e.id = ei.execution_id WHERE e.op_date = ?`, args: [date] },
   ]);
@@ -64,15 +64,16 @@ export async function syncDay(db: Db, date: string, dow: number): Promise<void> 
       if (onDemand && !existing?.started_manually) continue;
 
       if (!existing) {
-        stmt('INSERT OR IGNORE INTO executions (op_date, checklist_id, employee_id, checklist_name, description, due_time) VALUES (?, ?, ?, ?, ?, ?)',
-          date, c.id, emp.id, c.name, c.description, c.dueTime);
+        stmt('INSERT OR IGNORE INTO executions (op_date, checklist_id, employee_id, checklist_name, description, due_time, unit_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          date, c.id, emp.id, c.name, c.description, c.dueTime, c.unitId);
         activeItems.forEach((it, position) => upsertItem(execIdOf, [date, c.id, emp.id], it, position));
         continue;
       }
 
       keep.add(existing.id);
-      if (existing.checklist_name !== c.name || existing.description !== c.description || existing.due_time !== c.dueTime || !existing.visible)
-        stmt('UPDATE executions SET checklist_name = ?, description = ?, due_time = ?, visible = 1 WHERE id = ?', c.name, c.description, c.dueTime, existing.id);
+      if (existing.checklist_name !== c.name || existing.description !== c.description || existing.due_time !== c.dueTime
+        || existing.unit_id !== c.unitId || !existing.visible)
+        stmt('UPDATE executions SET checklist_name = ?, description = ?, due_time = ?, unit_id = ?, visible = 1 WHERE id = ?', c.name, c.description, c.dueTime, c.unitId, existing.id);
 
       const current = itemsByExec.get(existing.id) ?? new Map<string, ExistingItem>();
       const wanted = new Set<string>();
@@ -96,7 +97,7 @@ export async function syncDay(db: Db, date: string, dow: number): Promise<void> 
 
 export type ExecutionRow = {
   id: number; op_date: string; checklist_id: string; employee_id: string; checklist_name: string; description: string;
-  due_time: string | null; started_manually: number;
+  due_time: string | null; started_manually: number; unit_id: string | null;
 };
 
 export type ExecutionItemRow = {

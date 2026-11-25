@@ -1,11 +1,13 @@
+import { sameUnit } from '@rastro/domain';
 import type { Db } from '../db/index.js';
 import { type ExecutionRow, itemsOfMany } from './day.js';
 
 export type Progress = { done: number; total: number; late: number };
 
-/** Progresso por funcionário num dia (instâncias visíveis). */
-export async function progressByEmployee(db: Db, date: string, now: number): Promise<Map<string, Progress>> {
-  const execs = (await db.prepare('SELECT * FROM executions WHERE op_date = ? AND visible = 1').all(date)) as ExecutionRow[];
+/** Progresso por funcionário num dia (instâncias visíveis). `deviceUnitId`: só o que vale nessa unidade. */
+export async function progressByEmployee(db: Db, date: string, now: number, deviceUnitId: string | null): Promise<Map<string, Progress>> {
+  const all = (await db.prepare('SELECT * FROM executions WHERE op_date = ? AND visible = 1').all(date)) as ExecutionRow[];
+  const execs = all.filter((e) => sameUnit(e.unit_id, deviceUnitId));
   const items = await itemsOfMany(db, execs, () => now);
   const out = new Map<string, Progress>();
   for (const e of execs) {

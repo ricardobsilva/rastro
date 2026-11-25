@@ -3,12 +3,15 @@ import { ApiError, api, errorMessage } from '../api/client';
 import { useResource } from '../api/useResource';
 import { ACTION } from '../ui/actions';
 import { Avatar } from '../ui/Avatar';
+import { useAdmin, useUnitLabel } from './context';
 import type { AdminEmployee, HistoryPageData } from './types';
 import { useDates } from './useDates';
 
 const COLS = '90px 60px 1.3fr 1.6fr 1.2fr 110px 1.4fr';
 
 export function HistoryPage() {
+  const { unitId } = useAdmin();
+  const eyebrow = useUnitLabel('Auditoria');
   const dates = useDates();
   const emps = useResource<AdminEmployee[]>('/api/admin/employees');
   const [f, setF] = useState({ q: '', date: 'all', employeeId: 'all', action: 'all' });
@@ -17,6 +20,7 @@ export function HistoryPage() {
 
   const query = (offset: number) => {
     const qs = new URLSearchParams();
+    if (unitId) qs.set('unitId', unitId);
     if (f.date !== 'all') qs.set('date', f.date);
     if (f.employeeId !== 'all') qs.set('employeeId', f.employeeId);
     if (f.action !== 'all') qs.set('action', f.action);
@@ -39,14 +43,14 @@ export function HistoryPage() {
 
   useEffect(() => {
     load(0); // filtros mudaram: recomeça da primeira página
-  }, [f.q, f.date, f.employeeId, f.action]);
+  }, [f.q, f.date, f.employeeId, f.action, unitId]);
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
 
   return (
     <div className="page">
       <div>
-        <div className="eyebrow">Auditoria</div>
+        <div className="eyebrow">{eyebrow}</div>
         <h1 className="page-title">Histórico de execução</h1>
         <div className="muted" style={{ fontSize: 14, marginTop: 6, maxWidth: 680 }}>
           Cada registro guarda o nome do checklist e do item no momento da execução. Desmarcações nunca apagam o registro original.
@@ -80,7 +84,7 @@ export function HistoryPage() {
             <div key={r.id} className={`table-row${r.action === 'undone' ? ' is-undone' : ''}`} style={{ gridTemplateColumns: COLS, padding: '10px 16px' }}>
               <span className="cell">{r.dateLabel}</span>
               <span className="mono">{r.time}</span>
-              <span style={{ font: '400 13px var(--font-ui)', color: 'var(--text-3)' }}>{r.checklistName}</span>
+              <span style={{ font: '400 13px var(--font-ui)', color: 'var(--text-3)' }}>{r.checklistName}{r.unit && !unitId ? ` · ${r.unit}` : ''}</span>
               <span style={{ font: '600 13px var(--font-ui)' }}>{r.itemName}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8, font: '500 13px var(--font-ui)' }}>
                 <Avatar initials={r.initials} color={r.color} size={24} />{r.employeeName}

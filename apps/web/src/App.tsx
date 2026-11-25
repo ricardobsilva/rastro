@@ -12,7 +12,7 @@ export function App({ path = window.location.pathname, phone = isPhone() }: { pa
       {path.startsWith('/gestor') ? (
         <AdminApp />
       ) : (
-        <DeviceGate>{station ? <StationApp /> : <EmployeeApp />}</DeviceGate>
+        <DeviceGate station={station}>{station ? <StationApp /> : <EmployeeApp />}</DeviceGate>
       )}
     </ToastProvider>
   );

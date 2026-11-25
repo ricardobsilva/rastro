@@ -21,7 +21,7 @@ beforeEach(() => vi.resetAllMocks());
 
 describe('US11 — acesso do gestor (web)', () => {
   it('PIN correto libera o painel com toast (sucesso)', async () => {
-    api.get.mockRejectedValueOnce(new ApiError(401, 'Acesso restrito ao gestor.')).mockResolvedValue({ manager: MARINA, lateToday: 3 });
+    api.get.mockRejectedValueOnce(new ApiError(401, 'Acesso restrito ao gestor.')).mockResolvedValue({ manager: MARINA, lateToday: 3, units: [] });
     api.post.mockResolvedValue({ manager: MARINA });
     renderWithToast(<AdminApp />);
     expect(await screen.findByRole('heading', { name: 'Rastro · Painel do gestor' })).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('US11 — acesso do gestor (web)', () => {
   });
 
   it('sessão existente entra direto; badge mostra atrasos; navega entre páginas (sucesso)', async () => {
-    api.get.mockResolvedValue({ manager: MARINA, lateToday: 3 });
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 3, units: [] });
     renderWithToast(<AdminApp />);
     const painel = await screen.findByRole('button', { name: /Painel/ });
     expect(painel).toHaveTextContent('3');
@@ -53,13 +53,13 @@ describe('US11 — acesso do gestor (web)', () => {
   });
 
   it('sem atrasos não mostra badge (borda)', async () => {
-    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0, units: [] });
     renderWithToast(<AdminApp />);
     expect(await screen.findByRole('button', { name: 'Painel' })).toHaveTextContent(/^Painel$/);
   });
 
   it('Sair encerra a sessão e volta para a tela inicial (sucesso)', async () => {
-    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0, units: [] });
     api.del.mockResolvedValue(null);
     const go = vi.fn();
     renderWithToast(<AdminApp go={go} />);
@@ -70,7 +70,7 @@ describe('US11 — acesso do gestor (web)', () => {
   });
 
   it('Sair com o servidor fora do ar ainda volta para a tela inicial (erro)', async () => {
-    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0, units: [] });
     api.del.mockRejectedValue(new ApiError(0, 'Sem conexão com o servidor.'));
     const go = vi.fn();
     renderWithToast(<AdminApp go={go} />);
@@ -79,14 +79,14 @@ describe('US11 — acesso do gestor (web)', () => {
   });
 
   it('menu tem "Passo a passo" que abre o assistente (sucesso)', async () => {
-    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0, units: [] });
     renderWithToast(<AdminApp />);
     await userEvent.click(await screen.findByRole('button', { name: 'Passo a passo' }));
     expect(await screen.findByRole('heading', { name: 'Página Passo a passo' })).toBeInTheDocument();
   });
 
   it('menu tem "Exportar e importar" (sucesso)', async () => {
-    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0 });
+    api.get.mockResolvedValue({ manager: MARINA, lateToday: 0, units: [] });
     renderWithToast(<AdminApp />);
     await userEvent.click(await screen.findByRole('button', { name: 'Exportar e importar' }));
     expect(await screen.findByRole('heading', { name: 'Página Dados' })).toBeInTheDocument();

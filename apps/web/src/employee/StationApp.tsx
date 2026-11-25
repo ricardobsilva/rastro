@@ -14,7 +14,9 @@ import { ManagerLogin } from './ManagerLogin';
 import { NoteEditor } from './NoteEditor';
 import { OnDemandList } from './OnDemandList';
 import { runMeta } from './RunScreen';
+import { StationUnit } from './StationUnit';
 import type { Activity, Team, TeamMember, Today } from './types';
+import { hasManyUnits } from './units';
 import { useExecution } from './useExecution';
 
 /** Computador fixo compartilhado: troca de pessoa com um toque, sempre mostrando em nome de quem se marca. */
@@ -63,7 +65,7 @@ export function StationApp() {
           <div className="station-brand">
             <div className="restaurant-logo station-logo">{RESTAURANT.initials}</div>
             <div>
-              <div className="station-name">{RESTAURANT.name}</div>
+              <div className="station-name">{RESTAURANT.name}{team.data?.unit ? ` · ${team.data.unit.name}` : ''}</div>
               <div className="station-sub">Estação compartilhada · com <span>Rastro</span></div>
             </div>
           </div>
@@ -71,7 +73,20 @@ export function StationApp() {
             <span className="station-time">{team.data?.now ?? '--:--'}</span>
             <span className="station-date">{team.data?.dateLabel}</span>
           </div>
-          {session && !me && <ManagerLogin />}
+          {session && !me && (
+            <div className="station-manager">
+              {team.data && (team.data.units?.length ?? 0) > 0 && (
+                <StationUnit
+                  unit={team.data.unit} units={team.data.units}
+                  onChanged={(u) => {
+                    team.reload();
+                    toast(u ? `Este computador agora é da unidade ${u.name}.` : 'Este computador agora mostra todas as unidades.');
+                  }}
+                />
+              )}
+              <ManagerLogin />
+            </div>
+          )}
           {me && (
             <div className="station-who">
               <Avatar initials={me.initials} color={me.color} size={34} />
@@ -137,6 +152,7 @@ function StationMain({ me, members, onPick, onChange }: MainProps) {
   };
   const { exec, toggle, saveNote, finish, finishError, allDone, pop } = useExecution(runId, refresh);
   const s = today.data?.summary;
+  const showUnit = !!today.data && hasManyUnits(today.data);
 
   return (
     <div className="station-main">
@@ -179,9 +195,9 @@ function StationMain({ me, members, onPick, onChange }: MainProps) {
             <div className="stack" style={{ gap: 8 }}>
               <div className="section-label">Seus checklists</div>
               {cards.map((c) => (
-                <ChecklistCard key={c.executionId} card={c} compact selected={c.executionId === runId} onOpen={() => setSelected(c.executionId)} />
+                <ChecklistCard key={c.executionId} card={c} compact showUnit={showUnit} selected={c.executionId === runId} onOpen={() => setSelected(c.executionId)} />
               ))}
-              <OnDemandList compact list={today.data.onDemand} onStarted={(id) => { setSelected(id); today.reload(); }} />
+              <OnDemandList compact showUnit={showUnit} list={today.data.onDemand} onStarted={(id) => { setSelected(id); today.reload(); }} />
               {cards.length === 0 && <div className="empty">Nenhum checklist atribuído a você hoje.</div>}
             </div>
           </>

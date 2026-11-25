@@ -3,7 +3,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { AppContext } from '../../context.js';
 import { HttpError, parse, route } from '../../http.js';
-import { type EmployeeRow, getEmployee, insertEmployee, toPublic } from '../../repos/employees.js';
+import { type EmployeeRow, UNIT_IDS_SQL, getEmployee, insertEmployee, setUnitsStmts, toPublic, unitIdsOf } from '../../repos/employees.js';
+import { loadUnits } from '../../repos/units.js';
 import { requireAdmin } from '../../security/admin.js';
 
 const FILL = 'Preencha nome e cargo.';
@@ -14,9 +15,10 @@ const schema = z.object({
   group: z.enum(GROUPS, { message: 'Função inválida.' }),
   pin: z.string().regex(/^\d{4}$/, 'O PIN deve ter 4 números.').nullable().optional(),
   active: z.boolean().default(true),
+  unitIds: z.array(z.string(), { message: 'Unidade inválida.' }).default([]),
 });
 
-const view = (e: EmployeeRow) => ({ ...toPublic(e), active: !!e.active, hasPin: !!e.pin, isManager: e.grp === MANAGER_GROUP });
+const view = (e: EmployeeRow) => ({ ...toPublic(e), active: !!e.active, hasPin: !!e.pin, isManager: e.grp === MANAGER_GROUP, unitIds: unitIdsOf(e) });
 
 export function adminEmployeeRoutes({ db, clock }: AppContext) {
   const r = Router();
@@ -24,8 +26,13 @@ export function adminEmployeeRoutes({ db, clock }: AppContext) {
 
   /** Aplica regras de PIN/gestor e grava. `current` ausente = criação. */
   async function save(input: unknown, current?: EmployeeRow) {
-    const base = current ? { name: current.name, role: current.role, group: current.grp, active: !!current.active } : {};
+    const base = current ? { name: current.name, role: current.role, group: current.grp, active: !!current.active, unitIds: unitIdsOf(current) } : {};
     const data = parse(schema, { ...base, ...(input as object) });
+    const unitIds = [...new Set(data.unitIds)];
+    if (unitIds.length) {
+      const known = new Set((await loadUnits(db)).map((u) => u.id));
+      if (unitIds.some((id) => !known.has(id))) throw new HttpError(422, 'Unidade inválida.');
+    }
     const isManager = data.group === MANAGER_GROUP;
     const pin = isManager ? (data.pin ?? current?.pin ?? null) : null;
     if (isManager && !pin) throw new HttpError(422, 'Gestores precisam de um PIN de 4 números.');
@@ -39,15 +46,18 @@ export function adminEmployeeRoutes({ db, clock }: AppContext) {
     }
 
     if (current) {
-      await db.prepare('UPDATE employees SET name = ?, role = ?, grp = ?, pin = ?, active = ? WHERE id = ?')
-        .run(data.name, data.role, data.group, pin, +data.active, current.id);
+      await db.batch([
+        db.prepare('UPDATE employees SET name = ?, role = ?, grp = ?, pin = ?, active = ? WHERE id = ?')
+          .bind(data.name, data.role, data.group, pin, +data.active, current.id),
+        ...setUnitsStmts(current.id, unitIds),
+      ]);
       return (await getEmployee(db, current.id))!;
     }
-    return insertEmployee(db, { name: data.name, role: data.role, group: data.group, pin, active: data.active });
+    return insertEmployee(db, { name: data.name, role: data.role, group: data.group, pin, active: data.active, unitIds });
   }
 
   r.get('/admin/employees', route(async (_req, res) => {
-    res.json(((await db.prepare('SELECT * FROM employees ORDER BY active DESC, rowid').all()) as EmployeeRow[]).map(view));
+    res.json(((await db.prepare(`SELECT *, ${UNIT_IDS_SQL} FROM employees ORDER BY active DESC, rowid`).all()) as EmployeeRow[]).map(view));
   }));
 
   r.post('/admin/employees', route(async (req, res) => {

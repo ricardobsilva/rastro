@@ -4,24 +4,26 @@ import { api, errorMessage } from '../api/client';
 import { ChipGroup } from '../ui/ChipGroup';
 import { Modal } from '../ui/Modal';
 import { useToast } from '../ui/Toast';
+import type { AdminUnit } from './types';
 
 type Group = (typeof GROUPS)[number];
-export type EmployeeDraft = { id?: string; name: string; role: string; group: string; hasPin?: boolean };
-type Props = { employee?: EmployeeDraft; onClose: () => void; onSaved: (e: unknown) => void };
+export type EmployeeDraft = { id?: string; name: string; role: string; group: string; hasPin?: boolean; unitIds?: string[] };
+type Props = { employee?: EmployeeDraft; units?: AdminUnit[]; onClose: () => void; onSaved: (e: unknown) => void };
 
-export function EmployeeModal({ employee, onClose, onSaved }: Props) {
+export function EmployeeModal({ employee, units = [], onClose, onSaved }: Props) {
   const toast = useToast();
-  const [d, setD] = useState({ name: employee?.name ?? '', role: employee?.role ?? '', group: (employee?.group ?? 'Salão') as Group, pin: '' });
+  const [d, setD] = useState({ name: employee?.name ?? '', role: employee?.role ?? '', group: (employee?.group ?? 'Salão') as Group, pin: '', unitIds: employee?.unitIds ?? [] });
   const [err, setErr] = useState('');
   const upd = (p: Partial<typeof d>) => {
     setD((x) => ({ ...x, ...p }));
     setErr('');
   };
+  const options = units.filter((u) => u.active || employee?.unitIds?.includes(u.id));
   const isManager = d.group === MANAGER_GROUP;
 
   async function save() {
     if (!d.name.trim() || !d.role.trim()) return setErr('Preencha nome e cargo.');
-    const body = { name: d.name.trim(), role: d.role.trim(), group: d.group, ...(isManager && d.pin ? { pin: d.pin } : {}) };
+    const body = { name: d.name.trim(), role: d.role.trim(), group: d.group, ...(options.length ? { unitIds: d.unitIds } : {}), ...(isManager && d.pin ? { pin: d.pin } : {}) };
     try {
       const saved = employee?.id ? await api.patch(`/api/admin/employees/${employee.id}`, body) : await api.post('/api/admin/employees', body);
       toast(employee?.id ? 'Funcionário atualizado.' : 'Funcionário cadastrado.');
@@ -46,6 +48,16 @@ export function EmployeeModal({ employee, onClose, onSaved }: Props) {
         Função (para atribuição de checklists)
         <ChipGroup options={GROUPS} value={d.group} onToggle={(g) => upd({ group: g })} />
       </div>
+      {options.length > 0 && (
+        <div className="field">
+          Unidades
+          <ChipGroup
+            options={options.map((u) => u.id)} labels={Object.fromEntries(options.map((u) => [u.id, u.name]))} value={d.unitIds}
+            onToggle={(id) => upd({ unitIds: d.unitIds.includes(id) ? d.unitIds.filter((x) => x !== id) : [...d.unitIds, id] })}
+          />
+          <span className="muted-sm" style={{ fontWeight: 400 }}>Sem nenhuma marcada, a pessoa aparece em todas.</span>
+        </div>
+      )}
       {isManager && (
         <div className="field">
           <label htmlFor="emp-pin">PIN de 4 dígitos</label>

@@ -36,3 +36,9 @@ const ITEM_ROWS: [string, string, string, string, boolean, boolean, boolean?][] 
 export const ITEMS = ITEM_ROWS.map(([id, name, description, category, required, allowNote, active]) => ({
   id, name, description, category, required, allowNote, active: active !== false,
 }));
+
+/** Unidades do restaurante. O gestor pode renomear, desativar e criar outras. */
+export const UNITS = [
+  { id: 'u_farol', name: 'Farol' },
+  { id: 'u_ponta_verde', name: 'Ponta Verde' },
+];

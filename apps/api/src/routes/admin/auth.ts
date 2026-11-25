@@ -2,11 +2,12 @@ import { Router } from 'express';
 import type { AppContext } from '../../context.js';
 import { route } from '../../http.js';
 import { type EmployeeRow, getEmployee, toPublic } from '../../repos/employees.js';
+import { loadUnits } from '../../repos/units.js';
 import { ADMIN_COOKIE, ADMIN_SESSION_MS, requireAdmin } from '../../security/admin.js';
 import { checkManagerPin } from '../../security/pin.js';
 import { hashToken, newToken } from '../../security/tokens.js';
 import { currentDay } from '../../services/day.js';
-import { progressByEmployee } from '../../services/progress.js';
+import { reportRows } from '../../services/report.js';
 
 export function adminAuthRoutes({ db, clock, pinGuard }: AppContext) {
   const r = Router();
@@ -31,9 +32,12 @@ export function adminAuthRoutes({ db, clock, pinGuard }: AppContext) {
 
   r.get('/admin/me', requireAdmin(db, clock), route(async (_req, res) => {
     const now = await currentDay(db, clock);
-    let lateToday = 0;
-    for (const p of (await progressByEmployee(db, now.date, now.minute)).values()) lateToday += p.late;
-    res.json({ manager: toPublic(res.locals.manager as EmployeeRow), lateToday });
+    const [rows, units] = await Promise.all([reportRows(db, now.date, now), loadUnits(db)]);
+    const late = rows.filter((x) => x.status === 'late');
+    res.json({
+      manager: toPublic(res.locals.manager as EmployeeRow), lateToday: late.length,
+      units: units.map((u) => ({ ...u, lateToday: late.filter((x) => x.unitId === u.id).length })),
+    });
   }));
 
   return r;

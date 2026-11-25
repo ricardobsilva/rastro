@@ -8,7 +8,7 @@ describe('US01 — autorizar aparelho', () => {
       const { app } = await setup();
       const res = await request(app).post('/api/device/authorize').send({ pin: MANAGER_PIN });
       expect(res.status).toBe(201);
-      expect(res.body).toEqual({ authorized: true });
+      expect(res.body).toEqual({ authorized: true, units: [] });
       const cookie = String(res.headers['set-cookie']);
       expect(cookie).toMatch(/rastro_device=/);
       expect(cookie).toMatch(/HttpOnly/i);

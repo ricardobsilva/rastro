@@ -470,3 +470,27 @@ a { color: var(--primary); }
 .data-warning { padding: 16px 18px; border-radius: 14px; background: var(--late-bg); border: 1px solid var(--late-border); color: var(--late-fg); font: 500 18px/1.5 var(--font-ui); }
 .data-danger { background: var(--late); border-color: var(--late); color: var(--surface); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- unidades ---------- */
+.admin-units { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 6px 16px; }
+.unit-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+.unit-row { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 18px; }
+.unit-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; background: var(--warn-bg); color: var(--warn); font-size: 13px; }
+.unit-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.unit-card { gap: 10px; padding: 16px 18px; text-align: left; color: var(--text); }
+button.unit-card:hover { border-color: var(--primary); }
+.unit-card-pct { font: 700 24px/1 var(--font-display); }
+.unit-card .stacked > span { display: block; }
+.unit-options { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.unit-title { margin: 4px 0 0; font: 700 17px var(--font-display); }
+.cl-section { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.cl-section + .cl-section { margin-top: 10px; }
+.cl-section > h2 { margin: 0; }
+.station-manager { margin-left: auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.station-manager .manager-login { margin: 0; }
+@media (max-width: 899px) {
+  /* Seletor numa linha própria; só o menu rola para o lado. */
+  .admin-side:has(.admin-units) { flex-wrap: wrap; gap: 8px; overflow: visible; }
+  .admin-units { flex: 1 0 100%; padding: 0; }
+  .admin-side:has(.admin-units) .admin-nav { flex: 1; min-width: 0; overflow-x: auto; }
+}

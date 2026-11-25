@@ -88,7 +88,7 @@ describe('Exportar e importar dados (web)', () => {
   describe('borda', () => {
     it('arquivo de versão mais nova é recusado antes de enviar', async () => {
       render();
-      await pick({ ...EXPORT, version: 2 });
+      await pick({ ...EXPORT, version: 3 });
       expect(await screen.findByRole('alert')).toHaveTextContent('Este arquivo é de uma versão mais nova do Rastro.');
       expect(api.post).not.toHaveBeenCalled();
     });

@@ -7,7 +7,7 @@ describe('US07 — checklists sob demanda', () => {
       const { app } = await setup();
       const res = await (await employeeAgent(app, 'e3')).get('/api/me/today');
       expect(res.body.onDemand).toEqual([
-        { checklistId: 'c10', name: 'Recebimento de compras', description: 'Usar sempre que chegar mercadoria.', itemCount: 3 },
+        { checklistId: 'c10', name: 'Recebimento de compras', description: 'Usar sempre que chegar mercadoria.', unit: null, itemCount: 3 },
       ]);
       expect(res.body.cards.map((c: { checklistId: string }) => c.checklistId)).not.toContain('c10');
     });

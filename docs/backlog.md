@@ -394,8 +394,9 @@ Tokens de design, fontes (Bricolage Grotesque, Geist, Geist Mono), seed Casa Bra
 
 **Regras**
 - `GET /api/admin/export` e `POST /api/admin/import` exigem sessão de gestor; a importação aceita arquivos de até 50 MB, lidos só depois de conferir a sessão.
-- O arquivo traz `format: "rastro-export"`, `version: 1`, `exportedAt` e as tabelas de dados com as linhas exatamente como estão no banco: funcionários, itens, listas e seus vínculos, execuções, itens das execuções e o log de auditoria.
+- O arquivo traz `format: "rastro-export"`, `version: 2`, `exportedAt` e as tabelas de dados com as linhas exatamente como estão no banco: unidades, funcionários e suas unidades, itens, listas e seus vínculos, execuções, itens das execuções e o log de auditoria.
 - Aparelhos e sessões não são exportados. Ao importar, são apagados: todos entram de novo com o PIN.
+- Arquivos da versão 1 (antes das unidades) continuam entrando: as listas e pessoas ficam sem unidade e as unidades já cadastradas são mantidas.
 - A importação substitui tudo numa transação: se algo falhar, os dados atuais ficam intactos. Colunas desconhecidas são ignoradas.
 - É recusado (422) arquivo que não é do Rastro, de versão mais nova, incompleto ou corrompido, ou sem nenhum gestor ativo com PIN (ninguém conseguiria entrar).
 
@@ -406,7 +407,57 @@ Tokens de design, fontes (Bricolage Grotesque, Geist, Geist Mono), seed Casa Bra
 
 ---
 
+## US20 — Unidades e checklists por unidade
+
+**Como** gestor, **quero** separar checklists e equipe por unidade, **para** acompanhar o Farol e a Ponta Verde sem misturar as duas.
+
+**Aceite**
+- Seletor no menu do gestor (Farol, Ponta Verde, Todas) que vale para Painel, Equipe, Checklists e Histórico e fica lembrado no navegador.
+- Em "Todas", os checklists aparecem em uma seção por unidade; com uma unidade escolhida, só os dela.
+- Checklist novo já nasce na unidade escolhida. "Copiar para …" abre um checklist novo com os mesmos itens e horários na outra unidade, para escolher as pessoas e ajustar.
+- Cadastro de funcionário com as unidades em que a pessoa trabalha (uma ou mais).
+- Página "Unidades": criar, renomear, ativar e desativar.
+- O passo a passo pergunta a unidade primeiro, quando há mais de uma.
+
+**Regras**
+- Cada checklist é de uma unidade só. **Sem unidade vale para todas**: checklists, pessoas e aparelhos anteriores às unidades seguem funcionando até serem classificados.
+- Com unidades cadastradas, checklist novo exige unidade; um que já tem não volta a ficar sem.
+- Só quem trabalha na unidade pode ser escolhido. Quem sai dela deixa de receber o checklist a partir de hoje.
+- Trocar a unidade de um checklist não mexe em dias anteriores. A exceção é a primeira classificação: os dias que estavam sem unidade recebem a escolhida.
+- Não dá para desativar unidade com checklist ativo. O nome da unidade é único; o nome do checklist pode repetir entre unidades.
+- Farol e Ponta Verde são criadas ao subir a API só se não houver nenhuma unidade. Bancos antigos ganham as colunas novas ao abrir.
+
+---
+
+## US21 — Aparelhos por unidade
+
+**Como** funcionário, **quero** ver no computador da unidade só as tarefas dela, **para** não marcar nada da outra por engano.
+
+**Aceite**
+- Ao liberar um computador com o PIN, o gestor escolhe a unidade. A estação mostra o nome dela, a equipe e os checklists dela.
+- "Definir unidade" ou "Trocar unidade" na tela inicial da estação, com o PIN do gestor.
+- Celular pessoal não tem unidade: quem trabalha em mais de uma vê o Meu dia separado por unidade.
+
+**Regras**
+- A API recusa (403) identificar quem não trabalha na unidade do aparelho e abrir, marcar, concluir ou iniciar checklist de outra unidade.
+- Trocar a unidade do aparelho encerra a sessão aberta nele.
+
+---
+
+## US22 — Relatórios por unidade
+
+**Como** gestor, **quero** ver Painel, Equipe e Histórico por unidade e comparar as duas, **para** saber onde agir.
+
+**Aceite**
+- Os três filtram pela unidade do seletor (`unitId`); unidade desconhecida → 422. O aviso de atrasos do menu acompanha.
+- Em "Todas", o Painel traz um cartão por unidade (conclusão e atrasos) que leva a ela, com "Sem unidade" à parte, e os nomes dos checklists trazem a unidade.
+
+**Regras**
+- A unidade é gravada em cada execução do dia. O log de auditoria não muda: o Histórico filtra pela execução.
+
+---
+
 ## Fora do escopo do MVP
 - "Declarado × verificado" (validação do gerente, foto obrigatória).
-- Notificações de atraso, multi-unidade, exportação de relatórios.
+- Notificações de atraso, exportação de relatórios, acesso de gestor restrito a uma unidade.
 - Barra do protótipo (alternadores de demo, relógio simulado).

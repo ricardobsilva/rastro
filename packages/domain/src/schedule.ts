@@ -16,6 +16,18 @@ export function appliesOn(c: { active: boolean; period: Period; days: number[] }
  * Funcionários ativos que recebem o checklist: só as pessoas escolhidas.
  * A função é apenas um atalho na tela para marcar várias pessoas de uma vez.
  */
-export function assigneesOf<E extends { id: string; active: boolean }>(c: { employeeIds: string[] }, employees: E[]): E[] {
-  return employees.filter((e) => e.active && c.employeeIds.includes(e.id));
+export function assigneesOf<E extends { id: string; active: boolean; unitIds?: string[] }>(
+  c: { employeeIds: string[]; unitId?: string | null }, employees: E[],
+): E[] {
+  return employees.filter((e) => e.active && c.employeeIds.includes(e.id) && worksAt(e, c.unitId));
+}
+
+/** A pessoa trabalha nesta unidade? Sem unidade (da pessoa ou do que se pergunta) vale para todas. */
+export function worksAt(e: { unitIds?: string[] }, unitId: string | null | undefined): boolean {
+  return !unitId || !e.unitIds?.length || e.unitIds.includes(unitId);
+}
+
+/** O checklist (ou execução) pode ser usado num aparelho desta unidade? Sem unidade vale para todas. */
+export function sameUnit(unitId: string | null | undefined, deviceUnitId: string | null | undefined): boolean {
+  return !unitId || !deviceUnitId || unitId === deviceUnitId;
 }

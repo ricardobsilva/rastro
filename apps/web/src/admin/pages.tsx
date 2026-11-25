@@ -6,6 +6,7 @@ import { GuidePage } from './GuidePage';
 import { HistoryPage } from './HistoryPage';
 import { ItemsPage } from './ItemsPage';
 import { TeamPage } from './TeamPage';
+import { UnitsPage } from './UnitsPage';
 import type { PageId } from './context';
 
 export const PAGES: Record<PageId, ComponentType> = {
@@ -15,5 +16,6 @@ export const PAGES: Record<PageId, ComponentType> = {
   cls: ChecklistsPage,
   hist: HistoryPage,
   guide: GuidePage,
+  units: UnitsPage,
   data: DataPage,
 };

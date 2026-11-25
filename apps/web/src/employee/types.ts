@@ -1,9 +1,11 @@
+import type { Unit } from '../types';
 import type { CardStatus } from '../ui/status';
 
 export type TodayCard = {
   executionId: number; checklistId: string; name: string; dueTime: string | null; done: number; total: number; status: CardStatus;
+  unit: string | null;
 };
-export type OnDemand = { checklistId: string; name: string; description: string; itemCount: number };
+export type OnDemand = { checklistId: string; name: string; unit: string | null; description: string; itemCount: number };
 export type Today = {
   date: string; dateLabel: string; now: string; greeting: string;
   summary: { total: number; done: number; pending: number; late: number };
@@ -23,4 +25,4 @@ export type Execution = {
 export type Activity = { id: number; time: string; itemName: string; checklistName: string; action: 'done' | 'undone' | 'note'; note: string };
 
 export type TeamMember = import('../types').Employee & { done: number; total: number; late: number };
-export type Team = { now: string; dateLabel: string; members: TeamMember[] };
+export type Team = { now: string; dateLabel: string; unit: Unit | null; units: Unit[]; members: TeamMember[] };

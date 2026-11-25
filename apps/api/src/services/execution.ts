@@ -1,4 +1,4 @@
-import { type OperationalNow, cardStatus, fmtMinute } from '@rastro/domain';
+import { type OperationalNow, cardStatus, fmtMinute, sameUnit } from '@rastro/domain';
 import type { Db, Stmt } from '../db/index.js';
 import { HttpError } from '../http.js';
 import type { EmployeeRow } from '../repos/employees.js';
@@ -6,14 +6,15 @@ import { type ExecutionItemRow, type ExecutionRow, itemsOf } from './day.js';
 
 const END_OF_DAY = Number.POSITIVE_INFINITY;
 
-/** Carrega a execução do funcionário: 404 se não existe/está oculta, 403 se é de outra pessoa. */
-export async function ownExecution(db: Db, idParam: string, emp: EmployeeRow, today: string): Promise<ExecutionRow & { visible: number }> {
+/** Carrega a execução do funcionário: 404 se não existe/está oculta, 403 se é de outra pessoa ou de outra unidade. */
+export async function ownExecution(db: Db, idParam: string, emp: EmployeeRow, today: string, deviceUnitId: string | null): Promise<ExecutionRow & { visible: number }> {
   const id = Number(idParam);
   const exec = Number.isInteger(id)
     ? ((await db.prepare('SELECT * FROM executions WHERE id = ?').get(id)) as (ExecutionRow & { visible: number }) | undefined)
     : undefined;
   if (!exec || (exec.op_date === today && !exec.visible)) throw new HttpError(404, 'Checklist não encontrado.');
   if (exec.employee_id !== emp.id) throw new HttpError(403, 'Este checklist pertence a outro funcionário.');
+  if (!sameUnit(exec.unit_id, deviceUnitId)) throw new HttpError(403, 'Este checklist é de outra unidade.');
   return exec;
 }
 

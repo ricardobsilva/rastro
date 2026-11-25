@@ -47,7 +47,7 @@ npm run seed:demo # domínio + restaurante fictício Casa Brasa + 7 dias de hist
 |---|---|
 | `/` | Funcionário: layout mobile no celular, layout de estação no computador |
 | `/estacao` | Força a estação de trabalho em qualquer aparelho |
-| `/gestor` | Painel do gestor |
+| `/gestor` | Painel do gestor, com seletor de unidade |
 
 ## Deploy na Vercel
 

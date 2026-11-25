@@ -1,3 +1,4 @@
+import { worksAt } from '@rastro/domain';
 import { useState } from 'react';
 import { api, errorMessage } from '../api/client';
 import { useResource } from '../api/useResource';
@@ -5,7 +6,7 @@ import { Avatar } from '../ui/Avatar';
 import { useToast } from '../ui/Toast';
 import { STATUS, pct } from '../ui/status';
 import { EmployeeModal, type EmployeeDraft } from './EmployeeModal';
-import { useAdmin } from './context';
+import { useAdmin, useUnitLabel } from './context';
 import type { AdminEmployee, TeamData, TeamRow } from './types';
 import { useDates } from './useDates';
 
@@ -14,15 +15,19 @@ const EMPTY_ROW = (id: string): TeamRow => ({ employeeId: id, total: 0, done: 0,
 
 export function TeamPage() {
   const toast = useToast();
-  const { date, setDate, selectedEmployee } = useAdmin();
+  const { date, setDate, selectedEmployee, units, unitId } = useAdmin();
+  const eyebrow = useUnitLabel('Acompanhamento');
   const dates = useDates();
   const emps = useResource<AdminEmployee[]>('/api/admin/employees');
-  const team = useResource<TeamData>(`/api/admin/team${date ? `?date=${date}` : ''}`);
+  const query = new URLSearchParams({ ...(date && { date }), ...(unitId && { unitId }) }).toString();
+  const team = useResource<TeamData>(`/api/admin/team${query ? `?${query}` : ''}`);
   const [selected, setSelected] = useState<string | null>(selectedEmployee);
   const [modal, setModal] = useState<EmployeeDraft | null>(null);
 
   const stats = (id: string) => team.data?.rows.find((r) => r.employeeId === id) ?? EMPTY_ROW(id);
-  const sel = emps.data?.find((e) => e.id === selected);
+  const members = (emps.data ?? []).filter((e) => worksAt(e, unitId));
+  const unitNames = (e: AdminEmployee) => units.filter((u) => e.unitIds?.includes(u.id)).map((u) => u.name).join(', ') || 'Todas as unidades';
+  const sel = members.find((e) => e.id === selected);
 
   async function toggleActive(e: AdminEmployee) {
     try {
@@ -39,14 +44,14 @@ export function TeamPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <div className="eyebrow">Acompanhamento</div>
+          <div className="eyebrow">{eyebrow}</div>
           <h1 className="page-title">Equipe</h1>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <select className="select" aria-label="Data" value={date ?? dates[0]?.value ?? ''} onChange={(e) => setDate(e.target.value === dates[0]?.value ? null : e.target.value)}>
             {dates.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
-          <button type="button" className="btn btn-primary" onClick={() => setModal({ name: '', role: '', group: 'Salão' })}>+ Novo funcionário</button>
+          <button type="button" className="btn btn-primary" onClick={() => setModal({ name: '', role: '', group: 'Salão', unitIds: unitId ? [unitId] : [] })}>+ Novo funcionário</button>
         </div>
       </div>
       {(emps.error || team.error) && <div className="banner banner--error">{emps.error ?? team.error}</div>}
@@ -56,7 +61,7 @@ export function TeamPage() {
             <div className="table-row table-head" style={{ gridTemplateColumns: COLS }}>
               <span>Funcionário</span><span>Atrib.</span><span>Concl.</span><span>Execução</span><span>Pend.</span><span />
             </div>
-            {emps.data?.map((e) => {
+            {members.map((e) => {
               const s = stats(e.id);
               return (
                 <div
@@ -69,7 +74,7 @@ export function TeamPage() {
                     <Avatar initials={e.initials} color={e.color} size={32} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ font: '600 14px var(--font-ui)' }}>{e.name}</div>
-                      <div className="muted-sm">{e.role}{e.active ? '' : ' · Inativo'}</div>
+                      <div className="muted-sm">{e.role}{units.length > 0 && !unitId ? ` · ${unitNames(e)}` : ''}{e.active ? '' : ' · Inativo'}</div>
                     </div>
                   </div>
                   <span className="mono" style={{ fontSize: 14 }}>{s.total}</span>
@@ -92,7 +97,7 @@ export function TeamPage() {
         </div>
 
         {sel ? (
-          <TeamDetail employee={sel} row={stats(sel.id)} dateLabel={team.data?.dateLabel ?? ''} isToday={team.data?.isToday ?? true} onToggle={() => toggleActive(sel)} />
+          <TeamDetail employee={sel} row={stats(sel.id)} dateLabel={team.data?.dateLabel ?? ''} isToday={team.data?.isToday ?? true} showUnit={!unitId} onToggle={() => toggleActive(sel)} />
         ) : (
           <div className="empty" style={{ padding: '40px 20px' }}>Selecione um funcionário para ver o detalhamento do dia, com o horário de cada conclusão.</div>
         )}
@@ -100,6 +105,7 @@ export function TeamPage() {
       {modal && (
         <EmployeeModal
           employee={modal}
+          units={units}
           onClose={() => setModal(null)}
           onSaved={() => {
             setModal(null);
@@ -112,9 +118,9 @@ export function TeamPage() {
   );
 }
 
-type DetailProps = { employee: AdminEmployee; row: TeamRow; dateLabel: string; isToday: boolean; onToggle: () => void };
+type DetailProps = { employee: AdminEmployee; row: TeamRow; dateLabel: string; isToday: boolean; showUnit: boolean; onToggle: () => void };
 
-function TeamDetail({ employee: e, row, dateLabel, isToday, onToggle }: DetailProps) {
+function TeamDetail({ employee: e, row, dateLabel, isToday, showUnit, onToggle }: DetailProps) {
   return (
     <div className="panel" style={{ padding: 20, gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -131,8 +137,8 @@ function TeamDetail({ employee: e, row, dateLabel, isToday, onToggle }: DetailPr
         <div className="counter counter--warn"><div className="counter-n">{row.total - row.done}</div><div className="counter-l">pendentes</div></div>
       </div>
       {row.groups.map((g) => (
-        <div key={g.checklistName}>
-          <div className="detail-group-head"><span>{g.checklistName}</span><span>{g.dueTime ? `até ${g.dueTime}` : 'sob demanda'}</span></div>
+        <div key={g.executionId}>
+          <div className="detail-group-head"><span>{g.checklistName}{g.unit && showUnit ? ` · ${g.unit}` : ''}</span><span>{g.dueTime ? `até ${g.dueTime}` : 'sob demanda'}</span></div>
           {g.items.map((x) => (
             <div key={x.itemName} className="detail-item">
               <span className="detail-dot" style={{ background: STATUS[x.status].fg }} />

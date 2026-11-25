@@ -1,4 +1,4 @@
-import { GROUPS, MANAGER_GROUP, firstName } from '@rastro/domain';
+import { GROUPS, MANAGER_GROUP, firstName, sameUnit, worksAt } from '@rastro/domain';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { api, errorMessage } from '../api/client';
 import { useResource } from '../api/useResource';
@@ -7,10 +7,10 @@ import type { AdminChecklist, AdminEmployee, AdminItem } from './types';
 
 type When = 'daily' | 'weekdays' | 'ondemand';
 type NewPerson = { name: string; group: string };
-type Answers = { name: string; tasks: string[]; people: NewPerson[]; roles: string[]; when: When | null; days: number[]; dueTime: string };
-type Step = 'welcome' | 'name' | 'tasks' | 'team' | 'who' | 'when' | 'time' | 'review' | 'done';
+type Answers = { unitId: string | null; name: string; tasks: string[]; people: NewPerson[]; roles: string[]; when: When | null; days: number[]; dueTime: string };
+type Step = 'welcome' | 'unit' | 'name' | 'tasks' | 'team' | 'who' | 'when' | 'time' | 'review' | 'done';
 
-const EMPTY: Answers = { name: '', tasks: [], people: [], roles: [], when: null, days: [], dueTime: '' };
+const EMPTY: Answers = { unitId: null, name: '', tasks: [], people: [], roles: [], when: null, days: [], dueTime: '' };
 /** Gestor precisa de PIN, então é cadastrado na página Equipe, não aqui. */
 const TEAM_GROUPS = GROUPS.filter((g) => g !== MANAGER_GROUP);
 export const NAME_IDEAS = [
@@ -38,17 +38,18 @@ function whenText(a: Answers) {
  * letras grandes, sem arrastar nada. Cria a lista de uma vez só no fim.
  */
 export function GuidePage() {
-  const { go } = useAdmin();
+  const { go, units, unitId: chosen } = useAdmin();
+  const openUnits = units.filter((u) => u.active);
   const emps = useResource<AdminEmployee[]>('/api/admin/employees');
   const items = useResource<AdminItem[]>('/api/admin/items');
   const cls = useResource<AdminChecklist[]>('/api/admin/checklists');
   const [step, setStep] = useState<Step>('welcome');
-  const [a, setA] = useState<Answers>(EMPTY);
+  const [a, setA] = useState<Answers>({ ...EMPTY, unitId: chosen ?? (openUnits.length === 1 ? openUnits[0]!.id : null) });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<AdminChecklist | null>(null);
 
-  const order: Step[] = ['name', 'tasks', 'team', 'who', 'when', ...(a.when === 'ondemand' ? [] : (['time'] as Step[])), 'review'];
+  const order: Step[] = [...(openUnits.length > 1 ? (['unit'] as Step[]) : []), 'name', 'tasks', 'team', 'who', 'when', ...(a.when === 'ondemand' ? [] : (['time'] as Step[])), 'review'];
   const set = (p: Partial<Answers>) => {
     setA((x) => ({ ...x, ...p }));
     setError('');
@@ -57,14 +58,16 @@ export function GuidePage() {
     setStep(to);
     setError('');
   };
-  const back = () => move(step === 'name' ? 'welcome' : order[order.indexOf(step) - 1]!);
+  const back = () => move(order[order.indexOf(step) - 1] ?? 'welcome');
 
-  const current = (group: string) => (emps.data ?? []).filter((e) => e.active && e.group === group).map((e) => e.firstName);
+  const current = (group: string) => (emps.data ?? []).filter((e) => e.active && e.group === group && worksAt(e, a.unitId)).map((e) => e.firstName);
   const people = (group: string, list = a.people) => [...current(group), ...list.filter((p) => p.group === group).map((p) => firstName(p.name))];
 
   function addPerson(p: NewPerson): string {
     const key = norm(p.name);
-    const known = (emps.data ?? []).find((e) => e.active && norm(e.name) === key)?.name ?? a.people.find((x) => norm(x.name) === key)?.name;
+    const emp = (emps.data ?? []).find((e) => e.active && norm(e.name) === key);
+    if (emp && !worksAt(emp, a.unitId)) return `${emp.name} já está na equipe de outra unidade. Inclua esta unidade na página Equipe.`;
+    const known = emp?.name ?? a.people.find((x) => norm(x.name) === key)?.name;
     if (known) return `${known} já está na equipe.`;
     set({ people: [...a.people, p] });
     return '';
@@ -76,11 +79,15 @@ export function GuidePage() {
     set({ people: list, roles: a.roles.filter((r) => people(r, list).length > 0) });
   }
 
+  /** O mesmo nome pode existir em outra unidade. */
+  const existing = (cls.data ?? []).filter((c) => sameUnit(c.unitId, a.unitId));
+
   /** Mensagem do que falta responder neste passo, ou '' se pode seguir. */
   function missing(): string {
+    if (step === 'unit' && !a.unitId) return 'Escolha a unidade.';
     if (step === 'name') {
       if (!a.name.trim()) return 'Escreva o nome da lista.';
-      if (cls.data?.some((c) => norm(c.name) === norm(a.name))) return 'Já existe uma lista com esse nome. Escolha outro.';
+      if (existing.some((c) => norm(c.name) === norm(a.name))) return 'Já existe uma lista com esse nome. Escolha outro.';
     }
     if (step === 'tasks' && a.tasks.length === 0) return 'Escreva pelo menos uma tarefa.';
     if (step === 'who' && a.roles.length === 0) return 'Escolha quem vai fazer.';
@@ -109,6 +116,7 @@ export function GuidePage() {
         days: a.when === 'weekdays' ? [...a.days].sort((x, y) => x - y) : [],
         dueTime: a.when === 'ondemand' ? null : a.dueTime,
         newEmployees: a.people,
+        ...(a.unitId ? { unitId: a.unitId } : {}),
       });
       setCreated(saved);
       cls.reload();
@@ -123,12 +131,12 @@ export function GuidePage() {
   }
 
   function restart() {
-    setA(EMPTY);
+    setA({ ...EMPTY, unitId: a.unitId });
     setCreated(null);
-    move('name');
+    move(order[0]!);
   }
 
-  const ideas = NAME_IDEAS.filter((n) => !cls.data?.some((c) => norm(c.name) === norm(n))).slice(0, MAX_NAME_IDEAS);
+  const ideas = NAME_IDEAS.filter((n) => !existing.some((c) => norm(c.name) === norm(n))).slice(0, MAX_NAME_IDEAS);
   const pos = order.indexOf(step);
   const counter = pos >= 0 ? `Passo ${pos + 1} de ${order.length}` : null;
   const nav = (primary: ReactNode = <button type="button" className="guide-btn guide-btn--primary" onClick={next}>Próximo</button>) => (
@@ -152,8 +160,28 @@ export function GuidePage() {
             </p>
             <p className="guide-text">Pode voltar a qualquer momento. Nada é salvo até você conferir tudo no final.</p>
             <div className="guide-nav guide-nav--end">
-              <button type="button" className="guide-btn guide-btn--primary" onClick={() => move('name')}>Começar</button>
+              <button type="button" className="guide-btn guide-btn--primary" onClick={() => move(order[0]!)}>Começar</button>
             </div>
+          </>
+        )}
+
+        {step === 'unit' && (
+          <>
+            <Title step={step}>De qual unidade é esta lista?</Title>
+            <p className="guide-text">Só quem trabalha nessa unidade vai ver a lista.</p>
+            <div className="guide-options">
+              {openUnits.map((u) => (
+                <button
+                  key={u.id} type="button" className="guide-option" aria-pressed={a.unitId === u.id}
+                  onClick={() => a.unitId !== u.id && set({ unitId: u.id, roles: [] })}
+                >
+                  <span className="guide-check guide-check--round" aria-hidden="true">{a.unitId === u.id ? '●' : ''}</span>
+                  <span className="guide-option-title">{u.name}</span>
+                </button>
+              ))}
+            </div>
+            <Problem text={error} />
+            {nav()}
           </>
         )}
 
@@ -263,6 +291,11 @@ export function GuidePage() {
           <>
             <Title step={step}>Está tudo certo?</Title>
             <div className="guide-summary" data-testid="guide-summary">
+              {openUnits.length > 1 && (
+                <SummaryLine onChange={() => move('unit')} label="Mudar a unidade">
+                  Unidade: <strong>{units.find((u) => u.id === a.unitId)?.name}</strong>.
+                </SummaryLine>
+              )}
               <SummaryLine onChange={() => move('name')} label="Mudar o nome">
                 A lista <strong>{a.name.trim()}</strong> tem {a.tasks.length} {a.tasks.length === 1 ? 'tarefa' : 'tarefas'}.
               </SummaryLine>

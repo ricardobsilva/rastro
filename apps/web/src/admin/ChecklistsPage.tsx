@@ -1,4 +1,4 @@
-import { GROUPS, WEEKDAYS_SHORT, assigneesOf, firstName } from '@rastro/domain';
+import { GROUPS, WEEKDAYS_SHORT, assigneesOf, firstName, worksAt } from '@rastro/domain';
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from '../api/client';
 import { useResource } from '../api/useResource';
@@ -7,7 +7,7 @@ import { Switch } from '../ui/Switch';
 import { useToast } from '../ui/Toast';
 import { toneOf } from '../ui/categories';
 import { plural } from '../ui/status';
-import { useAdmin } from './context';
+import { useAdmin, useUnitLabel } from './context';
 import { periodLabel } from './periodLabel';
 import type { AdminChecklist, AdminEmployee, AdminItem, Period } from './types';
 
@@ -15,13 +15,14 @@ type Draft = Omit<AdminChecklist, 'id' | 'assignees'> & { id?: string };
 
 const PERIODS: [Period, string][] = [['daily', 'Diariamente'], ['weekdays', 'Dias específicos'], ['weekly', 'Semanalmente'], ['ondemand', 'Sob demanda']];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const NEW: Draft = { name: '', description: '', period: 'daily', days: [], dueTime: '12:00', employeeIds: [], itemIds: [], active: true };
+const NEW: Draft = { name: '', description: '', period: 'daily', days: [], dueTime: '12:00', employeeIds: [], itemIds: [], active: true, unitId: null };
 
 const toDraft = (c: AdminChecklist): Draft => ({ ...c, dueTime: c.dueTime ?? '12:00' });
 
 export function ChecklistsPage() {
   const toast = useToast();
-  const { go } = useAdmin();
+  const { go, units, unitId, setUnitId } = useAdmin();
+  const eyebrow = useUnitLabel('Configuração');
   const cls = useResource<AdminChecklist[]>('/api/admin/checklists');
   const items = useResource<AdminItem[]>('/api/admin/items');
   const emps = useResource<AdminEmployee[]>('/api/admin/employees');
@@ -29,12 +30,21 @@ export function ChecklistsPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [err, setErr] = useState('');
 
+  // Uma seção por unidade em "Todas"; só a lista da unidade quando há uma escolhida.
+  const noUnit = (cls.data ?? []).filter((c) => !c.unitId);
+  const sections = (
+    units.length === 0 ? [{ name: null, list: cls.data ?? [] }]
+    : unitId ? [{ name: null, list: (cls.data ?? []).filter((c) => c.unitId === unitId) }]
+    : [...units.map((u) => ({ name: u.name, list: (cls.data ?? []).filter((c) => c.unitId === u.id) })), { name: 'Sem unidade', list: noUnit }]
+  ).filter((s) => s.name === null || s.list.length > 0);
+  const first = sections[0]?.list[0];
+
   useEffect(() => {
-    if (cls.data && !draft && selId === null && cls.data[0]) {
-      setSelId(cls.data[0].id);
-      setDraft(toDraft(cls.data[0]));
+    if (first && !draft && selId === null) {
+      setSelId(first.id);
+      setDraft(toDraft(first));
     }
-  }, [cls.data, draft, selId]);
+  }, [first, draft, selId]);
 
   const select = (c: AdminChecklist) => {
     setSelId(c.id);
@@ -54,7 +64,11 @@ export function ChecklistsPage() {
       cls.setData((list) => (list?.some((c) => c.id === saved.id) ? list.map((c) => (c.id === saved.id ? saved : c)) : [...(list ?? []), saved]));
       setSelId(saved.id);
       setDraft(toDraft(saved));
-      toast(id ? 'Checklist atualizado. O histórico anterior foi preservado.' : 'Checklist criado e atribuído à equipe.');
+      const elsewhere = unitId && saved.unitId !== unitId ? units.find((u) => u.id === saved.unitId)?.name : null;
+      toast(
+        elsewhere ? `Checklist salvo na unidade ${elsewhere}.`
+        : id ? 'Checklist atualizado. O histórico anterior foi preservado.' : 'Checklist criado e atribuído à equipe.',
+      );
     } catch (e) {
       setErr(errorMessage(e));
     }
@@ -66,7 +80,31 @@ export function ChecklistsPage() {
     setErr('');
   }
 
-  const activeEmps = (emps.data ?? []).filter((e) => e.active);
+  const openUnits = units.filter((u) => u.active || u.id === draft?.unitId);
+  const unitNames = Object.fromEntries(units.map((u) => [u.id, u.name]));
+  const pickUnit = (id: string) => {
+    if (!draft || draft.unitId === id) return;
+    // Quem não trabalha na nova unidade sai da lista.
+    const stay = (empId: string) => (emps.data ?? []).some((e) => e.id === empId && worksAt(e, id));
+    upd({ unitId: id, employeeIds: draft.employeeIds.filter(stay) });
+  };
+  const saved = cls.data?.find((c) => c.id === draft?.id);
+  const copyTargets = saved ? units.filter((u) => u.active && u.id !== saved.unitId) : [];
+  const copyTo = (id: string) => {
+    if (!saved) return;
+    const { id: _id, assignees: _assignees, ...rest } = toDraft(saved) as AdminChecklist;
+    setSelId(null);
+    setDraft({ ...rest, unitId: id, employeeIds: [] });
+    setErr('');
+  };
+  const startNew = () => {
+    const open = units.filter((u) => u.active);
+    setSelId(null);
+    setDraft({ ...NEW, unitId: unitId ?? (open.length === 1 ? open[0]!.id : null) });
+    setErr('');
+  };
+
+  const activeEmps = (emps.data ?? []).filter((e) => e.active && worksAt(e, draft?.unitId));
   // Função é atalho: marca (ou desmarca) todas as pessoas ativas dela; depois dá para tirar quem não deve ver.
   const groupIds = (g: string) => activeEmps.filter((e) => e.group === g).map((e) => e.id);
   const groups = GROUPS.filter((g) => groupIds(g).length > 0);
@@ -82,32 +120,51 @@ export function ChecklistsPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <div className="eyebrow">Configuração</div>
+          <div className="eyebrow">{eyebrow}</div>
           <h1 className="page-title">Checklists</h1>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-secondary" onClick={() => go('guide')}>Criar com ajuda</button>
-          <button type="button" className="btn btn-primary" onClick={() => { setSelId(null); setDraft(NEW); setErr(''); }}>+ Criar checklist</button>
+          <button type="button" className="btn btn-primary" onClick={startNew}>+ Criar checklist</button>
         </div>
       </div>
       {cls.error && <div className="banner banner--error">{cls.error}</div>}
+      {units.length > 0 && noUnit.length > 0 && (
+        <div className="banner unit-banner">
+          <span>
+            {plural(noUnit.length, 'checklist ainda não tem unidade: a equipe o vê em todas.', 'checklists ainda não têm unidade: a equipe os vê em todas.')}
+            {' '}Abra cada um e escolha a unidade.
+          </span>
+          {unitId && <button type="button" className="text-btn" onClick={() => setUnitId(null)}>Ver</button>}
+        </div>
+      )}
       <div className="cl-layout">
-        <ul className="cl-list" aria-label="Checklists">
-          {cls.data?.map((c) => (
-            <li key={c.id}>
-              <button type="button" className={`cl-list-card${c.id === selId ? ' is-selected' : ''}`} style={{ opacity: c.active ? 1 : 0.6 }} onClick={() => select(c)}>
-                <div className="cl-list-top">
-                  <span style={{ font: '600 15px var(--font-ui)' }}>{c.name}</span>
-                  <span style={{ font: '600 11px var(--font-ui)', color: c.active ? 'var(--success)' : 'var(--text-2)' }}>{c.active ? 'Ativo' : 'Inativo'}</span>
-                </div>
-                <div className="muted-sm">
-                  {periodLabel(c)}{c.dueTime && c.period !== 'ondemand' ? ` · até ${c.dueTime}` : ''} · {plural(c.itemIds.length, 'item', 'itens')}
-                </div>
-                <div className="muted-sm">{c.assignees.length ? c.assignees.map(firstName).join(', ') : 'Sem responsáveis'}</div>
-              </button>
-            </li>
+        <div className="cl-list">
+          {sections.map((sec) => (
+            <section key={sec.name ?? 'all'} className="cl-section" aria-label={sec.name ?? undefined}>
+              {sec.name && <h2 className="section-label">{sec.name}</h2>}
+              <ul className="cl-section" aria-label={sec.name ? `Checklists · ${sec.name}` : 'Checklists'}>
+                {sec.list.map((c) => (
+                  <li key={c.id}>
+                    <button type="button" className={`cl-list-card${c.id === selId ? ' is-selected' : ''}`} style={{ opacity: c.active ? 1 : 0.6 }} onClick={() => select(c)}>
+                      <div className="cl-list-top">
+                        <span style={{ font: '600 15px var(--font-ui)' }}>{c.name}</span>
+                        <span style={{ font: '600 11px var(--font-ui)', color: c.active ? 'var(--success)' : 'var(--text-2)' }}>{c.active ? 'Ativo' : 'Inativo'}</span>
+                      </div>
+                      <div className="muted-sm">
+                        {periodLabel(c)}{c.dueTime && c.period !== 'ondemand' ? ` · até ${c.dueTime}` : ''} · {plural(c.itemIds.length, 'item', 'itens')}
+                      </div>
+                      <div className="muted-sm">{c.assignees.length ? c.assignees.map(firstName).join(', ') : 'Sem responsáveis'}</div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+          {cls.data && sections.every((x) => x.list.length === 0) && (
+            <div className="empty" style={{ padding: 24, fontSize: 13 }}>Nenhum checklist {unitId ? 'nesta unidade' : 'criado'} ainda.</div>
+          )}
+        </div>
 
         {draft && (
           <div className="panel cl-editor">
@@ -126,6 +183,13 @@ export function ChecklistsPage() {
                 <input value={draft.description} placeholder="Opcional" onChange={(e) => upd({ description: e.target.value })} />
               </label>
             </div>
+
+            {openUnits.length > 0 && (
+              <div className="stack" style={{ gap: 8 }} role="group" aria-label="Unidade do checklist">
+                <div className="field-label">Unidade</div>
+                <ChipGroup options={openUnits.map((u) => u.id)} labels={unitNames} value={draft.unitId ?? ''} onToggle={pickUnit} />
+              </div>
+            )}
 
             <div className="stack" style={{ gap: 8 }}>
               <div className="field-label">Periodicidade</div>
@@ -177,6 +241,9 @@ export function ChecklistsPage() {
             <div className="cl-actions">
               <button type="button" className="btn btn-primary" onClick={save}>Salvar checklist</button>
               <button type="button" className="btn btn-secondary" onClick={discard}>Descartar alterações</button>
+              {copyTargets.map((u) => (
+                <button key={u.id} type="button" className="btn btn-secondary" onClick={() => copyTo(u.id)}>Copiar para {u.name}</button>
+              ))}
               <span className="muted-sm" style={{ flex: '1 1 220px' }}>As alterações valem a partir de hoje. Registros de dias anteriores não são modificados.</span>
             </div>
           </div>

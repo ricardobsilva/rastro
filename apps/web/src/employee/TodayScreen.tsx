@@ -6,6 +6,7 @@ import { plural } from '../ui/status';
 import { ChecklistCard } from './ChecklistCard';
 import { OnDemandList } from './OnDemandList';
 import type { Today } from './types';
+import { byUnit, hasManyUnits } from './units';
 
 type Props = { me: Employee; onOpen: (executionId: number) => void; onSwitch: () => void };
 
@@ -24,6 +25,8 @@ export function TodayScreen({ me, onOpen, onSwitch }: Props) {
   if (!data) return <div className="screen" aria-busy="true" />;
 
   const { summary: s } = data;
+  const many = hasManyUnits(data);
+  const groups = many ? byUnit(data.cards) : [{ unit: null, list: data.cards }];
   return (
     <div className="screen">
       <div className="today-head">
@@ -52,8 +55,13 @@ export function TodayScreen({ me, onOpen, onSwitch }: Props) {
 
       <div className="stack">
         <div className="section-label">Seus checklists de hoje</div>
-        {data.cards.map((c) => (
-          <ChecklistCard key={c.executionId} card={c} onOpen={() => onOpen(c.executionId)} />
+        {groups.map((g) => (
+          <section key={g.unit ?? 'all'} className="stack" aria-label={g.unit ?? undefined}>
+            {many && <h2 className="unit-title">{g.unit ?? 'Todas as unidades'}</h2>}
+            {g.list.map((c) => (
+              <ChecklistCard key={c.executionId} card={c} onOpen={() => onOpen(c.executionId)} />
+            ))}
+          </section>
         ))}
         {data.cards.length === 0 && (
           <div className="empty">
@@ -66,7 +74,7 @@ export function TodayScreen({ me, onOpen, onSwitch }: Props) {
       {data.onDemand.length > 0 && (
         <div className="stack">
           <div className="section-label">Quando necessário</div>
-          <OnDemandList list={data.onDemand} onStarted={onOpen} />
+          <OnDemandList showUnit={many} list={data.onDemand} onStarted={onOpen} />
         </div>
       )}
     </div>

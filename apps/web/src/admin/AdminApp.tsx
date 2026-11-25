@@ -6,16 +6,34 @@ import { PinPad } from '../ui/PinPad';
 import { useToast } from '../ui/Toast';
 import { AdminContext, type PageId } from './context';
 import { PAGES } from './pages';
+import type { AdminUnit } from './types';
 
-type Me = { manager: Employee; lateToday: number };
+type Me = { manager: Employee; lateToday: number; units: AdminUnit[] };
 
-const NAV: [PageId, string][] = [['dash', 'Painel'], ['team', 'Equipe'], ['items', 'Itens'], ['cls', 'Checklists'], ['hist', 'Histórico'], ['guide', 'Passo a passo'], ['data', 'Exportar e importar']];
+const NAV: [PageId, string][] = [['dash', 'Painel'], ['team', 'Equipe'], ['items', 'Itens'], ['cls', 'Checklists'], ['hist', 'Histórico'], ['guide', 'Passo a passo'], ['units', 'Unidades'], ['data', 'Exportar e importar']];
+
+/** Só uma conveniência deste navegador: se não der para ler ou gravar, começa em "Todas". */
+const UNIT_KEY = 'rastro.gestor.unidade';
+function storedUnit(): string | null {
+  try {
+    return window.localStorage.getItem(UNIT_KEY);
+  } catch {
+    return null;
+  }
+}
+function storeUnit(id: string | null) {
+  try {
+    if (id) window.localStorage.setItem(UNIT_KEY, id);
+    else window.localStorage.removeItem(UNIT_KEY);
+  } catch { /* navegação privada */ }
+}
 
 export function AdminApp({ go: navigate = (path: string) => window.location.assign(path) }: { go?: (path: string) => void } = {}) {
   const toast = useToast();
   const [state, setState] = useState<{ kind: 'loading' } | { kind: 'gate' } | { kind: 'error'; message: string } | ({ kind: 'in' } & Me)>({ kind: 'loading' });
   const [page, setPage] = useState<PageId>('dash');
   const [date, setDate] = useState<string | null>(null);
+  const [chosenUnit, setChosenUnit] = useState<string | null>(storedUnit);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
 
   const loadMe = useCallback(async () => {
@@ -73,18 +91,34 @@ export function AdminApp({ go: navigate = (path: string) => window.location.assi
     setPage(p);
     if (opts?.employeeId) setSelectedEmployee(opts.employeeId);
   };
-  const { manager, lateToday } = state;
+  const { manager, lateToday, units } = state;
+  const open = units.filter((u) => u.active);
+  // Unidade guardada que foi desativada (ou sumiu num backup) volta para "Todas".
+  const unit = open.find((u) => u.id === chosenUnit) ?? null;
+  const unitId = unit?.id ?? null;
+  const setUnitId = (id: string | null) => {
+    setChosenUnit(id);
+    storeUnit(id);
+  };
+  const late = unit ? unit.lateToday : lateToday;
 
   return (
-    <AdminContext.Provider value={{ manager, date, setDate, selectedEmployee, go, refreshBadge: loadMe }}>
+    <AdminContext.Provider value={{ manager, date, setDate, selectedEmployee, go, refreshBadge: loadMe, units, unitId, setUnitId }}>
       <div className="admin">
         <aside className="admin-side">
+          {open.length > 0 && (
+            <div className="admin-units" role="group" aria-label="Unidade">
+              {[...open, { id: null, name: 'Todas' }].map((u) => (
+                <button key={u.id ?? 'all'} type="button" className="chip-btn chip-btn--sm" aria-pressed={unitId === u.id} onClick={() => setUnitId(u.id)}>{u.name}</button>
+              ))}
+            </div>
+          )}
           <div className="eyebrow eyebrow--xs admin-side-label">Gestão</div>
           <nav className="admin-nav" aria-label="Gestão">
             {NAV.map(([id, label]) => (
               <button key={id} type="button" className="admin-nav-btn" aria-current={page === id ? 'page' : undefined} onClick={() => go(id)}>
                 {label}
-                {id === 'dash' && lateToday > 0 && <span className="admin-badge">{lateToday}</span>}
+                {id === 'dash' && late > 0 && <span className="admin-badge">{late}</span>}
               </button>
             ))}
           </nav>
@@ -98,7 +132,8 @@ export function AdminApp({ go: navigate = (path: string) => window.location.assi
           </div>
         </aside>
         <main className="admin-main">
-          <Page />
+          {/* Trocar de unidade recomeça a página; o passo a passo tem a própria pergunta e guarda as respostas. */}
+          <Page key={page === 'guide' ? page : `${page}:${unitId ?? 'all'}`} />
         </main>
       </div>
     </AdminContext.Provider>

@@ -6,7 +6,7 @@ import { prepareDb } from '../src/db/prepare.js';
 import { adminAgent, employeeAgent, setup, testClock } from './helpers/setup.js';
 
 type Export = { format: string; version: number; exportedAt: string; tables: Record<string, Record<string, unknown>[]> };
-const TABLES = ['employees', 'items', 'checklists', 'checklist_items', 'checklist_roles', 'checklist_employees', 'executions', 'execution_items', 'audit_events'];
+const TABLES = ['units', 'employees', 'employee_units', 'items', 'checklists', 'checklist_items', 'checklist_roles', 'checklist_employees', 'executions', 'execution_items', 'audit_events'];
 const count = async (db: Db, t: string) => (await db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as { n: number }).n;
 
 /** Restaurante de demonstração com marcações de hoje (inclui observação e desmarcação). */
@@ -44,7 +44,7 @@ describe('Exportar e importar dados', () => {
       const res = await (await adminAgent(app)).get('/api/admin/export');
       expect(res.status).toBe(200);
       expect(res.headers['content-disposition']).toBe('attachment; filename="rastro-dados-2026-10-21.json"');
-      expect(res.body).toMatchObject({ format: 'rastro-export', version: 1, exportedAt: '2026-10-21T14:40:00.000Z' });
+      expect(res.body).toMatchObject({ format: 'rastro-export', version: 2, exportedAt: '2026-10-21T14:40:00.000Z' });
       expect(Object.keys(res.body.tables)).toEqual(TABLES);
       for (const t of TABLES) expect(res.body.tables[t], t).toHaveLength(await count(db, t));
       expect(res.body.tables.audit_events.length).toBeGreaterThan(0);
@@ -128,7 +128,7 @@ describe('Exportar e importar dados', () => {
     it('arquivo de versão mais nova → 422', async () => {
       const { app } = await setup();
       const data = await exportOf(app);
-      const res = await (await adminAgent(app)).post('/api/admin/import').send({ ...data, version: 2 });
+      const res = await (await adminAgent(app)).post('/api/admin/import').send({ ...data, version: 3 });
       expect(res.status).toBe(422);
       expect(res.body.error).toBe('Este arquivo é de uma versão mais nova do Rastro.');
     });

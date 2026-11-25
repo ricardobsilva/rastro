@@ -1,5 +1,5 @@
 import { type Client, type InArgs, type InValue, type ResultSet, type Transaction, createClient } from '@libsql/client';
-import { SCHEMA } from './schema.js';
+import { ADDED_COLUMNS, SCHEMA } from './schema.js';
 
 /** Comando pronto para ir num lote (`db.batch`). */
 export type Stmt = { sql: string; args: InValue[] };
@@ -82,7 +82,23 @@ export type DbConfig = { url: string; authToken?: string };
 export async function openDb(config: DbConfig = { url: ':memory:' }): Promise<Db> {
   const client = createClient({ url: config.url, authToken: config.authToken, intMode: 'number' });
   await client.executeMultiple(SCHEMA);
+  await addMissingColumns(client);
   return wrap(client);
+}
+
+/** Acrescenta a bancos antigos as colunas novas. Idempotente e tolerante a duas instâncias subindo juntas. */
+async function addMissingColumns(client: Client): Promise<void> {
+  const tables = [...new Set(ADDED_COLUMNS.map(([t]) => t))];
+  const infos = await client.batch(tables.map((t) => `PRAGMA table_info(${t})`), 'read');
+  const existing = new Set(infos.flatMap((rs, i) => plainRows(rs).map((c) => `${tables[i]}.${String(c.name)}`)));
+  for (const [table, column, definition] of ADDED_COLUMNS) {
+    if (existing.has(`${table}.${column}`)) continue;
+    try {
+      await client.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    } catch (e) {
+      if (!/duplicate column/i.test(String(e))) throw e;
+    }
+  }
 }
 
 /** Configuração a partir do ambiente: Turso se houver `TURSO_DATABASE_URL`, senão arquivo local. */

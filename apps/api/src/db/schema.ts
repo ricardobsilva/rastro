@@ -1,4 +1,20 @@
+/**
+ * Colunas criadas depois da primeira versão: bancos antigos as ganham ao abrir (ver db/index.ts).
+ * `unit_id` vazio = sem unidade, que vale para todas.
+ */
+export const ADDED_COLUMNS: [table: string, column: string, definition: string][] = [
+  ['checklists', 'unit_id', 'TEXT REFERENCES units(id)'],
+  ['devices', 'unit_id', 'TEXT REFERENCES units(id)'],
+  ['executions', 'unit_id', 'TEXT REFERENCES units(id)'],
+];
+
 export const SCHEMA = `
+CREATE TABLE IF NOT EXISTS units (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1
+);
+
 CREATE TABLE IF NOT EXISTS employees (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -7,6 +23,13 @@ CREATE TABLE IF NOT EXISTS employees (
   pin TEXT UNIQUE,
   color TEXT NOT NULL,
   active INTEGER NOT NULL DEFAULT 1
+);
+
+-- Unidades em que a pessoa trabalha. Sem nenhuma linha, vale para todas.
+CREATE TABLE IF NOT EXISTS employee_units (
+  employee_id TEXT NOT NULL REFERENCES employees(id),
+  unit_id TEXT NOT NULL REFERENCES units(id),
+  PRIMARY KEY (employee_id, unit_id)
 );
 
 CREATE TABLE IF NOT EXISTS items (
@@ -26,7 +49,8 @@ CREATE TABLE IF NOT EXISTS checklists (
   period TEXT NOT NULL CHECK (period IN ('daily','weekdays','weekly','ondemand')),
   days TEXT NOT NULL DEFAULT '[]',
   due_time TEXT,
-  active INTEGER NOT NULL DEFAULT 1
+  active INTEGER NOT NULL DEFAULT 1,
+  unit_id TEXT REFERENCES units(id)
 );
 
 CREATE TABLE IF NOT EXISTS checklist_items (
@@ -55,11 +79,12 @@ CREATE TABLE IF NOT EXISTS devices (
   authorized_by TEXT NOT NULL REFERENCES employees(id),
   created_at TEXT NOT NULL,
   employee_id TEXT REFERENCES employees(id),
-  session_since TEXT
+  session_since TEXT,
+  unit_id TEXT REFERENCES units(id)
 );
 
 -- Instância diária: um checklist executado por um funcionário num dia operacional.
--- Guarda snapshot de nome e prazo; dias anteriores nunca são ressincronizados.
+-- Guarda snapshot de nome, prazo e unidade; dias anteriores nunca são ressincronizados.
 CREATE TABLE IF NOT EXISTS executions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   op_date TEXT NOT NULL,
@@ -70,6 +95,7 @@ CREATE TABLE IF NOT EXISTS executions (
   due_time TEXT,
   started_manually INTEGER NOT NULL DEFAULT 0,
   visible INTEGER NOT NULL DEFAULT 1,
+  unit_id TEXT REFERENCES units(id),
   UNIQUE (op_date, checklist_id, employee_id)
 );
 

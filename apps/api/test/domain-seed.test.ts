@@ -93,7 +93,7 @@ describe('Banco de produção: só dados de domínio', () => {
       const db = await prepareDb();
       const { agent } = await prodAdmin(db);
       const res = await agent.post('/api/admin/checklists/guided').send({
-        name: 'Abertura', tasks: ['Abrir portas'], roles: ['Salão'], period: 'daily', days: [], dueTime: '10:00', newEmployees: [{ name: 'Pedro Ramos', group: 'Salão' }],
+        name: 'Abertura', unitId: 'u_farol', tasks: ['Abrir portas'], roles: ['Salão'], period: 'daily', days: [], dueTime: '10:00', newEmployees: [{ name: 'Pedro Ramos', group: 'Salão' }],
       });
       expect(res.status).toBe(201);
       await seedDomain(db);

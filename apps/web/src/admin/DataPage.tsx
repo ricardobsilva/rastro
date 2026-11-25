@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import { api, errorMessage } from '../api/client';
 
 const FORMAT = 'rastro-export';
-const VERSION = 1;
+/** Versão atual; arquivos da versão 1 (sem unidades) continuam entrando. */
+const VERSION = 2;
 const NOT_RASTRO = 'Este arquivo não é uma exportação do Rastro.';
 
 type ExportFile = { format: string; version: number; exportedAt: string; tables: Record<string, unknown[]> };
@@ -25,7 +26,7 @@ function parse(text: string): ExportFile {
   }
   if (data?.format !== FORMAT) throw new Error(NOT_RASTRO);
   if (typeof data.version === 'number' && data.version > VERSION) throw new Error('Este arquivo é de uma versão mais nova do Rastro.');
-  if (data.version !== VERSION || typeof data.tables !== 'object' || !data.tables) throw new Error('O arquivo está incompleto ou corrompido.');
+  if ((data.version !== 1 && data.version !== VERSION) || typeof data.tables !== 'object' || !data.tables) throw new Error('O arquivo está incompleto ou corrompido.');
   return data as ExportFile;
 }
 

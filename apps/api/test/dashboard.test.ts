@@ -34,7 +34,7 @@ describe('US15 — painel do gestor', () => {
       expect(b.kpis.total).toBe(b.kpis.done + b.kpis.pending + b.kpis.late);
       expect(b.kpis.pct).toBe(Math.round((6 / b.kpis.total) * 100));
       const c1 = b.byChecklist.find((x: { name: string }) => x.name === 'Abertura do restaurante');
-      expect(c1).toEqual({ name: 'Abertura do restaurante', done: 6, late: 6, total: 12 });
+      expect(c1).toEqual({ id: 'c1', unit: null, name: 'Abertura do restaurante', done: 6, late: 6, total: 12 });
       expect(b.byChecklist.at(-1).done / b.byChecklist.at(-1).total).toBeGreaterThanOrEqual(b.byChecklist[0].done / b.byChecklist[0].total);
       expect(b.lateList.length).toBeLessThanOrEqual(6);
       expect(b.lateList[0]).toMatchObject({ due: '09:30', delayMin: 130 });
@@ -54,7 +54,7 @@ describe('US15 — painel do gestor', () => {
       const done = (await admin.get('/api/admin/dashboard?employeeId=e1&status=done')).body;
       expect(done.kpis).toMatchObject({ total: 1, done: 1 });
       const cat = (await admin.get('/api/admin/dashboard?category=Organização&checklistId=c1')).body;
-      expect(cat.byChecklist).toEqual([{ name: 'Abertura do restaurante', done: 1, late: 0, total: 2 }]);
+      expect(cat.byChecklist).toEqual([{ id: 'c1', unit: null, name: 'Abertura do restaurante', done: 1, late: 0, total: 2 }]);
     });
 
     it('dia anterior: itens não feitos contam como atrasados ("não feito")', async () => {

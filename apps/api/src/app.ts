@@ -12,6 +12,7 @@ import { adminEmployeeRoutes } from './routes/admin/employees.js';
 import { adminHistoryRoutes } from './routes/admin/history.js';
 import { adminItemRoutes } from './routes/admin/items.js';
 import { adminTeamRoutes } from './routes/admin/team.js';
+import { adminUnitRoutes } from './routes/admin/units.js';
 import { deviceRoutes } from './routes/device.js';
 import { meRoutes } from './routes/me.js';
 import { sessionRoutes } from './routes/session.js';
@@ -48,6 +49,7 @@ export function createApp(deps: AppDeps) {
   app.use('/api', stationRoutes(ctx));
   app.use('/api', adminAuthRoutes(ctx));
   app.use('/api', adminItemRoutes(ctx));
+  app.use('/api', adminUnitRoutes(ctx));
   app.use('/api', adminEmployeeRoutes(ctx));
   app.use('/api', adminChecklistRoutes(ctx));
   app.use('/api', adminDashboardRoutes(ctx));

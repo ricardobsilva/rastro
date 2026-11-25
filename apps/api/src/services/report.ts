@@ -6,7 +6,7 @@ import { type ExecutionRow, itemsOfMany } from './day.js';
 export const HISTORY_DAYS = 7;
 
 export type ReportRow = {
-  date: string; executionId: number; checklistId: string; checklistName: string; dueTime: string | null; due: number | null;
+  date: string; unitId: string | null; executionId: number; checklistId: string; checklistName: string; dueTime: string | null; due: number | null;
   employeeId: string; itemId: string; itemName: string; category: string; status: ItemStatus; doneAt: string | null; note: string;
 };
 
@@ -17,7 +17,7 @@ export async function reportRows(db: Db, date: string, now: OperationalNow): Pro
   const items = await itemsOfMany(db, execs, () => minute);
   return execs.flatMap((e) =>
     items.get(e.id)!.map((i) => ({
-      date, executionId: e.id, checklistId: e.checklist_id, checklistName: e.checklist_name, dueTime: e.due_time, due: dueMinute(e.due_time),
+      date, unitId: e.unit_id, executionId: e.id, checklistId: e.checklist_id, checklistName: e.checklist_name, dueTime: e.due_time, due: dueMinute(e.due_time),
       employeeId: e.employee_id, itemId: i.item_id, itemName: i.item_name, category: i.category, status: i.status,
       doneAt: i.done && i.done_at !== null ? fmtMinute(i.done_at) : null, note: i.note,
     })),
